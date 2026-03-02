@@ -225,7 +225,6 @@
                 const hex = createHex(term, selectedColor, Math.random() * sw + 380, Math.random() * sh + 40);
                 workspace.appendChild(hex); selectColor(colorIndex + 1);
             });
-            if (!hexInput.readOnly) hexInput.focus();
             checkAllConnected();
         });
 
@@ -251,20 +250,27 @@
             hexes.forEach(h => gridMap[`${h.dataset.col},${h.dataset.row}`] = h.dataset.fullText);
             currentPairs = []; currentNodeGroups = [];
             const seenPairs = new Set(), seenNodes = new Set();
+
             for (const [pos, text] of Object.entries(gridMap)) {
-                const [c, r] = pos.split(',').map(Number), neighbors = getNeighbors(c, r);
-                neighbors.forEach((n, i) => {
-                    const n1Pos = `${n.c},${n.r}`, n2Pos = `${neighbors[(i+1)%neighbors.length].c},${neighbors[(i+1)%neighbors.length].r}`;
-                    if (gridMap[n1Pos]) {
-                        const pGroup = [text, gridMap[n1Pos]].sort(); const pKey = pGroup.join('|');
-                        if (!seenPairs.has(pKey)) { seenPairs.add(pKey); currentPairs.push(pGroup); }
-                        if (gridMap[n2Pos]) {
-                            const nGroup = [text, gridMap[n1Pos], gridMap[n2Pos]].sort(); const nKey = nGroup.join('|');
-                            if (!seenNodes.has(nKey)) { seenNodes.add(nKey); currentNodeGroups.push(nGroup); }
-                        }
-                    }
+                const [c, r] = pos.split(',').map(Number);
+                const neighbors = getNeighbors(c, r);
+                const connectedNeighbors = neighbors.filter(n => gridMap[`${n.c},${n.r}`]);
+
+                // Node logic: Any hex with 2 or more touching neighbors
+                if (connectedNeighbors.length >= 2) {
+                    const group = [text, ...connectedNeighbors.map(n => gridMap[`${n.c},${n.r}`])].sort();
+                    const key = group.join('|');
+                    if (!seenNodes.has(key)) { seenNodes.add(key); currentNodeGroups.push(group); }
+                }
+
+                // Pair logic: Standard 1-on-1
+                connectedNeighbors.forEach(n => {
+                    const group = [text, gridMap[`${n.c},${n.r}`]].sort();
+                    const key = group.join('|');
+                    if (!seenPairs.has(key)) { seenPairs.add(key); currentPairs.push(group); }
                 });
             }
+
             if (currentNodeGroups.length === 0) { btnNode.classList.add('hidden'); setChallengeMode('pair'); } 
             else { btnNode.classList.remove('hidden'); setChallengeMode('node'); }
             promptModal.classList.remove('hidden');
@@ -274,8 +280,8 @@
             btnPair.classList.toggle('active', mode === 'pair');
             btnNode.classList.toggle('active', mode === 'node');
             const group = mode === 'pair' ? currentPairs[Math.floor(Math.random() * currentPairs.length)] : currentNodeGroups[Math.floor(Math.random() * currentNodeGroups.length)];
-            challengeDesc.textContent = mode === 'pair' ? "Explain the link between these two:" : "Explain the intersection of these THREE terms:";
-            termContainer.innerHTML = group.map(t => `<span class="px-4 py-2 bg-white rounded-lg border-2 border-indigo-200 font-bold text-indigo-700 shadow-sm">${t}</span>`).join('');
+            challengeDesc.textContent = mode === 'pair' ? "Explain the link between these two terms:" : "Explain how the center term relates to ALL surrounding terms:";
+            termContainer.innerHTML = group.map((t, idx) => `<span class="px-4 py-2 bg-white rounded-lg border-2 ${idx===0 && mode==='node' ? 'border-indigo-600 scale-110 z-10' : 'border-indigo-200'} font-bold text-indigo-700 shadow-sm">${t}</span>`).join('');
             savedTermsHeader = group.join(mode === 'pair' ? ' + ' : ' • ');
             promptTextarea.value = "";
         }
@@ -291,28 +297,20 @@
             hexes.forEach(h => { const x = parseFloat(h.style.left), y = parseFloat(h.style.top); minX = Math.min(minX, x); minY = Math.min(minY, y); maxX = Math.max(maxX, x + 120); maxY = Math.max(maxY, y + 104); });
             const canvas = document.getElementById('export-canvas'), ctx = canvas.getContext('2d'), baseWidth = (maxX - minX) + 160, baseHeight = (maxY - minY) + 160;
             ctx.font = "16px sans-serif";
-            const lines = savedExplanation.split(' ').reduce((acc, word) => {
-                let cur = acc[acc.length-1];
-                if (ctx.measureText(cur + " " + word).width < Math.max(baseWidth, 500) - 80) acc[acc.length-1] += word + " ";
-                else acc.push(word + " ");
-                return acc;
-            }, [""]);
+            const words = savedExplanation.split(' '), lines = [""];
+            words.forEach(w => { if (ctx.measureText(lines[lines.length-1] + " " + w).width < Math.max(baseWidth, 500) - 80) lines[lines.length-1] += w + " "; else lines.push(w + " "); });
             const extraHeight = 120 + (lines.length * 24);
             canvas.width = Math.max(baseWidth, 500); canvas.height = baseHeight + extraHeight;
             ctx.fillStyle = "#d8d2e1"; ctx.fillRect(0,0,canvas.width, canvas.height);
             hexes.forEach(h => {
-                const x = parseFloat(h.style.left) - minX + 80, y = parseFloat(h.style.top) - minY + 80, color = h.querySelector('.hex-shape-outer').getAttribute('stroke'), textLines = h.querySelectorAll('tspan');
-                ctx.save(); ctx.translate(x, y); ctx.beginPath();
-                [[30,2],[90,2],[118,52],[90,102],[30,102],[2,52]].forEach((p, i) => i === 0 ? ctx.moveTo(p[0],p[1]) : ctx.lineTo(p[0],p[1]));
-                ctx.closePath(); ctx.fillStyle = "white"; ctx.fill(); ctx.strokeStyle = color; ctx.lineWidth = 5; ctx.stroke();
-                ctx.fillStyle = "#4a4a4a"; ctx.font = "bold 13px sans-serif"; ctx.textAlign = "center";
+                const x = parseFloat(h.style.left)-minX+80, y = parseFloat(h.style.top)-minY+80, color = h.querySelector('.hex-shape-outer').getAttribute('stroke'), textLines = h.querySelectorAll('tspan');
+                ctx.save(); ctx.translate(x, y); ctx.beginPath(); [[30,2],[90,2],[118,52],[90,102],[30,102],[2,52]].forEach((p, i) => i === 0 ? ctx.moveTo(p[0],p[1]) : ctx.lineTo(p[0],p[1]));
+                ctx.closePath(); ctx.fillStyle = "white"; ctx.fill(); ctx.strokeStyle = color; ctx.lineWidth = 5; ctx.stroke(); ctx.fillStyle = "#4a4a4a"; ctx.font = "bold 13px sans-serif"; ctx.textAlign = "center";
                 textLines.forEach((tl, i) => ctx.fillText(tl.textContent, 60, (52-(textLines.length-1)*8) + (i*16))); ctx.restore();
             });
             const py = baseHeight - 20;
-            ctx.fillStyle = "white"; ctx.fillRect(20, py, canvas.width-40, extraHeight-40);
-            ctx.strokeStyle = "#6366f1"; ctx.lineWidth = 3; ctx.strokeRect(20, py, canvas.width-40, extraHeight-40);
-            ctx.fillStyle = "#6366f1"; ctx.font = "bold 18px sans-serif"; ctx.fillText(savedTermsHeader, 40, py + 35);
-            ctx.fillStyle = "#4a4a4a"; ctx.font = "16px sans-serif";
+            ctx.fillStyle = "white"; ctx.fillRect(20, py, canvas.width-40, extraHeight-40); ctx.strokeStyle = "#6366f1"; ctx.lineWidth = 3; ctx.strokeRect(20, py, canvas.width-40, extraHeight-40);
+            ctx.fillStyle = "#6366f1"; ctx.font = "bold 18px sans-serif"; ctx.fillText(savedTermsHeader, 40, py + 35); ctx.fillStyle = "#4a4a4a"; ctx.font = "16px sans-serif";
             lines.forEach((l, i) => ctx.fillText(l.trim(), 40, py + 70 + (i*24)));
             const a = document.createElement('a'); a.download = `hex-thinking-${Date.now()}.png`; a.href = canvas.toDataURL(); a.click();
         }
