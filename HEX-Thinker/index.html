@@ -152,6 +152,7 @@
             transition: opacity 0.2s;
         }
         
+        /* The class we toggle to hide/show elements */
         .hidden { display: none !important; }
     </style>
 </head>
@@ -164,7 +165,7 @@
         </h1>
         
         <div class="mb-5">
-            <label class="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Terms (One per line)</label>
+            <label class="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Terms (Min: 6 | Max: 24)</label>
             <div class="flex flex-col gap-2">
                 <textarea id="hex-input" placeholder="Enter terms here...&#10;One per line..." rows="5" class="w-full px-4 py-3 border-2 border-gray-100 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all"></textarea>
                 <button id="add-btn" class="btn-primary shadow-lg shadow-indigo-200 w-full">Scatter Hexagons</button>
@@ -192,7 +193,7 @@
 
     <div class="actions-panel">
         <button id="clear-btn" class="bg-white/80 backdrop-blur border border-gray-200 text-gray-600 px-5 py-3 rounded-xl hover:bg-white transition font-bold shadow-sm">Clear Board</button>
-        <button id="prompt-btn" class="bg-indigo-100 text-indigo-700 border border-indigo-200 px-5 py-3 rounded-xl hover:bg-indigo-200 transition font-bold flex items-center gap-2 shadow-sm">
+        <button id="prompt-btn" class="hidden bg-indigo-100 text-indigo-700 border border-indigo-200 px-5 py-3 rounded-xl hover:bg-indigo-200 transition font-bold flex items-center gap-2 shadow-sm">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
             Generate Prompt
         </button>
@@ -283,6 +284,54 @@
             workspace.classList.toggle('grid-hidden', !e.target.checked);
         });
 
+        // Network Check: Determines if all hexagons are connected into a single group
+        function checkAllConnected() {
+            const hexes = document.querySelectorAll('.hex-container');
+            
+            // If less than minimum, hide button
+            if (hexes.length < 6) {
+                promptBtn.classList.add('hidden');
+                return;
+            }
+
+            // Build a map of all occupied spots
+            const occupied = new Set();
+            let startNode = null;
+            
+            hexes.forEach(h => {
+                const pos = `${h.dataset.col},${h.dataset.row}`;
+                occupied.add(pos);
+                if (!startNode) startNode = pos; // Grab the first one to start the search
+            });
+
+            // Network search to count how many we can reach
+            const visited = new Set();
+            const queue = [startNode];
+            visited.add(startNode);
+
+            while(queue.length > 0) {
+                const current = queue.shift();
+                const [c, r] = current.split(',');
+                const neighbors = getNeighbors(c, r);
+
+                neighbors.forEach(n => {
+                    const nPos = `${n.c},${n.r}`;
+                    // If neighbor exists on board and hasn't been checked yet
+                    if (occupied.has(nPos) && !visited.has(nPos)) {
+                        visited.add(nPos);
+                        queue.push(nPos);
+                    }
+                });
+            }
+
+            // If the number of connected hexes equals the total hexes, they are all touching!
+            if (visited.size === occupied.size) {
+                promptBtn.classList.remove('hidden'); // Show button
+            } else {
+                promptBtn.classList.add('hidden'); // Hide button
+            }
+        }
+
         function createHex(text, color, x, y) {
             const container = document.createElement('div');
             container.className = 'hex-container';
@@ -326,7 +375,7 @@
 
         function makeDraggable(el) {
             let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-            let originalLeft = 0, originalTop = 0; // Added memory for bounce-back
+            let originalLeft = 0, originalTop = 0; 
 
             el.onmousedown = dragStart;
             el.ontouchstart = dragStart;
@@ -337,7 +386,6 @@
                 const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
                 pos3 = clientX; pos4 = clientY;
                 
-                // Record the safe starting position before moving
                 originalLeft = el.style.left;
                 originalTop = el.style.top;
                 
@@ -369,26 +417,19 @@
                 const clientX = e.type === 'touchend' ? e.changedTouches[0].clientX : e.clientX;
                 const clientY = e.type === 'touchend' ? e.changedTouches[0].clientY : e.clientY;
                 
-                // Get boundaries for the delete zone, top menu, and bottom buttons
                 const deleteRect = deleteZone.getBoundingClientRect();
                 const menuPanel = document.querySelector('.controls-panel').getBoundingClientRect();
                 const actionPanel = document.querySelector('.actions-panel').getBoundingClientRect();
                 
-                // 1. Did they drop it in the trash?
                 if (clientX > deleteRect.left && clientX < deleteRect.right && clientY > deleteRect.top) {
                     el.remove();
-                } 
-                // 2. Did they drop it over the Top-Left Menu OR Bottom-Right Buttons?
-                else if (
+                } else if (
                     (clientX < menuPanel.right + 30 && clientY < menuPanel.bottom + 30) || 
                     (clientX > actionPanel.left - 30 && clientY > actionPanel.top - 30)
                 ) {
-                    // BOUNCE BACK: Reject the drop and snap back to original safe spot
                     el.style.left = originalLeft;
                     el.style.top = originalTop;
-                } 
-                // 3. Normal drop on the grid
-                else {
+                } else {
                     const snapped = getSnapPos(parseFloat(el.style.left), parseFloat(el.style.top));
                     el.style.left = snapped.x + "px";
                     el.style.top = snapped.y + "px";
@@ -401,6 +442,9 @@
                 deleteZone.classList.remove('active');
                 document.onmouseup = null; document.onmousemove = null;
                 document.ontouchend = null; document.ontouchmove = null;
+
+                // Check connections after every single drop
+                checkAllConnected();
             }
         }
 
@@ -428,6 +472,17 @@
             if (!rawText) return;
 
             const terms = rawText.split('\n').map(t => t.trim()).filter(t => t !== "");
+            
+            // MIN / MAX VALIDATION
+            if (terms.length < 6) {
+                alert("Please enter at least 6 terms (one per line).");
+                return;
+            }
+            if (terms.length > 24) {
+                alert("Please enter no more than 24 terms (one per line).");
+                return;
+            }
+
             const occupiedCells = new Set();
             document.querySelectorAll('.hex-container').forEach(h => {
                 occupiedCells.add(`${h.dataset.col},${h.dataset.row}`);
@@ -472,22 +527,22 @@
 
             hexInput.value = "";
             hexInput.focus();
+            
+            // Run check after spawning (hides button if they aren't connected yet)
+            checkAllConnected();
         });
 
         clearBtn.addEventListener('click', () => {
             if (confirm("Reset the thinking board?")) {
                 workspace.innerHTML = "";
                 savedExplanation = "";
+                checkAllConnected(); // Hide button on clear
             }
         });
 
         promptBtn.addEventListener('click', () => {
             const hexes = document.querySelectorAll('.hex-container');
-            if (hexes.length < 2) {
-                alert("You need to place and connect some hexagons first!");
-                return;
-            }
-
+            
             const gridMap = {};
             hexes.forEach(h => { gridMap[`${h.dataset.col},${h.dataset.row}`] = h.dataset.fullText; });
 
@@ -509,11 +564,6 @@
                         }
                     }
                 });
-            }
-
-            if (connections.length === 0) {
-                alert("Make sure you drag some hexagons so their edges touch to make connections!");
-                return;
             }
 
             const randomPair = connections[Math.floor(Math.random() * connections.length)];
