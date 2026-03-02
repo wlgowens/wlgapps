@@ -540,7 +540,7 @@
             });
 
             if (!hexInput.readOnly) {
-                hexInput.value = "";
+                // We removed the line that clears the text box so teachers can still copy the link!
                 hexInput.focus();
             }
             
@@ -597,7 +597,6 @@
             promptModal.classList.add('hidden');
         });
 
-        // --- NEW: Generate and Download Image Function ---
         function generateAndDownloadImage() {
             const hexes = document.querySelectorAll('.hex-container');
             if (hexes.length === 0) return;
@@ -726,10 +725,8 @@
             savedExplanation = promptTextarea.value.trim();
             savedTerms = promptTerm1.textContent + " & " + promptTerm2.textContent;
             
-            // Hide the modal immediately
             promptModal.classList.add('hidden');
             
-            // Directly trigger the download function
             generateAndDownloadImage();
         });
 
