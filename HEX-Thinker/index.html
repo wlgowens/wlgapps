@@ -164,10 +164,14 @@
         </h1>
         
         <div class="mb-5">
-            <label class="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Terms (Min: 6 | Max: 24)</label>
+            <label id="terms-label" class="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Terms (Min: 6 | Max: 24)</label>
             <div class="flex flex-col gap-2">
                 <textarea id="hex-input" placeholder="Enter terms here...&#10;One per line..." rows="5" class="w-full px-4 py-3 border-2 border-gray-100 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all"></textarea>
                 <button id="add-btn" class="btn-primary shadow-lg shadow-indigo-200 w-full">Scatter Hexagons</button>
+                <button id="link-btn" class="bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold py-2.5 rounded-xl w-full hover:bg-emerald-200 transition shadow-sm flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                    Copy Student Link
+                </button>
             </div>
         </div>
 
@@ -238,12 +242,14 @@
         const workspace = document.getElementById('workspace');
         const hexInput = document.getElementById('hex-input');
         const addBtn = document.getElementById('add-btn');
+        const linkBtn = document.getElementById('link-btn');
         const exportBtn = document.getElementById('export-btn');
         const clearBtn = document.getElementById('clear-btn');
         const promptBtn = document.getElementById('prompt-btn');
         const deleteZone = document.getElementById('delete-zone');
         const toggleGrid = document.getElementById('toggle-grid');
         const colorDots = Array.from(document.querySelectorAll('.color-dot'));
+        const termsLabel = document.getElementById('terms-label');
         
         const promptModal = document.getElementById('prompt-modal');
         const closeModalBtn = document.getElementById('close-modal-btn');
@@ -290,7 +296,6 @@
             
             if (hexes.length < 6) {
                 promptBtn.classList.add('hidden');
-                // Hide export button too just in case they broke the connection
                 exportBtn.classList.add('hidden'); 
                 return;
             }
@@ -324,7 +329,6 @@
 
             if (visited.size === occupied.size) {
                 promptBtn.classList.remove('hidden');
-                // If they already have an explanation saved, they can still save the image
                 if (savedExplanation) {
                     exportBtn.classList.remove('hidden');
                 }
@@ -468,6 +472,27 @@
             return !neighbors.some(n => occupiedCells.has(`${n.c},${n.r}`));
         }
 
+        // --- NEW: Handle generating the student link ---
+        linkBtn.addEventListener('click', () => {
+            const rawText = hexInput.value.trim();
+            if (!rawText) return alert("Please enter terms before creating a link!");
+
+            const terms = rawText.split('\n').map(t => t.trim()).filter(t => t !== "");
+            if (terms.length < 6) return alert("Please enter at least 6 terms before creating a link.");
+            if (terms.length > 24) return alert("Please enter no more than 24 terms before creating a link.");
+
+            // Package terms into the URL
+            const url = new URL(window.location.href);
+            url.searchParams.set('t', encodeURIComponent(terms.join('|')));
+
+            // Copy to clipboard
+            navigator.clipboard.writeText(url.toString()).then(() => {
+                alert("Student Link Copied! \n\nYou can now paste this directly into Google Classroom or Canvas.");
+            }).catch(err => {
+                alert("Couldn't automatically copy. Here is the link:\n" + url.toString());
+            });
+        });
+
         addBtn.addEventListener('click', () => {
             const rawText = hexInput.value.trim();
             if (!rawText) return;
@@ -525,8 +550,11 @@
                 selectColor(colorIndex + 1);
             });
 
-            hexInput.value = "";
-            hexInput.focus();
+            // Only clear the input if we aren't in student mode
+            if (!hexInput.readOnly) {
+                hexInput.value = "";
+                hexInput.focus();
+            }
             
             checkAllConnected();
         });
@@ -536,7 +564,12 @@
                 workspace.innerHTML = "";
                 savedExplanation = "";
                 promptBtn.classList.add('hidden');
-                exportBtn.classList.add('hidden'); // Also hide export on clear
+                exportBtn.classList.add('hidden');
+                
+                // If they are a student, automatically respawn the board for them
+                if (hexInput.readOnly) {
+                    setTimeout(() => addBtn.click(), 100);
+                }
             }
         });
 
@@ -587,7 +620,6 @@
             savedTerms = promptTerm1.textContent + " & " + promptTerm2.textContent;
             promptModal.classList.add('hidden');
             
-            // Unlocks the Save Image button!
             exportBtn.classList.remove('hidden');
             
             saveModalBtn.textContent = "Saved!";
@@ -712,6 +744,36 @@
             link.download = `hexagonal-thinking-${Date.now()}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
+        });
+
+        // --- NEW: Check for URL parameters when the page loads ---
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const tParam = urlParams.get('t');
+            
+            if (tParam) {
+                try {
+                    // Decode the terms from the link
+                    const terms = decodeURIComponent(tParam).split('|');
+                    hexInput.value = terms.join('\n');
+                    
+                    // After a tiny delay to ensure the page is ready, auto-click the scatter button
+                    setTimeout(() => {
+                        addBtn.click();
+                        
+                        // Disable the inputs so the student can't mess with the teacher's list
+                        hexInput.readOnly = true;
+                        hexInput.classList.add('bg-gray-100', 'text-gray-500', 'cursor-not-allowed');
+                        addBtn.classList.add('hidden');
+                        linkBtn.classList.add('hidden');
+                        
+                        // Update the label
+                        termsLabel.textContent = "Teacher Assigned Terms";
+                    }, 100);
+                } catch(e) {
+                    console.error("Could not parse terms from URL");
+                }
+            }
         });
     </script>
 </body>
