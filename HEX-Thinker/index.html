@@ -152,7 +152,6 @@
             transition: opacity 0.2s;
         }
         
-        /* The class we toggle to hide/show elements */
         .hidden { display: none !important; }
     </style>
 </head>
@@ -193,11 +192,13 @@
 
     <div class="actions-panel">
         <button id="clear-btn" class="bg-white/80 backdrop-blur border border-gray-200 text-gray-600 px-5 py-3 rounded-xl hover:bg-white transition font-bold shadow-sm">Clear Board</button>
+        
         <button id="prompt-btn" class="hidden bg-indigo-100 text-indigo-700 border border-indigo-200 px-5 py-3 rounded-xl hover:bg-indigo-200 transition font-bold flex items-center gap-2 shadow-sm">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
             Generate Prompt
         </button>
-        <button id="export-btn" class="bg-gray-900 text-white px-5 py-3 rounded-xl hover:bg-black transition font-bold flex items-center gap-2 shadow-xl">
+        
+        <button id="export-btn" class="hidden bg-gray-900 text-white px-5 py-3 rounded-xl hover:bg-black transition font-bold flex items-center gap-2 shadow-xl">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Save as Image
         </button>
@@ -284,27 +285,25 @@
             workspace.classList.toggle('grid-hidden', !e.target.checked);
         });
 
-        // Network Check: Determines if all hexagons are connected into a single group
         function checkAllConnected() {
             const hexes = document.querySelectorAll('.hex-container');
             
-            // If less than minimum, hide button
             if (hexes.length < 6) {
                 promptBtn.classList.add('hidden');
+                // Hide export button too just in case they broke the connection
+                exportBtn.classList.add('hidden'); 
                 return;
             }
 
-            // Build a map of all occupied spots
             const occupied = new Set();
             let startNode = null;
             
             hexes.forEach(h => {
                 const pos = `${h.dataset.col},${h.dataset.row}`;
                 occupied.add(pos);
-                if (!startNode) startNode = pos; // Grab the first one to start the search
+                if (!startNode) startNode = pos;
             });
 
-            // Network search to count how many we can reach
             const visited = new Set();
             const queue = [startNode];
             visited.add(startNode);
@@ -316,7 +315,6 @@
 
                 neighbors.forEach(n => {
                     const nPos = `${n.c},${n.r}`;
-                    // If neighbor exists on board and hasn't been checked yet
                     if (occupied.has(nPos) && !visited.has(nPos)) {
                         visited.add(nPos);
                         queue.push(nPos);
@@ -324,11 +322,15 @@
                 });
             }
 
-            // If the number of connected hexes equals the total hexes, they are all touching!
             if (visited.size === occupied.size) {
-                promptBtn.classList.remove('hidden'); // Show button
+                promptBtn.classList.remove('hidden');
+                // If they already have an explanation saved, they can still save the image
+                if (savedExplanation) {
+                    exportBtn.classList.remove('hidden');
+                }
             } else {
-                promptBtn.classList.add('hidden'); // Hide button
+                promptBtn.classList.add('hidden');
+                exportBtn.classList.add('hidden');
             }
         }
 
@@ -443,7 +445,6 @@
                 document.onmouseup = null; document.onmousemove = null;
                 document.ontouchend = null; document.ontouchmove = null;
 
-                // Check connections after every single drop
                 checkAllConnected();
             }
         }
@@ -473,7 +474,6 @@
 
             const terms = rawText.split('\n').map(t => t.trim()).filter(t => t !== "");
             
-            // MIN / MAX VALIDATION
             if (terms.length < 6) {
                 alert("Please enter at least 6 terms (one per line).");
                 return;
@@ -528,7 +528,6 @@
             hexInput.value = "";
             hexInput.focus();
             
-            // Run check after spawning (hides button if they aren't connected yet)
             checkAllConnected();
         });
 
@@ -536,7 +535,8 @@
             if (confirm("Reset the thinking board?")) {
                 workspace.innerHTML = "";
                 savedExplanation = "";
-                checkAllConnected(); // Hide button on clear
+                promptBtn.classList.add('hidden');
+                exportBtn.classList.add('hidden'); // Also hide export on clear
             }
         });
 
@@ -586,6 +586,9 @@
             savedExplanation = promptTextarea.value.trim();
             savedTerms = promptTerm1.textContent + " & " + promptTerm2.textContent;
             promptModal.classList.add('hidden');
+            
+            // Unlocks the Save Image button!
+            exportBtn.classList.remove('hidden');
             
             saveModalBtn.textContent = "Saved!";
             setTimeout(() => { saveModalBtn.textContent = "Save Explanation"; }, 2000);
