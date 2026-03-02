@@ -1,360 +1,210 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hexagonal Thinking Workspace</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { background-color: #d8d2e1; overflow: hidden; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
-        #workspace { width: 100vw; height: 100vh; position: relative; cursor: grab; overflow: hidden; background-color: #d8d2e1; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='208' viewBox='0 0 180 208'%3E%3Cpath d='M30 0 L90 0 L120 52 L90 104 L30 104 L0 52 Z M120 104 L180 104 L210 156 L180 208 L120 208 L90 156 Z M30 104 L90 104 L120 156 L90 208 L30 208 L0 156 Z' fill='none' stroke='%23b4acc3' stroke-width='1' stroke-dasharray='4,4'/%3E%3C/svg%3E"); background-size: 180px 208px; }
-        #workspace.grid-hidden { background-image: none; }
-        #workspace:active { cursor: grabbing; }
-        .hex-container { position: absolute; width: 120px; height: 104px; cursor: move; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05)); transition: transform 0.1s ease-out, filter 0.2s, left 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); user-select: none; touch-action: none; z-index: 10; }
-        .hex-container.dragging { filter: drop-shadow(0 20px 30px rgba(0,0,0,0.15)); z-index: 1000; transition: none; }
-        .hex-shape-outer { fill: white; stroke-width: 5; stroke-linejoin: round; }
-        .hex-text { pointer-events: none; font-size: 13px; font-weight: 700; text-anchor: middle; dominant-baseline: middle; fill: #4a4a4a; }
-        .controls-panel { position: fixed; top: 20px; left: 20px; z-index: 100; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); padding: 24px; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); width: 340px; border: 1px solid rgba(255,255,255,0.3); }
-        .actions-panel { position: fixed; bottom: 24px; right: 24px; z-index: 100; display: flex; gap: 12px; }
-        .delete-zone { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); width: 260px; height: 80px; border: 3px dashed #f43f5e; border-radius: 20px; display: flex; align-items: center; justify-content: center; color: #f43f5e; background: rgba(255, 241, 242, 0.9); opacity: 0; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); pointer-events: none; z-index: 50; }
-        .delete-zone.visible { opacity: 1; }
-        .delete-zone.active { background: #ffe4e6; transform: translateX(-50%) scale(1.05); border-style: solid; }
-        #export-canvas { display: none; }
-        .color-dot { width: 28px; height: 28px; border-radius: 8px; cursor: pointer; border: 3px solid white; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .color-dot:hover { transform: translateY(-2px); }
-        .color-dot.active { border-color: #1f2937; transform: scale(1.1); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-        .btn-primary { background: #6366f1; color: white; padding: 10px 20px; border-radius: 10px; font-weight: 700; transition: all 0.2s; }
-        .btn-primary:hover { background: #4f46e5; transform: translateY(-1px); }
-        textarea { resize: none; scrollbar-width: thin; }
-        .hidden { display: none !important; }
-        .choice-btn { flex: 1; padding: 12px; border-radius: 12px; border: 2px solid #eef2ff; font-weight: bold; transition: all 0.2s; text-align: center; cursor: pointer; color: #6366f1; }
-        .choice-btn:hover { background-color: #f5f7ff; }
-        .choice-btn.active { background-color: #6366f1; border-color: #6366f1; color: white; }
-        #prompt-modal { background-color: rgba(0, 0, 0, 0.2); backdrop-filter: blur(2px); pointer-events: none; }
-        #modal-content { pointer-events: auto; cursor: move; }
-    </style>
-</head>
-<body>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
 
-    <div class="controls-panel">
-        <h1 class="text-2xl font-black mb-6 text-gray-800 flex items-center gap-2">
-            <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="3" fill="none" class="text-indigo-600"><path d="M12 2l9 4.9V17.1L12 22l-9-4.9V6.9L12 2z"/></svg>
-            Hex Designer
-        </h1>
-        <div class="mb-5">
-            <label id="terms-label" class="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Terms (Min: 6 | Max: 24)</label>
-            <div class="flex flex-col gap-2">
-                <textarea id="hex-input" placeholder="Enter terms here..." rows="5" class="w-full px-4 py-3 border-2 border-gray-100 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all"></textarea>
-                <button id="add-btn" class="btn-primary shadow-lg shadow-indigo-200 w-full">Scatter Hexagons</button>
-                <button id="link-btn" class="bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold py-2.5 rounded-xl w-full hover:bg-emerald-200 transition shadow-sm flex items-center justify-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-                    Copy Student Link
-                </button>
-            </div>
-        </div>
-        <div class="mb-6">
-            <label class="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Starting Color</label>
-            <div class="flex gap-2 flex-wrap" id="color-picker">
-                <div class="color-dot active" data-color="#EAB308" style="background-color: #EAB308;"></div>
-                <div class="color-dot" data-color="#10B981" style="background-color: #10B981;"></div>
-                <div class="color-dot" data-color="#F43F5E" style="background-color: #F43F5E;"></div>
-                <div class="color-dot" data-color="#0EA5E9" style="background-color: #0EA5E9;"></div>
-                <div class="color-dot" data-color="#F97316" style="background-color: #F97316;"></div>
-                <div class="color-dot" data-color="#8B5CF6" style="background-color: #8B5CF6;"></div>
-                <div class="color-dot" data-color="#EC4899" style="background-color: #EC4899;"></div>
-            </div>
-        </div>
-        <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
-            <input type="checkbox" id="toggle-grid" checked class="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500">
-            <label for="toggle-grid" class="text-sm font-semibold text-gray-600 cursor-pointer select-none">Show Layout Net</label>
-        </div>
-    </div>
+let hexes = [];
+let currentPairs = [];
+let currentNodeGroups = [];
+let mode = 'pair';
 
-    <div class="actions-panel">
-        <button id="clear-btn" class="bg-white/80 backdrop-blur border border-gray-200 text-gray-600 px-5 py-3 rounded-xl hover:bg-white transition font-bold shadow-sm">Clear Board</button>
-        <button id="prompt-btn" class="hidden bg-indigo-100 text-indigo-700 border border-indigo-200 px-5 py-3 rounded-xl hover:bg-indigo-200 transition font-bold flex items-center gap-2 shadow-sm">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-            Connection Challenge
-        </button>
-    </div>
+const hexInput = document.getElementById('hexInput');
+const board = document.getElementById('board');
+const generateBtn = document.getElementById('generateBtn');
+const clearBtn = document.getElementById('clearBtn');
+const challengeBtn = document.getElementById('challengeBtn');
+const promptBtn = document.getElementById('promptBtn');
+const deleteZone = document.getElementById('deleteZone');
 
-    <div id="delete-zone" class="delete-zone">
-        <span class="font-black text-sm uppercase tracking-tighter flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-            Release to Delete
-        </span>
-    </div>
+const HEX_WIDTH = 140;
+const HEX_HEIGHT = 120;
 
-    <div id="workspace"></div>
-    <canvas id="export-canvas"></canvas>
+function createHex(text, x, y) {
+  const hex = document.createElement('div');
+  hex.className = "hex absolute cursor-move select-none";
+  hex.style.width = HEX_WIDTH + "px";
+  hex.style.height = HEX_HEIGHT + "px";
+  hex.style.left = x + "px";
+  hex.style.top = y + "px";
+  hex.textContent = text;
 
-    <div id="prompt-modal" class="fixed inset-0 z-[2000] hidden flex items-center justify-center p-4">
-        <div id="modal-content" class="bg-white/95 backdrop-blur-md p-8 rounded-3xl shadow-2xl max-w-2xl w-full border border-white/50 relative shadow-indigo-500/20">
-            <h2 class="text-2xl font-black text-indigo-800 mb-4 text-center pointer-events-none">Connection Challenge!</h2>
-            <div class="flex gap-2 mb-6 p-1.5 bg-gray-100/80 rounded-2xl" id="mode-selector">
-                <div id="select-pair" class="choice-btn active">Pair Challenge</div>
-                <div id="select-node" class="choice-btn">Node Challenge</div>
-            </div>
-            <p id="challenge-desc" class="text-gray-500 mb-6 text-xs font-black uppercase tracking-[0.2em] text-center pointer-events-none">Explain the relationship between these terms:</p>
-            <div id="term-container" class="flex flex-wrap items-center justify-center gap-4 mb-8 p-6 bg-indigo-50/40 rounded-2xl border border-indigo-100/50 pointer-events-none"></div>
-            <textarea id="prompt-textarea" class="w-full h-44 p-5 border-2 border-indigo-50 rounded-2xl focus:border-indigo-400 focus:ring-8 focus:ring-indigo-100 outline-none transition-all mb-6 text-gray-700 bg-white/80" placeholder="Analyze the relationship here..."></textarea>
-            <div class="flex justify-end gap-3">
-                <button id="close-modal-btn" class="px-6 py-3 rounded-xl font-bold text-gray-400 hover:text-gray-600 transition-colors cursor-pointer">Cancel</button>
-                <button id="save-modal-btn" class="bg-indigo-600 text-white px-8 py-3 rounded-xl font-black hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-200 flex items-center gap-3 active:scale-95 cursor-pointer">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                    Save & Download
-                </button>
-            </div>
-        </div>
-    </div>
+  board.appendChild(hex);
+  makeDraggable(hex);
 
-    <script>
-        const workspace = document.getElementById('workspace');
-        const hexInput = document.getElementById('hex-input');
-        const addBtn = document.getElementById('add-btn');
-        const linkBtn = document.getElementById('link-btn');
-        const clearBtn = document.getElementById('clear-btn');
-        const promptBtn = document.getElementById('prompt-btn');
-        const deleteZone = document.getElementById('delete-zone');
-        const toggleGrid = document.getElementById('toggle-grid');
-        const colorDots = Array.from(document.querySelectorAll('.color-dot'));
-        const promptModal = document.getElementById('prompt-modal');
-        const modalContent = document.getElementById('modal-content');
-        const closeModalBtn = document.getElementById('close-modal-btn');
-        const saveModalBtn = document.getElementById('save-modal-btn');
-        const termContainer = document.getElementById('term-container');
-        const challengeDesc = document.getElementById('challenge-desc');
-        const promptTextarea = document.getElementById('prompt-textarea');
-        const btnPair = document.getElementById('select-pair');
-        const btnNode = document.getElementById('select-node');
-        
-        let selectedColor = colorDots[0].dataset.color, colorIndex = 0, savedExplanation = "", savedTermsHeader = "", currentPairs = [], currentNodeGroups = [];
-        const GRID_DX = 90, GRID_DY = 104;
+  hexes.push({ el: hex, text, x, y });
+}
 
-        let isModalDragging = false, modalOffsetX, modalOffsetY;
-        modalContent.addEventListener('mousedown', (e) => {
-            if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'BUTTON' || e.target.closest('#mode-selector')) return;
-            isModalDragging = true;
-            modalOffsetX = e.clientX - modalContent.offsetLeft;
-            modalOffsetY = e.clientY - modalContent.offsetTop;
-            modalContent.style.transition = 'none';
-        });
-        document.addEventListener('mousemove', (e) => {
-            if (!isModalDragging) return;
-            modalContent.style.position = 'absolute';
-            modalContent.style.left = (e.clientX - modalOffsetX) + 'px';
-            modalContent.style.top = (e.clientY - modalOffsetY) + 'px';
-            modalContent.style.transform = 'none';
-        });
-        document.addEventListener('mouseup', () => isModalDragging = false);
+function generateHexes() {
+  board.innerHTML = "";
+  hexes = [];
 
-        function getSnapPos(x, y) {
-            const col = Math.round(x / GRID_DX);
-            const yOffset = Math.abs(col % 2) === 1 ? 52 : 0;
-            const row = Math.round((y - yOffset) / GRID_DY);
-            return { x: col * GRID_DX, y: row * GRID_DY + yOffset, col, row };
-        }
+  const values = hexInput.value.split('\n').map(v => v.trim()).filter(Boolean);
+  values.forEach((val, i) => {
+    createHex(val, 50 + (i % 4) * 160, 50 + Math.floor(i / 4) * 140);
+  });
+}
 
-        function getNeighbors(col, row) {
-            col = parseInt(col); row = parseInt(row);
-            const neighbors = [ {c: col, r: row - 1}, {c: col, r: row + 1} ];
-            if (col % 2 === 0) { 
-                neighbors.push({c: col - 1, r: row - 1}, {c: col - 1, r: row}, {c: col + 1, r: row - 1}, {c: col + 1, r: row});
-            } else { 
-                neighbors.push({c: col - 1, r: row}, {c: col - 1, r: row + 1}, {c: col + 1, r: row}, {c: col + 1, r: row + 1});
-            }
-            return neighbors;
-        }
+function clearBoard() {
+  board.innerHTML = "";
+  hexes = [];
+}
 
-        function checkAllConnected() {
-            const hexes = document.querySelectorAll('.hex-container');
-            if (hexes.length < 6) { promptBtn.classList.add('hidden'); return; }
-            const occupied = new Set(); let startNode = null;
-            hexes.forEach(h => { const pos = `${h.dataset.col},${h.dataset.row}`; occupied.add(pos); if (!startNode) startNode = pos; });
-            const visited = new Set(), queue = [startNode]; visited.add(startNode);
-            while(queue.length > 0) {
-                const current = queue.shift(), [c, r] = current.split(',');
-                getNeighbors(c, r).forEach(n => {
-                    const nPos = `${n.c},${n.r}`;
-                    if (occupied.has(nPos) && !visited.has(nPos)) { visited.add(nPos); queue.push(nPos); }
-                });
-            }
-            visited.size === occupied.size ? promptBtn.classList.remove('hidden') : promptBtn.classList.add('hidden');
-        }
+generateBtn.onclick = generateHexes;
+clearBtn.onclick = clearBoard;
 
-        function makeDraggable(el) {
-            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0, originalLeft, originalTop;
-            el.onmousedown = el.ontouchstart = dragStart;
-            function dragStart(e) {
-                el.style.transition = 'none';
-                const cx = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
-                const cy = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
-                pos3 = cx; pos4 = cy; originalLeft = el.style.left; originalTop = el.style.top;
-                el.classList.add('dragging'); deleteZone.classList.add('visible');
-                document.onmouseup = document.ontouchend = dragEnd;
-                document.onmousemove = document.ontouchmove = dragMove;
-            }
-            function dragMove(e) {
-                const cx = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
-                const cy = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
-                pos1 = pos3 - cx; pos2 = pos4 - cy; pos3 = cx; pos4 = cy;
-                el.style.top = (el.offsetTop - pos2) + "px"; el.style.left = (el.offsetLeft - pos1) + "px";
-                const r = deleteZone.getBoundingClientRect();
-                (cx > r.left && cx < r.right && cy > r.top) ? deleteZone.classList.add('active') : deleteZone.classList.remove('active');
-            }
-            function dragEnd(e) {
-                el.style.transition = 'transform 0.1s ease-out, filter 0.2s, left 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-                const cx = e.type === 'touchend' ? e.changedTouches[0].clientX : e.clientX;
-                const cy = e.type === 'touchend' ? e.changedTouches[0].clientY : e.clientY;
-                const dr = deleteZone.getBoundingClientRect(), mp = document.querySelector('.controls-panel').getBoundingClientRect(), ap = document.querySelector('.actions-panel').getBoundingClientRect();
-                if (cx > dr.left && cx < dr.right && cy > dr.top) el.remove();
-                else if ((cx < mp.right + 30 && cy < mp.bottom + 30) || (cx > ap.left - 30 && cy > ap.top - 30)) { el.style.left = originalLeft; el.style.top = originalTop; }
-                else { const snapped = getSnapPos(parseFloat(el.style.left), parseFloat(el.style.top)); el.style.left = snapped.x + "px"; el.style.top = snapped.y + "px"; el.dataset.col = snapped.col; el.dataset.row = snapped.row; }
-                el.classList.remove('dragging'); deleteZone.classList.remove('visible'); deleteZone.classList.remove('active');
-                document.onmouseup = document.onmousemove = document.ontouchend = document.ontouchmove = null;
-                checkAllConnected();
-            }
-        }
+function makeDraggable(el) {
+  let offsetX, offsetY;
 
-        addBtn.addEventListener('click', () => {
-            const terms = hexInput.value.trim().split('\n').map(t => t.trim()).filter(t => t !== "");
-            if (terms.length < 6 || terms.length > 24) return alert("Enter 6-24 terms.");
-            const occupied = new Set();
-            document.querySelectorAll('.hex-container').forEach(h => occupied.add(`${h.dataset.col},${h.dataset.row}`));
-            const sw = Math.max(window.innerWidth - 540, 100), sh = Math.max(window.innerHeight - 240, 100);
-            terms.forEach(term => {
-                let found = false, attempts = 0, snapped;
-                while (!found && attempts < 100) {
-                    const rx = Math.random() * sw + 380, ry = Math.random() * sh + 40;
-                    snapped = getSnapPos(rx, ry);
-                    const neighbors = getNeighbors(snapped.col, snapped.row);
-                    const isTouching = neighbors.some(n => occupied.has(`${n.c},${n.r}`)) || occupied.has(`${snapped.col},${snapped.row}`);
-                    if (!isTouching) found = true;
-                    attempts++;
-                }
-                const hex = createHex(term, selectedColor, snapped.x, snapped.y);
-                workspace.appendChild(hex); occupied.add(`${snapped.col},${snapped.row}`);
-                selectColor(colorIndex + 1);
-            });
-            checkAllConnected();
-        });
+  function dragStart(e) {
+    e.preventDefault();
 
-        function createHex(text, color, x, y) {
-            const container = document.createElement('div');
-            container.className = 'hex-container';
-            container.style.left = `${x}px`; container.style.top = `${y}px`;
-            const snapped = getSnapPos(x, y);
-            container.dataset.col = snapped.col; container.dataset.row = snapped.row; 
-            container.dataset.fullText = text; container.dataset.borderColor = color;
-            const lines = text.split(' ').reduce((acc, word) => {
-                let last = acc[acc.length-1];
-                if (!last || (last + word).length > 10) acc.push(word + " ");
-                else acc[acc.length-1] += word + " ";
-                return acc;
-            }, []).slice(0, 4);
-            container.innerHTML = `<svg width="120" height="104"><path d="M 30 2 L 90 2 L 118 52 L 90 102 L 30 102 L 2 52 Z" class="hex-shape-outer" stroke="${color}"/><text x="60" y="${52 - (lines.length - 1) * 8}" class="hex-text">${lines.map((l, i) => `<tspan x="60" dy="${i === 0 ? 0 : 16}">${l.trim()}</tspan>`).join('')}</text></svg>`;
-            makeDraggable(container);
-            return container;
-        }
+    const rect = el.getBoundingClientRect();
+    const event = e.touches ? e.touches[0] : e;
+    offsetX = event.clientX - rect.left;
+    offsetY = event.clientY - rect.top;
 
-        function createMiniHex(data, isCenter = false) {
-            const lines = data.text.split(' ').reduce((acc, word) => {
-                let last = acc[acc.length-1];
-                if (!last || (last + word).length > 8) acc.push(word + " ");
-                else acc[acc.length-1] += word + " ";
-                return acc;
-            }, []).slice(0, 3);
-            return `<div class="flex flex-col items-center"><svg width="110" height="95" viewBox="0 0 120 104"><path d="M 30 2 L 90 2 L 118 52 L 90 102 L 30 102 L 2 52 Z" fill="white" stroke="${data.color}" stroke-width="${isCenter ? 12 : 5}" /><text x="60" y="${52 - (lines.length - 1) * 8}" class="hex-text" style="font-size: 11px">${lines.map((l, i) => `<tspan x="60" dy="${i === 0 ? 0 : 14}">${l.trim()}</tspan>`).join('')}</text></svg></div>`;
-        }
+    document.onmousemove = document.ontouchmove = dragMove;
+    document.onmouseup = document.ontouchend = dragEnd;
+  }
 
-        promptBtn.addEventListener('click', () => {
-            const hexes = document.querySelectorAll('.hex-container'), gridMap = {};
-            hexes.forEach(h => gridMap[`${h.dataset.col},${h.dataset.row}`] = { text: h.dataset.fullText, color: h.dataset.borderColor });
-            currentPairs = []; currentNodeGroups = [];
-            const seenPairs = new Set(), seenNodes = new Set();
-            for (const [pos, data] of Object.entries(gridMap)) {
-                const [c, r] = pos.split(',').map(Number), neighbors = getNeighbors(c, r);
-                const connectedNeighbors = neighbors.filter(n => gridMap[`${n.c},${n.r}`]);
-                if (connectedNeighbors.length >= 2) {
-                    const group = [data, ...connectedNeighbors.map(n => gridMap[`${n.c},${n.r}`])];
-                    const key = group.map(g => g.text).sort().join('|');
-                    if (!seenNodes.has(key)) { seenNodes.add(key); currentNodeGroups.push(group); }
-                }
-                connectedNeighbors.forEach(n => {
-                    const group = [data, gridMap[`${n.c},${n.r}`]];
-                    const key = group.map(g => g.text).sort().join('|');
-                    if (!seenPairs.has(key)) { seenPairs.add(key); currentPairs.push(group); }
-                });
-            }
-            if (currentNodeGroups.length === 0) { btnNode.classList.add('hidden'); setChallengeMode('pair'); } 
-            else { btnNode.classList.remove('hidden'); setChallengeMode('pair'); }
-            modalContent.style.left = '50%'; modalContent.style.top = '50%'; modalContent.style.transform = 'translate(-50%, -50%)';
-            promptModal.classList.remove('hidden');
-        });
+  function dragMove(e) {
+    const event = e.touches ? e.touches[0] : e;
+    const boardRect = board.getBoundingClientRect();
 
-        function setChallengeMode(mode) {
-            btnPair.classList.toggle('active', mode === 'pair');
-            btnNode.classList.toggle('active', mode === 'node');
-            const group = mode === 'pair' ? currentPairs[Math.floor(Math.random() * currentPairs.length)] : currentNodeGroups[Math.floor(Math.random() * currentNodeGroups.length)];
-            
-            challengeDesc.textContent = mode === 'pair' ? "Explain the relationship between these two:" : "Explain how the center term relates to its neighbors:";
+    let x = event.clientX - boardRect.left - offsetX;
+    let y = event.clientY - boardRect.top - offsetY;
 
-            // --- REORDER LOGIC: Put center hub in middle for Node Challenge ---
-            let displayGroup = [...group];
-            if (mode === 'node') {
-                const hub = displayGroup.shift();
-                const mid = Math.floor(displayGroup.length / 2);
-                displayGroup.splice(mid, 0, hub);
-            }
+    el.style.left = x + "px";
+    el.style.top = y + "px";
 
-            termContainer.innerHTML = displayGroup.map((item, idx) => {
-                const isCenter = mode === 'node' ? (idx === Math.floor(displayGroup.length / 2)) : false;
-                return createMiniHex(item, isCenter);
-            }).join('');
-            
-            savedTermsHeader = group.map(g => g.text).join(mode === 'pair' ? ' + ' : ' • ');
-            promptTextarea.value = "";
-        }
+    const r = deleteZone.getBoundingClientRect();
+    const cx = event.clientX;
+    const cy = event.clientY;
 
-        btnPair.onclick = () => setChallengeMode('pair');
-        btnNode.onclick = () => setChallengeMode('node');
-        closeModalBtn.onclick = () => promptModal.classList.add('hidden');
-        saveModalBtn.onclick = () => { if (!promptTextarea.value.trim()) return alert("Write your explanation!"); savedExplanation = promptTextarea.value.trim(); promptModal.classList.add('hidden'); generateAndDownloadImage(); };
+    if (cx > r.left && cx < r.right && cy > r.top && cy < r.bottom) {
+      deleteZone.classList.add('bg-red-700');
+    } else {
+      deleteZone.classList.remove('bg-red-700');
+    }
+  }
 
-        function generateAndDownloadImage() {
-            const hexes = document.querySelectorAll('.hex-container');
-            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-            hexes.forEach(h => { const x = parseFloat(h.style.left), y = parseFloat(h.style.top); minX = Math.min(minX, x); minY = Math.min(minY, y); maxX = Math.max(maxX, x + 120); maxY = Math.max(maxY, y + 104); });
-            const canvas = document.getElementById('export-canvas'), ctx = canvas.getContext('2d'), baseWidth = (maxX - minX) + 160, baseHeight = (maxY - minY) + 160;
-            ctx.font = "16px sans-serif";
-            const words = savedExplanation.split(' '), lines = [""];
-            words.forEach(w => { if (ctx.measureText(lines[lines.length-1] + " " + w).width < Math.max(baseWidth, 500) - 80) lines[lines.length-1] += w + " "; else lines.push(w + " "); });
-            const extraHeight = 120 + (lines.length * 24);
-            canvas.width = Math.max(baseWidth, 500); canvas.height = baseHeight + extraHeight;
-            ctx.fillStyle = "#d8d2e1"; ctx.fillRect(0,0,canvas.width, canvas.height);
-            hexes.forEach(h => {
-                const x = parseFloat(h.style.left)-minX+80, y = parseFloat(h.style.top)-minY+80, color = h.querySelector('.hex-shape-outer').getAttribute('stroke'), textLines = h.querySelectorAll('tspan');
-                ctx.save(); ctx.translate(x, y); ctx.beginPath(); [[30,2],[90,2],[118,52],[90,102],[30,102],[2,52]].forEach((p, i) => i === 0 ? ctx.moveTo(p[0],p[1]) : ctx.lineTo(p[0],p[1]));
-                ctx.closePath(); ctx.fillStyle = "white"; ctx.fill(); ctx.strokeStyle = color; ctx.lineWidth = 5; ctx.stroke();
-                ctx.fillStyle = "#4a4a4a"; ctx.font = "bold 13px sans-serif"; ctx.textAlign = "center";
-                textLines.forEach((tl, i) => ctx.fillText(tl.textContent, 60, (52-(textLines.length-1)*8) + (i*16))); ctx.restore();
-            });
-            const py = baseHeight - 20;
-            ctx.fillStyle = "white"; ctx.fillRect(20, py, canvas.width-40, extraHeight-40); ctx.strokeStyle = "#6366f1"; ctx.lineWidth = 3; ctx.strokeRect(20, py, canvas.width-40, extraHeight-40);
-            ctx.fillStyle = "#6366f1"; ctx.font = "bold 18px sans-serif"; ctx.fillText(savedTermsHeader, 40, py + 35); ctx.fillStyle = "#4a4a4a"; ctx.font = "16px sans-serif";
-            lines.forEach((l, i) => ctx.fillText(l.trim(), 40, py + 70 + (i*24)));
-            const a = document.createElement('a'); a.download = `hex-thinking-${Date.now()}.png`; a.href = canvas.toDataURL(); a.click();
-        }
+  function dragEnd(e) {
+    const event = e.changedTouches ? e.changedTouches[0] : e;
+    const r = deleteZone.getBoundingClientRect();
+    const cx = event.clientX;
+    const cy = event.clientY;
 
-        window.addEventListener('DOMContentLoaded', () => {
-            const t = new URLSearchParams(window.location.search).get('t');
-            if (t) {
-                hexInput.value = decodeURIComponent(t).split('|').join('\n');
-                setTimeout(() => { addBtn.click(); hexInput.readOnly = true; hexInput.classList.add('bg-gray-100','text-gray-500'); addBtn.classList.add('hidden'); linkBtn.classList.add('hidden'); document.getElementById('terms-label').textContent = "Assigned Terms"; }, 100);
-            }
-        });
-        clearBtn.onclick = () => { if(confirm("Reset board?")) { workspace.innerHTML = ""; savedExplanation = ""; promptBtn.classList.add('hidden'); if(hexInput.readOnly) setTimeout(()=>addBtn.click(), 100); } };
-        linkBtn.onclick = () => { const t = hexInput.value.trim().split('\n').filter(x=>x).join('|'); if(!t) return; const u = new URL(window.location.href); u.searchParams.set('t', encodeURIComponent(t)); navigator.clipboard.writeText(u.toString()).then(()=>alert("Link Copied!")); };
-    </script>
-</body>
-</html>
+    if (cx > r.left && cx < r.right && cy > r.top && cy < r.bottom) {
+      el.remove();
+      hexes = hexes.filter(h => h.el !== el);
+    }
+
+    deleteZone.classList.remove('bg-red-700');
+    document.onmousemove = document.ontouchmove = null;
+    document.onmouseup = document.ontouchend = null;
+  }
+
+  el.onmousedown = el.ontouchstart = dragStart;
+}
+
+challengeBtn.onclick = () => {
+  mode = mode === 'pair' ? 'node' : 'pair';
+  alert("Mode switched to: " + mode);
+};
+
+promptBtn.onclick = () => {
+  currentPairs = [];
+  currentNodeGroups = [];
+
+  if (hexes.length < 2) return;
+
+  const texts = hexes.map(h => h.text);
+
+  for (let i = 0; i < texts.length - 1; i++) {
+    currentPairs.push([texts[i], texts[i + 1]]);
+  }
+
+  currentNodeGroups = [texts.slice(0, 3)];
+
+  const group = mode === 'pair'
+    ? currentPairs[Math.floor(Math.random() * currentPairs.length)]
+    : currentNodeGroups[Math.floor(Math.random() * currentNodeGroups.length)];
+
+  if (!group) return;
+
+  alert("Discuss connection between:\n\n" + group.join(" & "));
+};
+
+function generateAndDownloadImage() {
+
+  if (hexes.length === 0) {
+    alert("No hexes to export.");
+    return;
+  }
+
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+
+  hexes.forEach(h => {
+    const x = parseInt(h.el.style.left);
+    const y = parseInt(h.el.style.top);
+    minX = Math.min(minX, x);
+    minY = Math.min(minY, y);
+    maxX = Math.max(maxX, x + HEX_WIDTH);
+    maxY = Math.max(maxY, y + HEX_HEIGHT);
+  });
+
+  const canvas = document.createElement('canvas');
+  canvas.width = maxX - minX + 20;
+  canvas.height = maxY - minY + 20;
+
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = "white";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "black";
+  ctx.font = "14px Arial";
+
+  hexes.forEach(h => {
+    const x = parseInt(h.el.style.left) - minX + 10;
+    const y = parseInt(h.el.style.top) - minY + 10;
+
+    ctx.strokeRect(x, y, HEX_WIDTH, HEX_HEIGHT);
+    ctx.fillText(h.text, x + 10, y + 60);
+  });
+
+  const link = document.createElement('a');
+  link.download = "hex-board.png";
+  link.href = canvas.toDataURL();
+  link.click();
+}
+
+document.getElementById('saveBtn').onclick = generateAndDownloadImage;
+
+function generateStudentLink() {
+  const hexValues = hexes.map(h => h.text.trim()).filter(Boolean);
+  if (hexValues.length === 0) {
+    alert("Please create at least one hex.");
+    return;
+  }
+
+  const t = hexValues.join('|');
+  const u = new URL(window.location.href);
+  u.searchParams.set('t', t);
+
+  const link = u.toString();
+  navigator.clipboard.writeText(link).then(() => {
+    alert("Student link copied to clipboard!");
+  }).catch(() => {
+    prompt("Copy this link:", link);
+  });
+}
+
+document.getElementById('linkBtn').onclick = generateStudentLink;
+
+const params = new URLSearchParams(window.location.search);
+const t = params.get('t');
+
+if (t) {
+  hexInput.value = t.split('|').join('\n');
+}
+
+});
+</script>
