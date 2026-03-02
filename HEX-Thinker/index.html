@@ -30,12 +30,9 @@
         .choice-btn { flex: 1; padding: 12px; border-radius: 12px; border: 2px solid #eef2ff; font-weight: bold; transition: all 0.2s; text-align: center; cursor: pointer; color: #6366f1; }
         .choice-btn:hover { background-color: #f5f7ff; }
         .choice-btn.active { background-color: #6366f1; border-color: #6366f1; color: white; }
-        
-        /* Transparent Modal Container */
-        #prompt-modal {
-            background-color: rgba(17, 24, 39, 0.4); /* Darker but very thin transparency */
-            backdrop-filter: blur(2px);
-        }
+        #prompt-modal { background-color: rgba(0, 0, 0, 0.2); backdrop-filter: blur(2px); pointer-events: none; }
+        #modal-content { pointer-events: auto; cursor: move; }
+        #prompt-textarea, #save-modal-btn, #close-modal-btn, #mode-selector { cursor: auto; }
     </style>
 </head>
 <body>
@@ -93,22 +90,15 @@
     <canvas id="export-canvas"></canvas>
 
     <div id="prompt-modal" class="fixed inset-0 z-[2000] hidden flex items-center justify-center p-4">
-        <div class="bg-white/95 backdrop-blur-md p-8 rounded-3xl shadow-2xl max-w-2xl w-full border border-white/50 relative overflow-hidden">
-            <div class="absolute -top-24 -right-24 w-48 h-48 bg-indigo-50 rounded-full blur-3xl opacity-50"></div>
-            
-            <h2 class="text-2xl font-black text-indigo-800 mb-4 text-center">Connection Challenge!</h2>
-            
+        <div id="modal-content" class="bg-white/95 backdrop-blur-md p-8 rounded-3xl shadow-2xl max-w-2xl w-full border border-white/50 relative shadow-indigo-500/20">
+            <h2 class="text-2xl font-black text-indigo-800 mb-4 text-center pointer-events-none text-shadow-sm">Connection Challenge!</h2>
             <div class="flex gap-2 mb-6 p-1.5 bg-gray-100/80 rounded-2xl" id="mode-selector">
                 <div id="select-pair" class="choice-btn active">Pair Challenge</div>
                 <div id="select-node" class="choice-btn">Node Challenge</div>
             </div>
-
-            <p id="challenge-desc" class="text-gray-500 mb-6 text-xs font-black uppercase tracking-[0.2em] text-center">Explain the link between these terms:</p>
-            
-            <div id="term-container" class="flex flex-wrap items-center justify-center gap-4 mb-8 p-6 bg-indigo-50/40 rounded-2xl border border-indigo-100/50"></div>
-            
+            <p id="challenge-desc" class="text-gray-500 mb-6 text-xs font-black uppercase tracking-[0.2em] text-center pointer-events-none">Explain the relationship between these terms:</p>
+            <div id="term-container" class="flex flex-wrap items-center justify-center gap-4 mb-8 p-6 bg-indigo-50/40 rounded-2xl border border-indigo-100/50 pointer-events-none"></div>
             <textarea id="prompt-textarea" class="w-full h-44 p-5 border-2 border-indigo-50 rounded-2xl focus:border-indigo-400 focus:ring-8 focus:ring-indigo-100 outline-none transition-all mb-6 text-gray-700 bg-white/80" placeholder="Analyze the relationship here..."></textarea>
-            
             <div class="flex justify-end gap-3">
                 <button id="close-modal-btn" class="px-6 py-3 rounded-xl font-bold text-gray-400 hover:text-gray-600 transition-colors">Cancel</button>
                 <button id="save-modal-btn" class="bg-indigo-600 text-white px-8 py-3 rounded-xl font-black hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-200 flex items-center gap-3 active:scale-95">
@@ -129,8 +119,8 @@
         const deleteZone = document.getElementById('delete-zone');
         const toggleGrid = document.getElementById('toggle-grid');
         const colorDots = Array.from(document.querySelectorAll('.color-dot'));
-        
         const promptModal = document.getElementById('prompt-modal');
+        const modalContent = document.getElementById('modal-content');
         const closeModalBtn = document.getElementById('close-modal-btn');
         const saveModalBtn = document.getElementById('save-modal-btn');
         const termContainer = document.getElementById('term-container');
@@ -139,13 +129,26 @@
         const btnPair = document.getElementById('select-pair');
         const btnNode = document.getElementById('select-node');
         
-        let selectedColor = colorDots[0].dataset.color;
-        let colorIndex = 0;
-        let savedExplanation = "";
-        let savedTermsHeader = "";
-        let currentPairs = [], currentNodeGroups = [];
-
+        let selectedColor = colorDots[0].dataset.color, colorIndex = 0, savedExplanation = "", savedTermsHeader = "", currentPairs = [], currentNodeGroups = [];
         const GRID_DX = 90, GRID_DY = 104;
+
+        // Draggable Modal logic
+        let isModalDragging = false, modalOffsetX, modalOffsetY;
+        modalContent.addEventListener('mousedown', (e) => {
+            if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'BUTTON' || e.target.closest('#mode-selector')) return;
+            isModalDragging = true;
+            modalOffsetX = e.clientX - modalContent.offsetLeft;
+            modalOffsetY = e.clientY - modalContent.offsetTop;
+            modalContent.style.transition = 'none';
+        });
+        document.addEventListener('mousemove', (e) => {
+            if (!isModalDragging) return;
+            modalContent.style.position = 'absolute';
+            modalContent.style.left = (e.clientX - modalOffsetX) + 'px';
+            modalContent.style.top = (e.clientY - modalOffsetY) + 'px';
+            modalContent.style.transform = 'none';
+        });
+        document.addEventListener('mouseup', () => isModalDragging = false);
 
         function getSnapPos(x, y) {
             const col = Math.round(x / GRID_DX);
@@ -153,16 +156,6 @@
             const row = Math.round((y - yOffset) / GRID_DY);
             return { x: col * GRID_DX, y: row * GRID_DY + yOffset, col, row };
         }
-
-        function selectColor(index) {
-            colorDots.forEach(d => d.classList.remove('active'));
-            colorIndex = index % colorDots.length;
-            colorDots[colorIndex].classList.add('active');
-            selectedColor = colorDots[colorIndex].dataset.color;
-        }
-
-        colorDots.forEach((dot, idx) => dot.addEventListener('click', () => selectColor(idx)));
-        toggleGrid.addEventListener('change', (e) => workspace.classList.toggle('grid-hidden', !e.target.checked));
 
         function getNeighbors(col, row) {
             col = parseInt(col); row = parseInt(row);
@@ -225,13 +218,29 @@
             }
         }
 
+        // --- ENHANCED SPAWN LOGIC: Ensures No Touching On Spawn ---
         addBtn.addEventListener('click', () => {
             const terms = hexInput.value.trim().split('\n').map(t => t.trim()).filter(t => t !== "");
             if (terms.length < 6 || terms.length > 24) return alert("Enter 6-24 terms.");
+            
+            const occupied = new Set();
+            document.querySelectorAll('.hex-container').forEach(h => occupied.add(`${h.dataset.col},${h.dataset.row}`));
+
             const sw = Math.max(window.innerWidth - 540, 100), sh = Math.max(window.innerHeight - 240, 100);
+            
             terms.forEach(term => {
-                const hex = createHex(term, selectedColor, Math.random() * sw + 380, Math.random() * sh + 40);
-                workspace.appendChild(hex); selectColor(colorIndex + 1);
+                let found = false, attempts = 0, snapped;
+                while (!found && attempts < 100) {
+                    const rx = Math.random() * sw + 380, ry = Math.random() * sh + 40;
+                    snapped = getSnapPos(rx, ry);
+                    const neighbors = getNeighbors(snapped.col, snapped.row);
+                    const isTouching = neighbors.some(n => occupied.has(`${n.c},${n.r}`)) || occupied.has(`${snapped.col},${snapped.row}`);
+                    if (!isTouching) found = true;
+                    attempts++;
+                }
+                const hex = createHex(term, selectedColor, snapped.x, snapped.y);
+                workspace.appendChild(hex); occupied.add(`${snapped.col},${snapped.row}`);
+                selectColor(colorIndex + 1);
             });
             checkAllConnected();
         });
@@ -239,12 +248,10 @@
         function createHex(text, color, x, y) {
             const container = document.createElement('div');
             container.className = 'hex-container';
+            container.style.left = `${x}px`; container.style.top = `${y}px`;
             const snapped = getSnapPos(x, y);
-            container.style.left = `${snapped.x}px`; container.style.top = `${snapped.y}px`;
             container.dataset.col = snapped.col; container.dataset.row = snapped.row; 
-            container.dataset.fullText = text;
-            container.dataset.borderColor = color;
-
+            container.dataset.fullText = text; container.dataset.borderColor = color;
             const lines = text.split(' ').reduce((acc, word) => {
                 let last = acc[acc.length-1];
                 if (!last || (last + word).length > 10) acc.push(word + " ");
@@ -263,20 +270,7 @@
                 else acc[acc.length-1] += word + " ";
                 return acc;
             }, []).slice(0, 3);
-            
-            return `
-                <div class="flex flex-col items-center">
-                    <svg width="110" height="95" viewBox="0 0 120 104">
-                        <path d="M 30 2 L 90 2 L 118 52 L 90 102 L 30 102 L 2 52 Z" 
-                              fill="white" 
-                              stroke="${data.color}" 
-                              stroke-width="${isCenter ? 10 : 5}" />
-                        <text x="60" y="${52 - (lines.length - 1) * 8}" class="hex-text" style="font-size: 11px">
-                            ${lines.map((l, i) => `<tspan x="60" dy="${i === 0 ? 0 : 14}">${l.trim()}</tspan>`).join('')}
-                        </text>
-                    </svg>
-                </div>
-            `;
+            return `<div class="flex flex-col items-center"><svg width="110" height="95" viewBox="0 0 120 104"><path d="M 30 2 L 90 2 L 118 52 L 90 102 L 30 102 L 2 52 Z" fill="white" stroke="${data.color}" stroke-width="${isCenter ? 10 : 5}" /><text x="60" y="${52 - (lines.length - 1) * 8}" class="hex-text" style="font-size: 11px">${lines.map((l, i) => `<tspan x="60" dy="${i === 0 ? 0 : 14}">${l.trim()}</tspan>`).join('')}</text></svg></div>`;
         }
 
         promptBtn.addEventListener('click', () => {
@@ -284,42 +278,31 @@
             hexes.forEach(h => gridMap[`${h.dataset.col},${h.dataset.row}`] = { text: h.dataset.fullText, color: h.dataset.borderColor });
             currentPairs = []; currentNodeGroups = [];
             const seenPairs = new Set(), seenNodes = new Set();
-
             for (const [pos, data] of Object.entries(gridMap)) {
-                const [c, r] = pos.split(',').map(Number);
-                const neighbors = getNeighbors(c, r);
+                const [c, r] = pos.split(',').map(Number), neighbors = getNeighbors(c, r);
                 const connectedNeighbors = neighbors.filter(n => gridMap[`${n.c},${n.r}`]);
-
                 if (connectedNeighbors.length >= 2) {
                     const group = [data, ...connectedNeighbors.map(n => gridMap[`${n.c},${n.r}`])];
                     const key = group.map(g => g.text).sort().join('|');
                     if (!seenNodes.has(key)) { seenNodes.add(key); currentNodeGroups.push(group); }
                 }
-
                 connectedNeighbors.forEach(n => {
                     const group = [data, gridMap[`${n.c},${n.r}`]];
                     const key = group.map(g => g.text).sort().join('|');
                     if (!seenPairs.has(key)) { seenPairs.add(key); currentPairs.push(group); }
                 });
             }
-
             if (currentNodeGroups.length === 0) { btnNode.classList.add('hidden'); setChallengeMode('pair'); } 
             else { btnNode.classList.remove('hidden'); setChallengeMode('pair'); }
+            modalContent.style.left = '50%'; modalContent.style.top = '50%'; modalContent.style.transform = 'translate(-50%, -50%)';
             promptModal.classList.remove('hidden');
         });
 
         function setChallengeMode(mode) {
             btnPair.classList.toggle('active', mode === 'pair');
             btnNode.classList.toggle('active', mode === 'node');
-            
-            const group = mode === 'pair' 
-                ? currentPairs[Math.floor(Math.random() * currentPairs.length)] 
-                : currentNodeGroups[Math.floor(Math.random() * currentNodeGroups.length)];
-            
-            challengeDesc.textContent = mode === 'pair' 
-                ? "Explain the relationship between these two:" 
-                : "Explain how the center term relates to its neighbors:";
-
+            const group = mode === 'pair' ? currentPairs[Math.floor(Math.random() * currentPairs.length)] : currentNodeGroups[Math.floor(Math.random() * currentNodeGroups.length)];
+            challengeDesc.textContent = mode === 'pair' ? "Explain the relationship between these two:" : "Explain how the center term relates to its neighbors:";
             termContainer.innerHTML = group.map((item, idx) => createMiniHex(item, mode === 'node' && idx === 0)).join('');
             savedTermsHeader = group.map(g => g.text).join(mode === 'pair' ? ' + ' : ' • ');
             promptTextarea.value = "";
