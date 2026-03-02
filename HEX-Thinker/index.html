@@ -326,6 +326,8 @@
 
         function makeDraggable(el) {
             let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            let originalLeft = 0, originalTop = 0; // Added memory for bounce-back
+
             el.onmousedown = dragStart;
             el.ontouchstart = dragStart;
 
@@ -334,6 +336,11 @@
                 const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
                 const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
                 pos3 = clientX; pos4 = clientY;
+                
+                // Record the safe starting position before moving
+                originalLeft = el.style.left;
+                originalTop = el.style.top;
+                
                 el.classList.add('dragging');
                 deleteZone.classList.add('visible');
                 document.onmouseup = dragEnd;
@@ -361,17 +368,34 @@
                 el.style.transition = 'transform 0.1s ease-out, filter 0.2s, left 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
                 const clientX = e.type === 'touchend' ? e.changedTouches[0].clientX : e.clientX;
                 const clientY = e.type === 'touchend' ? e.changedTouches[0].clientY : e.clientY;
-                const rect = deleteZone.getBoundingClientRect();
                 
-                if (clientX > rect.left && clientX < rect.right && clientY > rect.top) {
+                // Get boundaries for the delete zone, top menu, and bottom buttons
+                const deleteRect = deleteZone.getBoundingClientRect();
+                const menuPanel = document.querySelector('.controls-panel').getBoundingClientRect();
+                const actionPanel = document.querySelector('.actions-panel').getBoundingClientRect();
+                
+                // 1. Did they drop it in the trash?
+                if (clientX > deleteRect.left && clientX < deleteRect.right && clientY > deleteRect.top) {
                     el.remove();
-                } else {
+                } 
+                // 2. Did they drop it over the Top-Left Menu OR Bottom-Right Buttons?
+                else if (
+                    (clientX < menuPanel.right + 30 && clientY < menuPanel.bottom + 30) || 
+                    (clientX > actionPanel.left - 30 && clientY > actionPanel.top - 30)
+                ) {
+                    // BOUNCE BACK: Reject the drop and snap back to original safe spot
+                    el.style.left = originalLeft;
+                    el.style.top = originalTop;
+                } 
+                // 3. Normal drop on the grid
+                else {
                     const snapped = getSnapPos(parseFloat(el.style.left), parseFloat(el.style.top));
                     el.style.left = snapped.x + "px";
                     el.style.top = snapped.y + "px";
                     el.dataset.col = snapped.col;
                     el.dataset.row = snapped.row;
                 }
+                
                 el.classList.remove('dragging');
                 deleteZone.classList.remove('visible');
                 deleteZone.classList.remove('active');
@@ -409,11 +433,10 @@
                 occupiedCells.add(`${h.dataset.col},${h.dataset.row}`);
             });
 
-            // NEW: Safe spawn boundaries so they don't hide under the UI panels
-            const safeLeft = 380; // Past the left menu
-            const safeTop = 40;   // Padding from top
-            const safeRight = 160; // Padding from right edge
-            const safeBottom = 200; // Padding from bottom buttons
+            const safeLeft = 380; 
+            const safeTop = 40;   
+            const safeRight = 160; 
+            const safeBottom = 200; 
 
             const spawnWidth = Math.max(window.innerWidth - safeLeft - safeRight, 100);
             const spawnHeight = Math.max(window.innerHeight - safeTop - safeBottom, 100);
