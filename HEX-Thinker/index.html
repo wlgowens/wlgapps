@@ -148,7 +148,6 @@
             scrollbar-width: thin;
         }
 
-        /* Modal Styles */
         #prompt-modal {
             transition: opacity 0.2s;
         }
@@ -227,7 +226,8 @@
             <textarea id="prompt-textarea" class="w-full h-40 p-4 border-2 border-gray-200 rounded-xl focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 outline-none transition-all mb-4 text-gray-700" placeholder="Type your explanation here..."></textarea>
             
             <div class="flex justify-end gap-3">
-                <button id="close-modal-btn" class="px-6 py-2.5 rounded-xl font-bold text-gray-500 hover:bg-gray-100 transition-colors">Close</button>
+                <button id="close-modal-btn" class="px-6 py-2.5 rounded-xl font-bold text-gray-500 hover:bg-gray-100 transition-colors">Cancel</button>
+                <button id="save-modal-btn" class="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200">Save Explanation</button>
             </div>
         </div>
     </div>
@@ -243,15 +243,19 @@
         const toggleGrid = document.getElementById('toggle-grid');
         const colorDots = Array.from(document.querySelectorAll('.color-dot'));
         
-        // Modal Elements
         const promptModal = document.getElementById('prompt-modal');
         const closeModalBtn = document.getElementById('close-modal-btn');
+        const saveModalBtn = document.getElementById('save-modal-btn');
         const promptTerm1 = document.getElementById('prompt-term-1');
         const promptTerm2 = document.getElementById('prompt-term-2');
         const promptTextarea = document.getElementById('prompt-textarea');
         
         let selectedColor = colorDots[0].dataset.color;
         let colorIndex = 0;
+        
+        // Variables to hold the student's text for the image export
+        let savedExplanation = "";
+        let savedTerms = "";
         
         const GRID_DX = 90;
         const GRID_DY = 104;
@@ -289,7 +293,6 @@
             container.style.top = `${snapped.y}px`;
             container.dataset.col = snapped.col;
             container.dataset.row = snapped.row;
-            // Store the full text safely as a data attribute for easier retrieval
             container.dataset.fullText = text;
 
             const words = text.split(' ');
@@ -378,12 +381,9 @@
             }
         }
 
-        // Helper to get neighbors based on staggered grid
         function getNeighbors(col, row) {
             col = parseInt(col); row = parseInt(row);
-            const neighbors = [
-                {c: col, r: row - 1}, {c: col, r: row + 1}
-            ];
+            const neighbors = [ {c: col, r: row - 1}, {c: col, r: row + 1} ];
             if (col % 2 === 0) { 
                 neighbors.push({c: col - 1, r: row - 1}, {c: col - 1, r: row});
                 neighbors.push({c: col + 1, r: row - 1}, {c: col + 1, r: row});
@@ -396,7 +396,7 @@
 
         function isSafe(col, row, occupiedCells) {
             const neighbors = getNeighbors(col, row);
-            neighbors.push({c: col, r: row}); // add self
+            neighbors.push({c: col, r: row});
             return !neighbors.some(n => occupiedCells.has(`${n.c},${n.r}`));
         }
 
@@ -423,9 +423,7 @@
                     randX = Math.random() * spawnWidth + margin;
                     randY = Math.random() * spawnHeight + margin;
                     snapped = getSnapPos(randX, randY);
-                    if (isSafe(snapped.col, snapped.row, occupiedCells)) {
-                        found = true;
-                    }
+                    if (isSafe(snapped.col, snapped.row, occupiedCells)) { found = true; }
                     attempts++;
                 }
 
@@ -435,9 +433,7 @@
                         randX = Math.random() * spawnWidth + margin;
                         randY = Math.random() * spawnHeight + margin;
                         snapped = getSnapPos(randX, randY);
-                        if (!occupiedCells.has(`${snapped.col},${snapped.row}`)) {
-                            found = true;
-                        }
+                        if (!occupiedCells.has(`${snapped.col},${snapped.row}`)) { found = true; }
                         attempts++;
                     }
                 }
@@ -452,10 +448,12 @@
         });
 
         clearBtn.addEventListener('click', () => {
-            if (confirm("Reset the thinking board?")) workspace.innerHTML = "";
+            if (confirm("Reset the thinking board?")) {
+                workspace.innerHTML = "";
+                savedExplanation = ""; // Clear text too
+            }
         });
 
-        // --- NEW FEATURE: Connection Prompt ---
         promptBtn.addEventListener('click', () => {
             const hexes = document.querySelectorAll('.hex-container');
             if (hexes.length < 2) {
@@ -463,13 +461,9 @@
                 return;
             }
 
-            // Map all hexes by their grid position
             const gridMap = {};
-            hexes.forEach(h => {
-                gridMap[`${h.dataset.col},${h.dataset.row}`] = h.dataset.fullText;
-            });
+            hexes.forEach(h => { gridMap[`${h.dataset.col},${h.dataset.row}`] = h.dataset.fullText; });
 
-            // Find all connected pairs
             const connections = [];
             const seenPairs = new Set();
 
@@ -481,7 +475,6 @@
                     const neighborPos = `${n.c},${n.r}`;
                     if (gridMap[neighborPos]) {
                         const text2 = gridMap[neighborPos];
-                        // Create a unique key so A-B is the same as B-A
                         const pairKey = [text1, text2].sort().join('|');
                         if (!seenPairs.has(pairKey)) {
                             seenPairs.add(pairKey);
@@ -496,20 +489,32 @@
                 return;
             }
 
-            // Pick a random connection
             const randomPair = connections[Math.floor(Math.random() * connections.length)];
             
-            // Populate and show the modal
             promptTerm1.textContent = randomPair[0];
             promptTerm2.textContent = randomPair[1];
-            promptTextarea.value = ""; // Clear old text
+            promptTextarea.value = savedExplanation; // Load previously saved text if they open it again
             promptModal.classList.remove('hidden');
         });
 
         closeModalBtn.addEventListener('click', () => {
             promptModal.classList.add('hidden');
         });
-        // ----------------------------------------
+
+        // The new SAVE button logic
+        saveModalBtn.addEventListener('click', () => {
+            if (promptTextarea.value.trim() === "") {
+                alert("Please type your explanation before saving!");
+                return;
+            }
+            savedExplanation = promptTextarea.value.trim();
+            savedTerms = promptTerm1.textContent + " & " + promptTerm2.textContent;
+            promptModal.classList.add('hidden');
+            
+            // Give the student a subtle visual confirmation
+            saveModalBtn.textContent = "Saved!";
+            setTimeout(() => { saveModalBtn.textContent = "Save Explanation"; }, 2000);
+        });
 
         exportBtn.addEventListener('click', () => {
             const hexes = document.querySelectorAll('.hex-container');
@@ -525,15 +530,51 @@
             const padding = 80;
             const canvas = document.getElementById('export-canvas');
             const ctx = canvas.getContext('2d');
-            const width = (maxX - minX) + (padding * 2);
-            const height = (maxY - minY) + (padding * 2);
+            
+            const baseWidth = (maxX - minX) + (padding * 2);
+            let baseHeight = (maxY - minY) + (padding * 2);
 
-            canvas.width = width;
-            canvas.height = height;
+            // Text Wrap Helper Function for the Canvas
+            function getLines(context, text, maxWidth) {
+                const words = text.split(" ");
+                const lines = [];
+                let currentLine = words[0];
 
+                for (let i = 1; i < words.length; i++) {
+                    const word = words[i];
+                    const width = context.measureText(currentLine + " " + word).width;
+                    if (width < maxWidth) {
+                        currentLine += " " + word;
+                    } else {
+                        lines.push(currentLine);
+                        currentLine = word;
+                    }
+                }
+                lines.push(currentLine);
+                return lines;
+            }
+
+            let textLines = [];
+            let extraHeight = 0;
+            const textPadding = 40;
+
+            // If a student saved an explanation, calculate the extra space needed at the bottom
+            if (savedExplanation) {
+                ctx.font = "16px sans-serif";
+                // Ensure the canvas is wide enough to make the text readable
+                const adjustedWidth = Math.max(baseWidth, 500); 
+                textLines = getLines(ctx, savedExplanation, adjustedWidth - (textPadding * 2));
+                extraHeight = 100 + (textLines.length * 24); // 100px for title/margins + 24px per line
+            }
+
+            canvas.width = Math.max(baseWidth, savedExplanation ? 500 : 0);
+            canvas.height = baseHeight + extraHeight;
+
+            // Draw Background
             ctx.fillStyle = "#d8d2e1";
-            ctx.fillRect(0, 0, width, height);
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+            // Draw Hexes
             hexes.forEach(h => {
                 const x = parseFloat(h.style.left) - minX + padding;
                 const y = parseFloat(h.style.top) - minY + padding;
@@ -567,6 +608,37 @@
                 });
                 ctx.restore();
             });
+
+            // Draw the text panel at the bottom if explanation exists
+            if (savedExplanation) {
+                const panelY = baseHeight - 20;
+                const panelHeight = extraHeight;
+                
+                // Draw white card
+                ctx.fillStyle = "white";
+                ctx.fillRect(20, panelY, canvas.width - 40, panelHeight - 20);
+                
+                // Draw Border on Card
+                ctx.strokeStyle = "#e5e7eb";
+                ctx.lineWidth = 2;
+                ctx.strokeRect(20, panelY, canvas.width - 40, panelHeight - 20);
+
+                // Draw Title
+                ctx.fillStyle = "#6366f1"; // Indigo
+                ctx.font = "bold 18px sans-serif";
+                ctx.textAlign = "left";
+                ctx.textBaseline = "top";
+                ctx.fillText("Connection: " + savedTerms, textPadding, panelY + 20);
+
+                // Draw Paragraph
+                ctx.fillStyle = "#4a4a4a";
+                ctx.font = "16px sans-serif";
+                let currentY = panelY + 55;
+                textLines.forEach(line => {
+                    ctx.fillText(line, textPadding, currentY);
+                    currentY += 24;
+                });
+            }
 
             const link = document.createElement('a');
             link.download = `hexagonal-thinking-${Date.now()}.png`;
