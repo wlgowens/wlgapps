@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,11 +7,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
-            background-color: #d8d2e1; /* Pastel lavender background from image */
+            background-color: #d8d2e1;
             overflow: hidden;
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
         }
-
 
         #workspace {
             width: 100vw;
@@ -21,22 +19,13 @@
             cursor: grab;
             overflow: hidden;
             background-color: #d8d2e1;
-            /* Subtle hexagonal grid net */
             background-image:
                 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='208' viewBox='0 0 180 208'%3E%3Cpath d='M30 0 L90 0 L120 52 L90 104 L30 104 L0 52 Z M120 104 L180 104 L210 156 L180 208 L120 208 L90 156 Z M30 104 L90 104 L120 156 L90 208 L30 208 L0 156 Z' fill='none' stroke='%23b4acc3' stroke-width='1' stroke-dasharray='4,4'/%3E%3C/svg%3E");
             background-size: 180px 208px;
         }
 
-
-        #workspace.grid-hidden {
-            background-image: none;
-        }
-
-
-        #workspace:active {
-            cursor: grabbing;
-        }
-
+        #workspace.grid-hidden { background-image: none; }
+        #workspace:active { cursor: grabbing; }
 
         .hex-container {
             position: absolute;
@@ -50,20 +39,17 @@
             z-index: 10;
         }
 
-
         .hex-container.dragging {
             filter: drop-shadow(0 20px 30px rgba(0,0,0,0.15));
             z-index: 1000;
             transition: none;
         }
 
-
         .hex-shape-outer {
             fill: white;
-            stroke-width: 5; /* Thick border style */
+            stroke-width: 5;
             stroke-linejoin: round;
         }
-
 
         .hex-text {
             pointer-events: none;
@@ -72,9 +58,7 @@
             text-anchor: middle;
             dominant-baseline: middle;
             fill: #4a4a4a;
-            word-wrap: break-word;
         }
-
 
         .controls-panel {
             position: fixed;
@@ -90,7 +74,6 @@
             border: 1px solid rgba(255,255,255,0.3);
         }
 
-
         .actions-panel {
             position: fixed;
             bottom: 24px;
@@ -99,7 +82,6 @@
             display: flex;
             gap: 12px;
         }
-
 
         .delete-zone {
             position: fixed;
@@ -121,23 +103,15 @@
             z-index: 50;
         }
 
-
-        .delete-zone.visible {
-            opacity: 1;
-        }
-
-
+        .delete-zone.visible { opacity: 1; }
         .delete-zone.active {
             background: #ffe4e6;
             transform: translateX(-50%) scale(1.05);
             border-style: solid;
         }
 
-
-        #export-canvas {
-            display: none;
-        }
-       
+        #export-canvas { display: none; }
+        
         .color-dot {
             width: 28px;
             height: 28px;
@@ -148,15 +122,12 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
-
         .color-dot:hover { transform: translateY(-2px); }
-       
         .color-dot.active {
             border-color: #1f2937;
             transform: scale(1.1);
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
-
 
         .btn-primary {
             background: #6366f1;
@@ -167,28 +138,32 @@
             transition: all 0.2s;
         }
 
-
         .btn-primary:hover {
             background: #4f46e5;
             transform: translateY(-1px);
         }
 
-
         textarea {
             resize: none;
             scrollbar-width: thin;
         }
+
+        /* Modal Styles */
+        #prompt-modal {
+            transition: opacity 0.2s;
+        }
+        
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
-
 
     <div class="controls-panel">
         <h1 class="text-2xl font-black mb-6 text-gray-800 flex items-center gap-2">
             <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="3" fill="none" class="text-indigo-600"><path d="M12 2l9 4.9V17.1L12 22l-9-4.9V6.9L12 2z"/></svg>
             Hex Designer
         </h1>
-       
+        
         <div class="mb-5">
             <label class="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Terms (One per line)</label>
             <div class="flex flex-col gap-2">
@@ -197,20 +172,18 @@
             </div>
         </div>
 
-
         <div class="mb-6">
             <label class="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Starting Border Color</label>
             <div class="flex gap-2 flex-wrap" id="color-picker">
-                <div class="color-dot active" data-color="#EAB308" style="background-color: #EAB308;"></div> <!-- Gold -->
-                <div class="color-dot" data-color="#10B981" style="background-color: #10B981;"></div> <!-- Green -->
-                <div class="color-dot" data-color="#F43F5E" style="background-color: #F43F5E;"></div> <!-- Pink/Red -->
-                <div class="color-dot" data-color="#0EA5E9" style="background-color: #0EA5E9;"></div> <!-- Blue -->
-                <div class="color-dot" data-color="#F97316" style="background-color: #F97316;"></div> <!-- Orange -->
-                <div class="color-dot" data-color="#8B5CF6" style="background-color: #8B5CF6;"></div> <!-- Purple -->
-                <div class="color-dot" data-color="#EC4899" style="background-color: #EC4899;"></div> <!-- Magenta -->
+                <div class="color-dot active" data-color="#EAB308" style="background-color: #EAB308;"></div>
+                <div class="color-dot" data-color="#10B981" style="background-color: #10B981;"></div>
+                <div class="color-dot" data-color="#F43F5E" style="background-color: #F43F5E;"></div>
+                <div class="color-dot" data-color="#0EA5E9" style="background-color: #0EA5E9;"></div>
+                <div class="color-dot" data-color="#F97316" style="background-color: #F97316;"></div>
+                <div class="color-dot" data-color="#8B5CF6" style="background-color: #8B5CF6;"></div>
+                <div class="color-dot" data-color="#EC4899" style="background-color: #EC4899;"></div>
             </div>
         </div>
-
 
         <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
             <input type="checkbox" id="toggle-grid" checked class="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500">
@@ -218,15 +191,17 @@
         </div>
     </div>
 
-
     <div class="actions-panel">
-        <button id="clear-btn" class="bg-white/80 backdrop-blur border border-gray-200 text-gray-600 px-6 py-3 rounded-xl hover:bg-white transition font-bold shadow-sm">Clear Board</button>
-        <button id="export-btn" class="bg-gray-900 text-white px-6 py-3 rounded-xl hover:bg-black transition font-bold flex items-center gap-2 shadow-xl">
+        <button id="clear-btn" class="bg-white/80 backdrop-blur border border-gray-200 text-gray-600 px-5 py-3 rounded-xl hover:bg-white transition font-bold shadow-sm">Clear Board</button>
+        <button id="prompt-btn" class="bg-indigo-100 text-indigo-700 border border-indigo-200 px-5 py-3 rounded-xl hover:bg-indigo-200 transition font-bold flex items-center gap-2 shadow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            Generate Prompt
+        </button>
+        <button id="export-btn" class="bg-gray-900 text-white px-5 py-3 rounded-xl hover:bg-black transition font-bold flex items-center gap-2 shadow-xl">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Save as Image
         </button>
     </div>
-
 
     <div id="delete-zone" class="delete-zone">
         <span class="font-black text-sm uppercase tracking-tighter flex items-center gap-2">
@@ -235,12 +210,27 @@
         </span>
     </div>
 
-
     <div id="workspace"></div>
-
-
     <canvas id="export-canvas"></canvas>
 
+    <div id="prompt-modal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[2000] hidden flex items-center justify-center">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-lg w-full mx-4 border border-gray-100">
+            <h2 class="text-2xl font-black text-indigo-600 mb-2">Connection Check!</h2>
+            <p class="text-gray-600 mb-5 font-medium leading-relaxed">In a paragraph, explain the connection between these two:</p>
+            
+            <div class="flex items-center justify-center gap-4 mb-6 p-5 bg-indigo-50/50 rounded-xl border border-indigo-100">
+                <span id="prompt-term-1" class="font-bold text-lg text-gray-800 text-center flex-1 break-words">Term 1</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>
+                <span id="prompt-term-2" class="font-bold text-lg text-gray-800 text-center flex-1 break-words">Term 2</span>
+            </div>
+            
+            <textarea id="prompt-textarea" class="w-full h-40 p-4 border-2 border-gray-200 rounded-xl focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 outline-none transition-all mb-4 text-gray-700" placeholder="Type your explanation here..."></textarea>
+            
+            <div class="flex justify-end gap-3">
+                <button id="close-modal-btn" class="px-6 py-2.5 rounded-xl font-bold text-gray-500 hover:bg-gray-100 transition-colors">Close</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         const workspace = document.getElementById('workspace');
@@ -248,16 +238,23 @@
         const addBtn = document.getElementById('add-btn');
         const exportBtn = document.getElementById('export-btn');
         const clearBtn = document.getElementById('clear-btn');
+        const promptBtn = document.getElementById('prompt-btn');
         const deleteZone = document.getElementById('delete-zone');
         const toggleGrid = document.getElementById('toggle-grid');
         const colorDots = Array.from(document.querySelectorAll('.color-dot'));
-       
+        
+        // Modal Elements
+        const promptModal = document.getElementById('prompt-modal');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const promptTerm1 = document.getElementById('prompt-term-1');
+        const promptTerm2 = document.getElementById('prompt-term-2');
+        const promptTextarea = document.getElementById('prompt-textarea');
+        
         let selectedColor = colorDots[0].dataset.color;
         let colorIndex = 0;
-       
+        
         const GRID_DX = 90;
         const GRID_DY = 104;
-
 
         function getSnapPos(x, y) {
             const col = Math.round(x / GRID_DX);
@@ -267,7 +264,6 @@
             return { x: col * GRID_DX, y: row * GRID_DY + yOffset, col, row };
         }
 
-
         function selectColor(index) {
             colorDots.forEach(d => d.classList.remove('active'));
             colorIndex = index % colorDots.length;
@@ -276,27 +272,25 @@
             selectedColor = dot.dataset.color;
         }
 
-
         colorDots.forEach((dot, idx) => {
             dot.addEventListener('click', () => selectColor(idx));
         });
-
 
         toggleGrid.addEventListener('change', (e) => {
             workspace.classList.toggle('grid-hidden', !e.target.checked);
         });
 
-
         function createHex(text, color, x, y) {
             const container = document.createElement('div');
             container.className = 'hex-container';
-           
+            
             const snapped = getSnapPos(x, y);
             container.style.left = `${snapped.x}px`;
             container.style.top = `${snapped.y}px`;
             container.dataset.col = snapped.col;
             container.dataset.row = snapped.row;
-
+            // Store the full text safely as a data attribute for easier retrieval
+            container.dataset.fullText = text;
 
             const words = text.split(' ');
             let lines = [];
@@ -312,7 +306,6 @@
             lines.push(currentLine.trim());
             lines = lines.slice(0, 4);
 
-
             container.innerHTML = `
                 <svg width="120" height="104" viewBox="0 0 120 104">
                     <path d="M 30 2 L 90 2 L 118 52 L 90 102 L 30 102 L 2 52 Z"
@@ -324,18 +317,15 @@
                 </svg>
             `;
 
-
             workspace.appendChild(container);
             makeDraggable(container);
             return container;
         }
 
-
         function makeDraggable(el) {
             let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
             el.onmousedown = dragStart;
             el.ontouchstart = dragStart;
-
 
             function dragStart(e) {
                 el.style.transition = 'none';
@@ -349,7 +339,6 @@
                 document.ontouchend = dragEnd;
                 document.ontouchmove = dragMove;
             }
-
 
             function dragMove(e) {
                 const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
@@ -366,13 +355,12 @@
                 }
             }
 
-
             function dragEnd(e) {
                 el.style.transition = 'transform 0.1s ease-out, filter 0.2s, left 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
                 const clientX = e.type === 'touchend' ? e.changedTouches[0].clientX : e.clientX;
                 const clientY = e.type === 'touchend' ? e.changedTouches[0].clientY : e.clientY;
                 const rect = deleteZone.getBoundingClientRect();
-               
+                
                 if (clientX > rect.left && clientX < rect.right && clientY > rect.top) {
                     el.remove();
                 } else {
@@ -390,68 +378,57 @@
             }
         }
 
-
-        // Helper to check if a grid cell (col, row) is "safe" (not occupied and no neighbors)
-        function isSafe(col, row, occupiedCells) {
+        // Helper to get neighbors based on staggered grid
+        function getNeighbors(col, row) {
+            col = parseInt(col); row = parseInt(row);
             const neighbors = [
-                {c: col, r: row}, // The cell itself
-                {c: col, r: row - 1}, {c: col, r: row + 1}, // Above and below
+                {c: col, r: row - 1}, {c: col, r: row + 1}
             ];
-
-
-            // Add side neighbors based on staggered grid logic
-            if (col % 2 === 0) { // Even col
+            if (col % 2 === 0) { 
                 neighbors.push({c: col - 1, r: row - 1}, {c: col - 1, r: row});
                 neighbors.push({c: col + 1, r: row - 1}, {c: col + 1, r: row});
-            } else { // Odd col
+            } else { 
                 neighbors.push({c: col - 1, r: row}, {c: col - 1, r: row + 1});
                 neighbors.push({c: col + 1, r: row}, {c: col + 1, r: row + 1});
             }
-
-
-            return !neighbors.some(n => occupiedCells.has(`${n.c},${n.r}`));
+            return neighbors;
         }
 
+        function isSafe(col, row, occupiedCells) {
+            const neighbors = getNeighbors(col, row);
+            neighbors.push({c: col, r: row}); // add self
+            return !neighbors.some(n => occupiedCells.has(`${n.c},${n.r}`));
+        }
 
         addBtn.addEventListener('click', () => {
             const rawText = hexInput.value.trim();
             if (!rawText) return;
 
-
             const terms = rawText.split('\n').map(t => t.trim()).filter(t => t !== "");
-           
-            // Get currently occupied cells
             const occupiedCells = new Set();
             document.querySelectorAll('.hex-container').forEach(h => {
                 occupiedCells.add(`${h.dataset.col},${h.dataset.row}`);
             });
 
-
             const margin = 120;
             const spawnWidth = window.innerWidth - (margin * 2) - 120;
             const spawnHeight = window.innerHeight - (margin * 2) - 104;
-
 
             terms.forEach((term) => {
                 let found = false;
                 let attempts = 0;
                 let randX, randY, snapped;
 
-
-                // Try to find a safe random spot that doesn't touch anything
                 while (!found && attempts < 50) {
                     randX = Math.random() * spawnWidth + margin;
                     randY = Math.random() * spawnHeight + margin;
                     snapped = getSnapPos(randX, randY);
-                   
                     if (isSafe(snapped.col, snapped.row, occupiedCells)) {
                         found = true;
                     }
                     attempts++;
                 }
 
-
-                // If no safe spot found after 50 tries, just pick any spot that isn't exactly stacked
                 if (!found) {
                     attempts = 0;
                     while (!found && attempts < 50) {
@@ -465,27 +442,78 @@
                     }
                 }
 
-
                 createHex(term, selectedColor, randX, randY);
                 occupiedCells.add(`${snapped.col},${snapped.row}`);
                 selectColor(colorIndex + 1);
             });
 
-
             hexInput.value = "";
             hexInput.focus();
         });
-
 
         clearBtn.addEventListener('click', () => {
             if (confirm("Reset the thinking board?")) workspace.innerHTML = "";
         });
 
+        // --- NEW FEATURE: Connection Prompt ---
+        promptBtn.addEventListener('click', () => {
+            const hexes = document.querySelectorAll('.hex-container');
+            if (hexes.length < 2) {
+                alert("You need to place and connect some hexagons first!");
+                return;
+            }
+
+            // Map all hexes by their grid position
+            const gridMap = {};
+            hexes.forEach(h => {
+                gridMap[`${h.dataset.col},${h.dataset.row}`] = h.dataset.fullText;
+            });
+
+            // Find all connected pairs
+            const connections = [];
+            const seenPairs = new Set();
+
+            for (const [pos, text1] of Object.entries(gridMap)) {
+                const [col, row] = pos.split(',');
+                const neighbors = getNeighbors(col, row);
+                
+                neighbors.forEach(n => {
+                    const neighborPos = `${n.c},${n.r}`;
+                    if (gridMap[neighborPos]) {
+                        const text2 = gridMap[neighborPos];
+                        // Create a unique key so A-B is the same as B-A
+                        const pairKey = [text1, text2].sort().join('|');
+                        if (!seenPairs.has(pairKey)) {
+                            seenPairs.add(pairKey);
+                            connections.push([text1, text2]);
+                        }
+                    }
+                });
+            }
+
+            if (connections.length === 0) {
+                alert("Make sure you drag some hexagons so their edges touch to make connections!");
+                return;
+            }
+
+            // Pick a random connection
+            const randomPair = connections[Math.floor(Math.random() * connections.length)];
+            
+            // Populate and show the modal
+            promptTerm1.textContent = randomPair[0];
+            promptTerm2.textContent = randomPair[1];
+            promptTextarea.value = ""; // Clear old text
+            promptModal.classList.remove('hidden');
+        });
+
+        closeModalBtn.addEventListener('click', () => {
+            promptModal.classList.add('hidden');
+        });
+        // ----------------------------------------
 
         exportBtn.addEventListener('click', () => {
             const hexes = document.querySelectorAll('.hex-container');
             if (hexes.length === 0) return;
-
 
             let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
             hexes.forEach(h => {
@@ -494,21 +522,17 @@
                 maxX = Math.max(maxX, x + 120); maxY = Math.max(maxY, y + 104);
             });
 
-
             const padding = 80;
             const canvas = document.getElementById('export-canvas');
             const ctx = canvas.getContext('2d');
             const width = (maxX - minX) + (padding * 2);
             const height = (maxY - minY) + (padding * 2);
 
-
             canvas.width = width;
             canvas.height = height;
 
-
             ctx.fillStyle = "#d8d2e1";
             ctx.fillRect(0, 0, width, height);
-
 
             hexes.forEach(h => {
                 const x = parseFloat(h.style.left) - minX + padding;
@@ -516,16 +540,15 @@
                 const color = h.querySelector('.hex-shape-outer').getAttribute('stroke');
                 const tspanList = h.querySelectorAll('tspan');
 
-
                 ctx.save();
                 ctx.translate(x, y);
-               
+                
                 ctx.beginPath();
                 const points = [[30, 2], [90, 2], [118, 52], [90, 102], [30, 102], [2, 52]];
                 ctx.moveTo(points[0][0], points[0][1]);
                 points.slice(1).forEach(p => ctx.lineTo(p[0], p[1]));
                 ctx.closePath();
-               
+                
                 ctx.fillStyle = "white";
                 ctx.fill();
                 ctx.strokeStyle = color;
@@ -533,19 +556,17 @@
                 ctx.lineJoin = "round";
                 ctx.stroke();
 
-
                 ctx.fillStyle = "#4a4a4a";
                 ctx.font = "bold 13px sans-serif";
                 ctx.textAlign = "center";
                 ctx.textBaseline = "middle";
-               
+                
                 const startYOffset = 52 - (tspanList.length - 1) * 8;
                 tspanList.forEach((span, i) => {
                     ctx.fillText(span.textContent, 60, startYOffset + (i * 16));
                 });
                 ctx.restore();
             });
-
 
             const link = document.createElement('a');
             link.download = `hexagonal-thinking-${Date.now()}.png`;
@@ -555,5 +576,3 @@
     </script>
 </body>
 </html>
-
-
