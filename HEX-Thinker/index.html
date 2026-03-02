@@ -253,7 +253,6 @@
         let selectedColor = colorDots[0].dataset.color;
         let colorIndex = 0;
         
-        // Variables to hold the student's text for the image export
         let savedExplanation = "";
         let savedTerms = "";
         
@@ -410,9 +409,14 @@
                 occupiedCells.add(`${h.dataset.col},${h.dataset.row}`);
             });
 
-            const margin = 120;
-            const spawnWidth = window.innerWidth - (margin * 2) - 120;
-            const spawnHeight = window.innerHeight - (margin * 2) - 104;
+            // NEW: Safe spawn boundaries so they don't hide under the UI panels
+            const safeLeft = 380; // Past the left menu
+            const safeTop = 40;   // Padding from top
+            const safeRight = 160; // Padding from right edge
+            const safeBottom = 200; // Padding from bottom buttons
+
+            const spawnWidth = Math.max(window.innerWidth - safeLeft - safeRight, 100);
+            const spawnHeight = Math.max(window.innerHeight - safeTop - safeBottom, 100);
 
             terms.forEach((term) => {
                 let found = false;
@@ -420,8 +424,8 @@
                 let randX, randY, snapped;
 
                 while (!found && attempts < 50) {
-                    randX = Math.random() * spawnWidth + margin;
-                    randY = Math.random() * spawnHeight + margin;
+                    randX = Math.random() * spawnWidth + safeLeft;
+                    randY = Math.random() * spawnHeight + safeTop;
                     snapped = getSnapPos(randX, randY);
                     if (isSafe(snapped.col, snapped.row, occupiedCells)) { found = true; }
                     attempts++;
@@ -430,8 +434,8 @@
                 if (!found) {
                     attempts = 0;
                     while (!found && attempts < 50) {
-                        randX = Math.random() * spawnWidth + margin;
-                        randY = Math.random() * spawnHeight + margin;
+                        randX = Math.random() * spawnWidth + safeLeft;
+                        randY = Math.random() * spawnHeight + safeTop;
                         snapped = getSnapPos(randX, randY);
                         if (!occupiedCells.has(`${snapped.col},${snapped.row}`)) { found = true; }
                         attempts++;
@@ -450,7 +454,7 @@
         clearBtn.addEventListener('click', () => {
             if (confirm("Reset the thinking board?")) {
                 workspace.innerHTML = "";
-                savedExplanation = ""; // Clear text too
+                savedExplanation = "";
             }
         });
 
@@ -493,7 +497,7 @@
             
             promptTerm1.textContent = randomPair[0];
             promptTerm2.textContent = randomPair[1];
-            promptTextarea.value = savedExplanation; // Load previously saved text if they open it again
+            promptTextarea.value = savedExplanation; 
             promptModal.classList.remove('hidden');
         });
 
@@ -501,7 +505,6 @@
             promptModal.classList.add('hidden');
         });
 
-        // The new SAVE button logic
         saveModalBtn.addEventListener('click', () => {
             if (promptTextarea.value.trim() === "") {
                 alert("Please type your explanation before saving!");
@@ -511,7 +514,6 @@
             savedTerms = promptTerm1.textContent + " & " + promptTerm2.textContent;
             promptModal.classList.add('hidden');
             
-            // Give the student a subtle visual confirmation
             saveModalBtn.textContent = "Saved!";
             setTimeout(() => { saveModalBtn.textContent = "Save Explanation"; }, 2000);
         });
@@ -534,7 +536,6 @@
             const baseWidth = (maxX - minX) + (padding * 2);
             let baseHeight = (maxY - minY) + (padding * 2);
 
-            // Text Wrap Helper Function for the Canvas
             function getLines(context, text, maxWidth) {
                 const words = text.split(" ");
                 const lines = [];
@@ -558,23 +559,19 @@
             let extraHeight = 0;
             const textPadding = 40;
 
-            // If a student saved an explanation, calculate the extra space needed at the bottom
             if (savedExplanation) {
                 ctx.font = "16px sans-serif";
-                // Ensure the canvas is wide enough to make the text readable
                 const adjustedWidth = Math.max(baseWidth, 500); 
                 textLines = getLines(ctx, savedExplanation, adjustedWidth - (textPadding * 2));
-                extraHeight = 100 + (textLines.length * 24); // 100px for title/margins + 24px per line
+                extraHeight = 100 + (textLines.length * 24);
             }
 
             canvas.width = Math.max(baseWidth, savedExplanation ? 500 : 0);
             canvas.height = baseHeight + extraHeight;
 
-            // Draw Background
             ctx.fillStyle = "#d8d2e1";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Draw Hexes
             hexes.forEach(h => {
                 const x = parseFloat(h.style.left) - minX + padding;
                 const y = parseFloat(h.style.top) - minY + padding;
@@ -609,28 +606,23 @@
                 ctx.restore();
             });
 
-            // Draw the text panel at the bottom if explanation exists
             if (savedExplanation) {
                 const panelY = baseHeight - 20;
                 const panelHeight = extraHeight;
                 
-                // Draw white card
                 ctx.fillStyle = "white";
                 ctx.fillRect(20, panelY, canvas.width - 40, panelHeight - 20);
                 
-                // Draw Border on Card
                 ctx.strokeStyle = "#e5e7eb";
                 ctx.lineWidth = 2;
                 ctx.strokeRect(20, panelY, canvas.width - 40, panelHeight - 20);
 
-                // Draw Title
-                ctx.fillStyle = "#6366f1"; // Indigo
+                ctx.fillStyle = "#6366f1"; 
                 ctx.font = "bold 18px sans-serif";
                 ctx.textAlign = "left";
                 ctx.textBaseline = "top";
                 ctx.fillText("Connection: " + savedTerms, textPadding, panelY + 20);
 
-                // Draw Paragraph
                 ctx.fillStyle = "#4a4a4a";
                 ctx.font = "16px sans-serif";
                 let currentY = panelY + 55;
