@@ -11,7 +11,651 @@
         #workspace { 
             width: 100vw; height: 100vh; position: relative; overflow: hidden; background-color: #f8fafc; 
         }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Association Triangles</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #f8fafc; overflow: hidden; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        
+        #workspace { 
+            width: 100vw; height: 100vh; position: relative; overflow: hidden; background-color: #f8fafc; 
+        }
 
+        /* --- Animated Background Orbs --- */
+        .bg-blob {
+            position: absolute; filter: blur(90px); opacity: 0.6; z-index: 1;
+            animation: float-orb 15s infinite alternate ease-in-out;
+            border-radius: 50%; transition: background-color 2s ease;
+        }
+        .blob-1 { top: -10%; left: 10%; width: 500px; height: 500px; background: #c7d2fe; animation-delay: 0s; }
+        .blob-2 { bottom: -10%; right: 10%; width: 600px; height: 600px; background: #fbcfe8; animation-delay: -4s; }
+        .blob-3 { top: 30%; left: 50%; width: 450px; height: 450px; background: #bbf7d0; animation-delay: -8s; transform: translateX(-50%); }
+
+        @keyframes float-orb {
+            0% { transform: translateY(0) scale(1) translateX(0); }
+            100% { transform: translateY(-40px) scale(1.05) translateX(20px); }
+        }
+        
+        /* --- Thematic Floating Icons (Collision Physics) --- */
+        #icon-layer { position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: 0.25; }
+        .icon-wrapper { position: absolute; top: 0; left: 0; will-change: transform; }
+        .icon-emoji { display: inline-block; font-size: 2.5rem; transition: transform 0.8s ease-out, opacity 0.8s ease-out, filter 0.8s ease-out; }
+        .poof .icon-emoji { transform: scale(1.5) rotate(10deg); opacity: 0; filter: blur(2px); }
+        
+        .controls-panel { position: fixed; top: 20px; left: 20px; z-index: 100; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(12px); padding: 24px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 340px; border: 1px solid white; }
+        
+        .btn-primary { background: #4f46e5; color: white; padding: 10px 20px; border-radius: 10px; font-weight: 700; transition: all 0.2s; }
+        .btn-primary:hover { background: #4338ca; transform: translateY(-1px); box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3); }
+        textarea { resize: none; scrollbar-width: thin; line-height: 1.4; }
+        .hidden { display: none !important; }
+        #prompt-modal { background-color: rgba(15, 23, 42, 0.4); backdrop-filter: blur(3px); }
+        
+        /* --- The Upgraded Triangle Container --- */
+        #triangle-container {
+            position: absolute;
+            top: 50%; left: calc(50% + 150px); transform: translate(-50%, -50%);
+            width: 650px; height: 550px; z-index: 10;
+        }
+
+        /* --- Premium Gradient Term Nodes --- */
+        .triangle-node {
+            position: absolute;
+            width: 200px;
+            border-radius: 16px;
+            padding: 14px;
+            text-align: center;
+            font-weight: 900;
+            color: #1e1b4b;
+            box-shadow: 0 15px 25px -5px rgba(0, 0, 0, 0.1);
+            transform: translate(-50%, -50%);
+            z-index: 20;
+            font-size: 1.1rem;
+            background: linear-gradient(white, white) padding-box, linear-gradient(135deg, #818cf8, #f472b6) border-box;
+            border: 4px solid transparent;
+        }
+
+        /* --- Standardized Edge Ovals --- */
+        .edge-btn {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.95);
+            border: 2px dashed #a5b4fc;
+            color: #6366f1;
+            font-weight: 800;
+            width: 150px; 
+            height: 44px; 
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 999px; cursor: pointer; z-index: 30; transition: all 0.2s;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(5px);
+        }
+
+        .edge-btn:hover { border-style: solid; border-color: #f472b6; color: #d946ef; transform: translate(-50%, -50%) scale(1.05); box-shadow: 0 10px 15px -3px rgba(217, 70, 239, 0.2); }
+        .edge-btn.completed { background: #10b981; border: 2px solid #059669; color: white; border-style: solid; }
+
+        .center-btn {
+            position: absolute;
+            top: 58%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(226, 232, 240, 0.9);
+            color: #94a3b8; border: none; width: 180px; padding: 16px 0;
+            border-radius: 16px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px;
+            z-index: 40; transition: all 0.3s; pointer-events: none;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); text-align: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .center-btn.unlocked { background: #f59e0b; color: white; pointer-events: auto; cursor: pointer; animation: glow 2s infinite; }
+        .center-btn.unlocked:hover { transform: translate(-50%, -50%) scale(1.05); }
+        .center-btn.completed { background: #10b981; color: white; animation: none; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3); }
+
+        @keyframes glow { 0%, 100% { box-shadow: 0 0 5px rgba(245,158,11,0.5); } 50% { box-shadow: 0 0 20px rgba(245,158,11,0.8); } }
+        #export-canvas { display: none; }
+    </style>
+</head>
+<body>
+
+    <!-- Animated Orbs -->
+    <div id="orb-1" class="bg-blob blob-1"></div>
+    <div id="orb-2" class="bg-blob blob-2"></div>
+    <div id="orb-3" class="bg-blob blob-3"></div>
+    
+    <!-- Thematic Floating Icons -->
+    <div id="icon-layer"></div>
+
+    <div class="controls-panel">
+        <h1 class="text-2xl font-black mb-6 text-gray-800 flex items-center gap-2">
+            <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="3" fill="none" class="text-indigo-600"><polygon points="12 2 22 20 2 20"></polygon></svg>
+            Association Triangles
+        </h1>
+        <label id="terms-label" class="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Terms (Min: 3 | Max: 9 | One per line)</label>
+        <textarea id="term-input" placeholder="Term 1&#10;Term 2&#10;Term 3..." rows="5" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-400 outline-none mb-3 text-sm"></textarea>
+        <button id="add-btn" class="btn-primary w-full mb-2">Preview Triangle</button>
+        <button id="link-btn" class="bg-emerald-100 text-emerald-700 font-bold py-2 rounded-xl w-full text-sm">Copy Student Link</button>
+        
+        <div id="info-box" class="mt-4 p-3 bg-indigo-50 rounded-lg text-[12px] text-indigo-800 leading-tight">
+            <strong>Teacher Tip:</strong> The app randomly selects 3 terms per student for a unique challenge! More terms = more combinations.
+        </div>
+    </div>
+
+    <div id="workspace">
+        <div id="triangle-container">
+            <!-- The visually appealing SVG triangle -->
+            <svg class="absolute inset-0 w-full h-full" style="z-index: 10; filter: drop-shadow(0 10px 15px rgba(99, 102, 241, 0.15));">
+                <defs>
+                    <linearGradient id="tri-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#818cf8" />
+                        <stop offset="50%" stop-color="#c084fc" />
+                        <stop offset="100%" stop-color="#f472b6" />
+                    </linearGradient>
+                </defs>
+                <polygon points="325,40 525,430 125,430" fill="rgba(255,255,255,0.4)" stroke="url(#tri-grad)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+
+            <div id="node-1" class="triangle-node" style="left: 50%; top: 8%;">[Term 1]</div>
+            <div id="node-2" class="triangle-node" style="left: 19%; top: 78%;">[Term 2]</div>
+            <div id="node-3" class="triangle-node" style="left: 81%; top: 78%;">[Term 3]</div>
+
+            <button id="edge-12" class="edge-btn" style="left: 34.5%; top: 43%;" onclick="openModal('e12')">Connection</button>
+            <button id="edge-23" class="edge-btn" style="left: 50%; top: 78%;" onclick="openModal('e23')">Connection</button>
+            <button id="edge-31" class="edge-btn" style="left: 65.5%; top: 43%;" onclick="openModal('e31')">Connection</button>
+            
+            <button id="center-node" class="center-btn" onclick="openModal('center')">🔒 Summary</button>
+        </div>
+    </div>
+    
+    <canvas id="export-canvas"></canvas>
+
+    <div id="prompt-modal" class="fixed inset-0 z-[2000] hidden flex items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-2xl w-full border border-gray-100 relative">
+            <h2 id="modal-title" class="text-2xl font-black text-indigo-800 mb-2 text-center">Explain the Connection</h2>
+            <p id="modal-desc" class="text-gray-500 mb-6 text-sm font-bold uppercase tracking-wider text-center">Describe exactly how these two concepts relate, connect, or influence each other:</p>
+            
+            <div id="modal-terms-display" class="flex items-center justify-center gap-4 mb-6 p-4 bg-indigo-50 rounded-2xl border border-indigo-100 font-black text-indigo-900 text-lg text-center"></div>
+            
+            <textarea id="prompt-textarea" class="w-full h-44 p-5 border-2 border-gray-200 rounded-2xl focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 outline-none transition-all mb-6 text-gray-700 text-base" placeholder="Type your explanation here..."></textarea>
+            
+            <div id="student-export-zone" class="hidden mt-6 pt-6 border-t border-gray-100">
+                <p class="text-center font-black text-indigo-900 mb-1 text-lg">Share with your Teacher</p>
+                <p class="text-center text-xs text-gray-500 mb-4 px-4">Choose 'Copy Text' to paste your work into Google Classroom or a Doc, or 'Download Image' to save the visual diagram.</p>
+                <div class="flex flex-wrap justify-center gap-3">
+                    <button id="copy-text-btn" class="bg-white text-indigo-600 border-2 border-indigo-600 px-6 py-2.5 rounded-xl hover:bg-indigo-50 transition font-black flex items-center gap-2 shadow-sm text-base">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        Copy Text
+                    </button>
+                    <button id="save-img-btn" class="bg-indigo-600 text-white border border-indigo-700 px-6 py-2.5 rounded-xl hover:bg-indigo-700 transition font-black flex items-center gap-2 shadow-sm text-base">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Download Image
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 mt-6">
+                <button id="close-modal-btn" class="px-6 py-3 rounded-xl font-bold text-gray-400 hover:text-gray-600 transition-colors">Cancel</button>
+                <button id="save-modal-btn" class="bg-indigo-600 text-white px-8 py-3 rounded-xl font-black hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 flex items-center gap-2">
+                    Save Response
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const termInput = document.getElementById('term-input');
+        const addBtn = document.getElementById('add-btn');
+        const linkBtn = document.getElementById('link-btn');
+        const termsLabel = document.getElementById('terms-label');
+        const saveImgBtn = document.getElementById('save-img-btn');
+        const copyTextBtn = document.getElementById('copy-text-btn');
+        const infoBox = document.getElementById('info-box');
+        const iconLayer = document.getElementById('icon-layer');
+        const exportZone = document.getElementById('student-export-zone');
+        
+        const node1 = document.getElementById('node-1');
+        const node2 = document.getElementById('node-2');
+        const node3 = document.getElementById('node-3');
+        const btnE12 = document.getElementById('edge-12');
+        const btnE23 = document.getElementById('edge-23');
+        const btnE31 = document.getElementById('edge-31');
+        const btnCenter = document.getElementById('center-node');
+
+        const modal = document.getElementById('prompt-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalDesc = document.getElementById('modal-desc');
+        const modalTermsDisplay = document.getElementById('modal-terms-display');
+        const modalTextarea = document.getElementById('prompt-textarea');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const saveModalBtn = document.getElementById('save-modal-btn');
+
+        let activeTerms = ["[Term 1]", "[Term 2]", "[Term 3]"];
+        let explanations = { e12: "", e23: "", e31: "", center: "" };
+        let currentTarget = "";
+
+        // Keyword Dictionary for dynamic background
+        const themeMap = {
+            market: ['📈','💰','🏦','💵'], profit: ['📈','💰','🏦','💵'], trade: ['🚢','📦','🌎'],
+            individual: ['👤','🗳️','🔑'], rights: ['⚖️','📜','🗽'], war: ['⚔️','🛡️','🔥'],
+            geo: ['🏔️','🗺️','🌳'], land: ['🏔️','🗺️','🌳'], water: ['🌊','💧','🛶'],
+            science: ['🔬','🧬','🔭'], tech: ['💻','⚙️','🚀']
+        };
+
+        const colorPalettes = [
+            ['#c7d2fe', '#fbcfe8', '#bbf7d0'], // Default / Soft
+            ['#fef08a', '#fed7aa', '#fbcfe8'], // Warm / Economics
+            ['#a7f3d0', '#bae6fd', '#c7d2fe'], // Cool / Geo
+            ['#fecaca', '#fca5a5', '#fef08a']  // Intense / Conflict
+        ];
+
+        // Background Physics Engine variables
+        let iconParticles = [];
+        let physicsAnimFrame = null;
+        let currentIconSet = [];
+
+        function updateTheme(terms) {
+            iconLayer.innerHTML = '';
+            if (physicsAnimFrame) cancelAnimationFrame(physicsAnimFrame);
+            iconParticles = [];
+
+            const text = terms.join(' ').toLowerCase();
+            let icons = ['✨','🧠','💡', '🔗']; 
+            let selectedColors = colorPalettes[0];
+
+            if (text.includes('market') || text.includes('profit') || text.includes('trade')) selectedColors = colorPalettes[1];
+            else if (text.includes('geo') || text.includes('water') || text.includes('land')) selectedColors = colorPalettes[2];
+            else if (text.includes('war') || text.includes('rights')) selectedColors = colorPalettes[3];
+
+            for (let key in themeMap) {
+                if (text.includes(key)) icons = icons.concat(themeMap[key]);
+            }
+            currentIconSet = icons;
+            
+            // Apply Colors
+            document.getElementById('orb-1').style.background = selectedColors[0];
+            document.getElementById('orb-2').style.background = selectedColors[1];
+            document.getElementById('orb-3').style.background = selectedColors[2];
+
+            // Generate physics icons
+            for (let i = 0; i < 8; i++) {
+                spawnParticle();
+            }
+
+            physicsLoop();
+        }
+
+        function spawnParticle() {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'icon-wrapper';
+            const emoji = document.createElement('span');
+            emoji.className = 'icon-emoji';
+            emoji.textContent = currentIconSet[Math.floor(Math.random() * currentIconSet.length)];
+            wrapper.appendChild(emoji);
+            iconLayer.appendChild(wrapper);
+
+            let x = Math.random() * (window.innerWidth - 60);
+            let y = Math.random() * (window.innerHeight - 60);
+            
+            iconParticles.push({
+                el: wrapper,
+                emojiEl: emoji,
+                x: x,
+                y: y,
+                vx: (Math.random() - 0.5) * 1.5, // Velocity X
+                vy: (Math.random() - 0.5) * 1.5, // Velocity Y
+                poofing: false
+            });
+        }
+
+        function physicsLoop() {
+            const boundsX = window.innerWidth - 50;
+            const boundsY = window.innerHeight - 50;
+
+            for (let i = 0; i < iconParticles.length; i++) {
+                let p1 = iconParticles[i];
+                if (p1.poofing) continue;
+
+                // Move
+                p1.x += p1.vx;
+                p1.y += p1.vy;
+
+                // Bounce off walls
+                if (p1.x <= 0 || p1.x >= boundsX) p1.vx *= -1;
+                if (p1.y <= 0 || p1.y >= boundsY) p1.vy *= -1;
+
+                p1.el.style.transform = `translate(${p1.x}px, ${p1.y}px)`;
+
+                // Collision Check
+                for (let j = i + 1; j < iconParticles.length; j++) {
+                    let p2 = iconParticles[j];
+                    if (p2.poofing) continue;
+
+                    let dx = p1.x - p2.x;
+                    let dy = p1.y - p2.y;
+                    let dist = Math.sqrt(dx*dx + dy*dy);
+
+                    if (dist < 30) { // Collision threshold
+                        p1.poofing = true;
+                        p2.poofing = true;
+                        
+                        p1.el.classList.add('poof');
+                        p2.el.classList.add('poof');
+
+                        // Respawn
+                        setTimeout(() => {
+                            // Reset particle 1
+                            p1.x = Math.random() * boundsX;
+                            p1.y = Math.random() * boundsY;
+                            p1.el.classList.remove('poof');
+                            p1.poofing = false;
+                            p1.emojiEl.textContent = currentIconSet[Math.floor(Math.random() * currentIconSet.length)];
+                            
+                            // Reset particle 2
+                            p2.x = Math.random() * boundsX;
+                            p2.y = Math.random() * boundsY;
+                            p2.el.classList.remove('poof');
+                            p2.poofing = false;
+                            p2.emojiEl.textContent = currentIconSet[Math.floor(Math.random() * currentIconSet.length)];
+                        }, 800); // Matches transition duration
+                    }
+                }
+            }
+            physicsAnimFrame = requestAnimationFrame(physicsLoop);
+        }
+
+        function buildTriangle(termsArray) {
+            if (termsArray.length < 3) return;
+            
+            if (termsArray.length === 3) {
+                activeTerms = [...termsArray];
+            } else {
+                let shuffled = [...termsArray].sort(() => 0.5 - Math.random());
+                activeTerms = [shuffled[0], shuffled[1], shuffled[2]];
+            }
+
+            node1.textContent = activeTerms[0];
+            node2.textContent = activeTerms[1];
+            node3.textContent = activeTerms[2];
+
+            explanations = { e12: "", e23: "", e31: "", center: "" };
+            
+            [btnE12, btnE23, btnE31].forEach(btn => {
+                btn.classList.remove('completed');
+                btn.innerHTML = "Connection";
+            });
+            
+            btnCenter.classList.remove('unlocked', 'completed');
+            btnCenter.innerHTML = "🔒 Summary";
+            
+            updateTheme(activeTerms);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const t = new URLSearchParams(window.location.search).get('t');
+            if (t) {
+                const terms = decodeURIComponent(t).split('|');
+                termInput.value = terms.join('\n');
+                
+                termInput.readOnly = true;
+                termInput.classList.add('bg-gray-100', 'text-gray-500', 'cursor-not-allowed');
+                addBtn.classList.add('hidden');
+                linkBtn.classList.add('hidden');
+                termsLabel.textContent = "Assigned Terms";
+                
+                infoBox.classList.replace('bg-indigo-50', 'bg-emerald-50');
+                infoBox.classList.replace('text-indigo-800', 'text-emerald-800');
+                infoBox.innerHTML = "<strong>Instructions:</strong> Click each Connection button to explain how the terms link together. Complete all three to unlock the final Summary challenge!";
+                
+                buildTriangle(terms);
+            } else {
+                updateTheme(activeTerms); // Initial theme load for blank state
+            }
+        });
+
+        addBtn.addEventListener('click', () => {
+            const raw = termInput.value.trim();
+            if (!raw) return;
+            const terms = raw.split(/\r?\n|,/).map(t => t.trim()).filter(t => t.length > 0);
+            if (terms.length < 3) return alert("Please enter at least 3 terms.");
+            if (terms.length > 9) return alert("Please limit your list to a maximum of 9 terms.");
+            buildTriangle(terms);
+        });
+
+        linkBtn.addEventListener('click', () => {
+            const raw = termInput.value.trim();
+            if (!raw) return alert("Enter terms first!");
+            const terms = raw.split(/\r?\n|,/).map(t => t.trim()).filter(t => t.length > 0);
+            if (terms.length < 3) return alert("Please enter at least 3 terms.");
+            if (terms.length > 9) return alert("Please limit your list to a maximum of 9 terms.");
+
+            const url = new URL(window.location.href);
+            url.searchParams.set('t', encodeURIComponent(terms.join('|')));
+            navigator.clipboard.writeText(url.toString()).then(() => alert("Student Link Copied!")).catch(err => {
+                prompt("Copy this link:", url.toString());
+            });
+        });
+
+        window.openModal = function(target) {
+            currentTarget = target;
+            modalTextarea.value = explanations[target]; 
+
+            if (target === 'center') {
+                modalTitle.textContent = "Core Scenario Summary";
+                modalDesc.textContent = "Summarize the entire scenario using all three concepts:";
+                modalTermsDisplay.innerHTML = `<span class="text-fuchsia-600">${activeTerms[0]}</span> • <span class="text-fuchsia-600">${activeTerms[1]}</span> • <span class="text-fuchsia-600">${activeTerms[2]}</span>`;
+                saveModalBtn.innerHTML = "Save Response";
+
+                if (explanations.center) {
+                    exportZone.classList.remove('hidden');
+                    saveModalBtn.classList.add('hidden');
+                    closeModalBtn.innerHTML = "Done";
+                } else {
+                    exportZone.classList.add('hidden');
+                    saveModalBtn.classList.remove('hidden');
+                    closeModalBtn.innerHTML = "Cancel";
+                }
+            } else {
+                modalTitle.textContent = "Explain the Connection";
+                modalDesc.textContent = "Describe exactly how these two concepts relate, connect, or influence each other:";
+                let tA, tB;
+                if (target === 'e12') { tA = activeTerms[0]; tB = activeTerms[1]; }
+                if (target === 'e23') { tA = activeTerms[1]; tB = activeTerms[2]; }
+                if (target === 'e31') { tA = activeTerms[2]; tB = activeTerms[0]; }
+                
+                modalTermsDisplay.innerHTML = `<span class="text-indigo-600">${tA}</span> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg> <span class="text-indigo-600">${tB}</span>`;
+                saveModalBtn.innerHTML = "Save Response";
+                exportZone.classList.add('hidden');
+                saveModalBtn.classList.remove('hidden');
+                closeModalBtn.innerHTML = "Cancel";
+            }
+            modal.classList.remove('hidden');
+            setTimeout(() => modalTextarea.focus(), 100);
+        };
+
+        closeModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
+
+        saveModalBtn.addEventListener('click', () => {
+            const text = modalTextarea.value.trim();
+            if (!text) return alert("Please write an explanation.");
+            
+            explanations[currentTarget] = text;
+            
+            let btn;
+            if (currentTarget === 'e12') btn = btnE12;
+            if (currentTarget === 'e23') btn = btnE23;
+            if (currentTarget === 'e31') btn = btnE31;
+            if (currentTarget === 'center') btn = btnCenter;
+
+            btn.classList.add('completed');
+            btn.innerHTML = "✓ Done";
+
+            if (explanations.e12 && explanations.e23 && explanations.e31) {
+                if (!explanations.center) {
+                    btnCenter.classList.add('unlocked');
+                    btnCenter.innerHTML = "🔓 Summary";
+                }
+            }
+
+            if (currentTarget === 'center') {
+                exportZone.classList.remove('hidden');
+                saveModalBtn.classList.add('hidden');
+                closeModalBtn.innerHTML = "Done";
+                
+                // Visual pop for share buttons
+                exportZone.classList.add('scale-105');
+                setTimeout(() => exportZone.classList.remove('scale-105'), 300);
+            } else {
+                modal.classList.add('hidden');
+            }
+        });
+
+        // Copy Text Functionality - Formats output cleanly with bold tags for pasting
+        copyTextBtn.addEventListener('click', async () => {
+            const htmlContent = `
+                <h2>ASSOCIATION TRIANGLE SUMMARY</h2>
+                <br>
+                <p><strong>Connection:</strong> <strong>${activeTerms[0]}</strong> ↔ <strong>${activeTerms[1]}</strong></p>
+                <p>${explanations.e12}</p>
+                <br>
+                <p><strong>Connection:</strong> <strong>${activeTerms[1]}</strong> ↔ <strong>${activeTerms[2]}</strong></p>
+                <p>${explanations.e23}</p>
+                <br>
+                <p><strong>Connection:</strong> <strong>${activeTerms[2]}</strong> ↔ <strong>${activeTerms[0]}</strong></p>
+                <p>${explanations.e31}</p>
+                <br>
+                <p><strong>Core Scenario Summary:</strong> ${activeTerms.join(' • ')}</p>
+                <p>${explanations.center}</p>
+            `;
+
+            const plainContent = `ASSOCIATION TRIANGLE SUMMARY\n\nConnection: ${activeTerms[0]} ↔ ${activeTerms[1]}\n${explanations.e12}\n\nConnection: ${activeTerms[1]} ↔ ${activeTerms[2]}\n${explanations.e23}\n\nConnection: ${activeTerms[2]} ↔ ${activeTerms[0]}\n${explanations.e31}\n\nCore Scenario Summary: ${activeTerms.join(' • ')}\n${explanations.center}`;
+
+            try {
+                const clipboardItem = new ClipboardItem({
+                    "text/plain": new Blob([plainContent], { type: "text/plain" }),
+                    "text/html": new Blob([htmlContent], { type: "text/html" })
+                });
+                await navigator.clipboard.write([clipboardItem]);
+                alert("Text copied to clipboard! You can now paste it into Google Classroom or a Doc.");
+            } catch (err) {
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = htmlContent;
+                tempDiv.style.position = 'absolute';
+                tempDiv.style.left = '-9999px';
+                document.body.appendChild(tempDiv);
+                
+                const range = document.createRange();
+                range.selectNodeContents(tempDiv);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+                
+                try {
+                    document.execCommand('copy');
+                    alert("Text copied to clipboard! You can now paste it into Google Classroom or a Doc.");
+                } catch (fallbackErr) {
+                    alert("Failed to copy. Your browser might not support this feature.");
+                }
+                document.body.removeChild(tempDiv);
+            }
+        });
+
+        saveImgBtn.addEventListener('click', () => {
+            const canvas = document.getElementById('export-canvas');
+            const ctx = canvas.getContext('2d');
+            const width = 800;
+            
+            function getLines(text, maxWidth) {
+                if (!text) return [];
+                const words = text.split(" "), lines = [];
+                let currentLine = words[0] || "";
+                for (let i = 1; i < words.length; i++) {
+                    if (ctx.measureText(currentLine + " " + words[i]).width < maxWidth) currentLine += " " + words[i];
+                    else { lines.push(currentLine); currentLine = words[i]; }
+                }
+                lines.push(currentLine);
+                return lines;
+            }
+
+            ctx.font = "15px sans-serif";
+            const maxTextWidth = 720;
+            const l12 = getLines(explanations.e12, maxTextWidth);
+            const l23 = getLines(explanations.e23, maxTextWidth);
+            const l31 = getLines(explanations.e31, maxTextWidth);
+            const lCenter = getLines(explanations.center, maxTextWidth);
+            
+            const totalLines = l12.length + l23.length + l31.length + lCenter.length;
+            const height = 550 + (totalLines * 24) + 250;
+            
+            canvas.width = width;
+            canvas.height = height;
+            ctx.fillStyle = "#f8fafc";
+            ctx.fillRect(0, 0, width, height);
+
+            ctx.save();
+            ctx.translate(100, 50); 
+            
+            let triGrad = ctx.createLinearGradient(300, 40, 500, 400);
+            triGrad.addColorStop(0, "#818cf8");
+            triGrad.addColorStop(0.5, "#c084fc");
+            triGrad.addColorStop(1, "#f472b6");
+            
+            ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
+            ctx.beginPath();
+            ctx.moveTo(325, 40); ctx.lineTo(525, 430); ctx.lineTo(125, 430); ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = triGrad;
+            ctx.lineWidth = 10;
+            ctx.lineJoin = "round";
+            ctx.stroke();
+
+            function drawNode(text, cx, cy) {
+                const boxW = 180, boxH = 50;
+                ctx.fillStyle = "white";
+                ctx.beginPath(); ctx.roundRect(cx - boxW/2, cy - boxH/2, boxW, boxH, 12); ctx.fill();
+                ctx.strokeStyle = triGrad;
+                ctx.lineWidth = 4; ctx.stroke();
+                ctx.fillStyle = "#1e1b4b"; ctx.font = "bold 16px sans-serif"; ctx.textAlign = "center";
+                ctx.textBaseline = "middle"; ctx.fillText(text, cx, cy);
+            }
+
+            drawNode(activeTerms[0], 325, 40);
+            drawNode(activeTerms[1], 125, 430);
+            drawNode(activeTerms[2], 525, 430);
+            ctx.restore();
+
+            ctx.textAlign = "left"; ctx.textBaseline = "top";
+            const padding = 40;
+            let currentY = 550;
+            
+            function printSection(title, linesArray, isCenter = false) {
+                ctx.fillStyle = isCenter ? "#f59e0b" : "#4f46e5";
+                ctx.font = "900 18px sans-serif";
+                ctx.fillText(title, padding, currentY); currentY += 28;
+                ctx.fillStyle = "#334155"; ctx.font = "16px sans-serif";
+                linesArray.forEach(line => { ctx.fillText(line, padding, currentY); currentY += 24; });
+                currentY += 30; 
+            }
+
+            ctx.fillStyle = "white";
+            ctx.beginPath(); ctx.roundRect(20, 520, width - 40, height - 540, 16); ctx.fill();
+            ctx.strokeStyle = "#e2e8f0"; ctx.lineWidth = 2; ctx.stroke();
+            
+            printSection(`Connection: ${activeTerms[0]} ↔ ${activeTerms[1]}`, l12);
+            printSection(`Connection: ${activeTerms[1]} ↔ ${activeTerms[2]}`, l23);
+            printSection(`Connection: ${activeTerms[2]} ↔ ${activeTerms[0]}`, l31);
+            ctx.beginPath(); ctx.moveTo(padding, currentY - 10); ctx.lineTo(width - padding, currentY - 10);
+            ctx.strokeStyle = "#e2e8f0"; ctx.lineWidth = 2; ctx.stroke();
+            currentY += 10;
+            printSection(`Scenario Summary`, lCenter, true);
+
+            const link = document.createElement('a');
+            link.download = `association-triangle-${Date.now()}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
+    </script>
+</body>
+</html>
         /* --- Animated Background Orbs --- */
         .bg-blob {
             position: absolute; filter: blur(90px); opacity: 0.6; z-index: 1;
