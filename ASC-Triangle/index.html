@@ -546,54 +546,39 @@
             const formatPlainMixed = (t) => isUrl(t) ? `[Image Link: ${t}]` : t;
 
             function buildConnectionHtml(tA, tB, exp, index) {
-                if (isUrl(tA) || isUrl(tB)) {
-                    // Uses HTML tables for layout to guarantee Google Docs keeps items on the same line and wraps text cleanly
-                    let formatItem = (t) => {
-                        if (isUrl(t)) {
-                            const dim = preloadedDims[t];
-                            let finalW = 144, finalH = 144;
-                            // Calculate proper constrained 144px box (approx 1.5 inches)
-                            if (dim.w > dim.h) {
-                                finalH = Math.round((dim.h / dim.w) * 144);
-                            } else {
-                                finalW = Math.round((dim.w / dim.h) * 144);
-                            }
-                            
-                            // Hardcoded width and height attributes prevent stretching
-                            return `<img src="${t}" width="${finalW}" height="${finalH}" style="border-radius: 4px; border: 1px solid #e2e8f0; display: block;" alt="Image" />`;
-                        } else {
-                            return `<span>${t}</span>`;
+                // Now uses the table layout and border for ALL connections (images and text)
+                let formatItem = (t) => {
+                    if (isUrl(t)) {
+                        const dim = preloadedDims[t];
+                        let finalW = 144, finalH = 144;
+                        // Calculate proper constrained 144px box (approx 1.5 inches)
+                        if (dim && dim.w > dim.h) {
+                            finalH = Math.round((dim.h / dim.w) * 144);
+                        } else if (dim) {
+                            finalW = Math.round((dim.w / dim.h) * 144);
                         }
-                    };
+                        
+                        return `<img src="${t}" width="${finalW}" height="${finalH}" style="border-radius: 4px; display: block; margin: 0 auto;" alt="Image" />`;
+                    } else {
+                        return `<span style="display: inline-block;">${t}</span>`;
+                    }
+                };
 
-                    // Explicitly set table column widths so text doesn't get crushed or over-extended
-                    let widthA = isUrl(tA) ? "150" : "400";
-                    let widthB = isUrl(tB) ? "150" : "400";
-
-                    return `
-                        <p style="margin-bottom: 4px;"><strong>Connection ${index}:</strong></p>
-                        <table style="border: none; border-collapse: collapse; margin-bottom: 8px;">
-                            <tr>
-                                <td width="${widthA}" style="vertical-align: middle; text-align: left; padding-right: 12px; border: none;">${formatItem(tA)}</td>
-                                <td width="30" style="vertical-align: middle; text-align: center; border: none;"><strong>&harr;</strong></td>
-                                <td width="${widthB}" style="vertical-align: middle; text-align: left; padding-left: 12px; border: none;">${formatItem(tB)}</td>
-                            </tr>
-                        </table>
-                        <p style="margin-top: 4px;">${exp}</p><br>
-                    `;
-                } else {
-                    // Clean text-only output (no quotes, no bold terms)
-                    return `<p><strong>Connection ${index}:</strong><br>${tA}<br>${tB}</p>\n<p>${exp}</p><br>`;
-                }
+                return `
+                    <p style="margin-bottom: 4px;"><strong>Connection ${index}:</strong></p>
+                    <table border="1" style="border: 1px solid black; border-collapse: collapse; margin-bottom: 8px; width: 100%; max-width: 800px;">
+                        <tr>
+                            <td style="width: 45%; vertical-align: middle; text-align: center; padding: 12px; border: 1px solid black; word-wrap: break-word;">${formatItem(tA)}</td>
+                            <td style="width: 10%; vertical-align: middle; text-align: center; padding: 12px; border: 1px solid black;"><strong>&harr;</strong></td>
+                            <td style="width: 45%; vertical-align: middle; text-align: center; padding: 12px; border: 1px solid black; word-wrap: break-word;">${formatItem(tB)}</td>
+                        </tr>
+                    </table>
+                    <p style="margin-top: 4px; margin-bottom: 16px;">${exp}</p>
+                `;
             }
 
             function buildConnectionPlain(tA, tB, exp, index) {
-                if (isUrl(tA) || isUrl(tB)) {
-                    return `Connection ${index}:\n${formatPlainMixed(tA)} ↔ ${formatPlainMixed(tB)}\n${exp}\n\n`;
-                } else {
-                    // Clean plain text output
-                    return `Connection ${index}:\n${tA}\n${tB}\n${exp}\n\n`;
-                }
+                return `Connection ${index}:\n${formatPlainMixed(tA)} ↔ ${formatPlainMixed(tB)}\n${exp}\n\n`;
             }
 
             const htmlContent = `
