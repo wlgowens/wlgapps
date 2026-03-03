@@ -196,6 +196,7 @@
 
     <div id="workspace">
         <div id="triangle-container">
+            <!-- The visually appealing SVG triangle -->
             <svg class="absolute inset-0 w-full h-full" style="z-index: 10; filter: drop-shadow(0 10px 15px rgba(99, 102, 241, 0.15));">
                 <defs>
                     <linearGradient id="tri-grad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -416,7 +417,7 @@
                 teacherInputs.classList.add('hidden');
                 infoBox.classList.replace('bg-indigo-50', 'bg-emerald-50');
                 infoBox.classList.replace('text-indigo-800', 'text-emerald-800');
-                infoBox.innerHTML = "<strong>Instructions:</strong> Click each Connection button to explain how the terms link together. Complete all three to unlock the final Summary challenge!";
+                infoBox.innerHTML = "<strong>Instructions:</strong> Click each Connection button to explain how these sources link together. Complete all three to unlock the final Summary challenge!";
                 buildTriangle(terms);
             } else {
                 updateTheme(activeTerms);
