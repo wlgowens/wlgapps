@@ -565,13 +565,18 @@
                             return `<span>${t}</span>`;
                         }
                     };
+
+                    // Explicitly set table column widths so text doesn't get crushed or over-extended
+                    let widthA = isUrl(tA) ? "150" : "400";
+                    let widthB = isUrl(tB) ? "150" : "400";
+
                     return `
                         <p style="margin-bottom: 4px;"><strong>Connection ${index}:</strong></p>
                         <table style="border: none; border-collapse: collapse; margin-bottom: 8px;">
                             <tr>
-                                <td style="vertical-align: middle; padding-right: 12px; border: none; max-width: 300px;">${formatItem(tA)}</td>
-                                <td style="vertical-align: middle; padding-right: 12px; border: none;"><strong>&harr;</strong></td>
-                                <td style="vertical-align: middle; border: none; max-width: 300px;">${formatItem(tB)}</td>
+                                <td width="${widthA}" style="vertical-align: middle; text-align: left; padding-right: 12px; border: none;">${formatItem(tA)}</td>
+                                <td width="30" style="vertical-align: middle; text-align: center; border: none;"><strong>&harr;</strong></td>
+                                <td width="${widthB}" style="vertical-align: middle; text-align: left; padding-left: 12px; border: none;">${formatItem(tB)}</td>
                             </tr>
                         </table>
                         <p style="margin-top: 4px;">${exp}</p><br>
