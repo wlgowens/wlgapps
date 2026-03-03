@@ -533,8 +533,8 @@
                     // Uses HTML tables for layout to guarantee Google Docs keeps items on the same line and wraps text cleanly
                     let formatItem = (t) => {
                         if (isUrl(t)) {
-                            // Fixed width explicitly applied to force Google Docs/Word to size the image at ~1.5 inches (144px)
-                            return `<img src="${t}" width="144" style="width: 144px; max-width: 144px; border-radius: 4px; border: 1px solid #e2e8f0; display: block;" alt="Image" />`;
+                            // Constrain BOTH max-width and max-height to ~1.5 inches (144px) so it preserves aspect ratio and doesn't get too tall
+                            return `<img src="${t}" style="max-width: 144px; max-height: 144px; width: auto; height: auto; border-radius: 4px; border: 1px solid #e2e8f0; display: block;" alt="Image" />`;
                         } else {
                             return `<strong>${t}</strong>`;
                         }
@@ -543,9 +543,9 @@
                         <p style="margin-bottom: 4px;"><strong>Connection ${index}:</strong></p>
                         <table style="border: none; border-collapse: collapse; margin-bottom: 8px;">
                             <tr>
-                                <td style="vertical-align: middle; padding-right: 12px; border: none;">${formatItem(tA)}</td>
+                                <td style="vertical-align: middle; padding-right: 12px; border: none; max-width: 250px; word-wrap: break-word;">${formatItem(tA)}</td>
                                 <td style="vertical-align: middle; padding-right: 12px; border: none;"><strong>&harr;</strong></td>
-                                <td style="vertical-align: middle; border: none;">${formatItem(tB)}</td>
+                                <td style="vertical-align: middle; border: none; max-width: 250px; word-wrap: break-word;">${formatItem(tB)}</td>
                             </tr>
                         </table>
                         <p style="margin-top: 4px;">${exp}</p><br>
