@@ -535,7 +535,8 @@
         closeModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
 
         copyTextBtn.addEventListener('click', async () => {
-            const formatHtml = (t) => isUrl(t) ? `<img src="${t}" height="60" style="height: 60px; width: auto; vertical-align: middle; border-radius: 4px; margin: 0 4px; display: inline-block;" alt="Source Image" />` : `<strong>${t}</strong>`;
+            // Updated formatHtml to enforce standard thumbnail sizing (approx 1.5 to 2 inches)
+            const formatHtml = (t) => isUrl(t) ? `<img src="${t}" width="144" height="144" style="width: 144px; height: 144px; object-fit: contain; vertical-align: middle; border-radius: 4px; margin: 4px; display: inline-block; border: 1px solid #e2e8f0;" alt="Source Image" />` : `<strong>${t}</strong>`;
             const formatPlain = (t) => isUrl(t) ? `[Image Link: ${t}]` : t;
 
             const htmlContent = `
@@ -553,7 +554,7 @@
 
             try {
                 const clipboardItem = new ClipboardItem({ "text/plain": new Blob([plainContent], { type: "text/plain" }), "text/html": new Blob([htmlContent], { type: "text/html" }) });
-                await navigator.clipboard.write([clipboardItem]); alert("Text copied to clipboard! (Images will appear when pasted into a rich text editor like Google Docs)");
+                await navigator.clipboard.write([clipboardItem]); alert("Text copied to clipboard! (Images will appear small when pasted into a rich text editor like Google Docs)");
             } catch (err) { alert("Failed to copy. Try selecting manually."); }
         });
 
@@ -567,19 +568,30 @@
             const originalBtnContent = saveImgBtn.innerHTML;
             saveImgBtn.innerHTML = `<span class="animate-pulse font-bold">Generating Diagram...</span>`;
 
-            // Wait for images to load safely
+            // Smart Image Loader to bypass basic CORS issues securely using an open proxy if needed
+            const getSafeImage = (url) => {
+                return new Promise(resolve => {
+                    const img = new Image();
+                    img.crossOrigin = "anonymous";
+                    img.onload = () => resolve(img);
+                    img.onerror = () => {
+                        const proxyImg = new Image();
+                        proxyImg.crossOrigin = "anonymous";
+                        proxyImg.onload = () => resolve(proxyImg);
+                        proxyImg.onerror = () => resolve(null); // If proxy also fails, gracefully fallback
+                        proxyImg.src = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
+                    };
+                    img.src = url;
+                });
+            };
+
+            // Wait for images to load securely
             const loadedImages = {};
-            const imagePromises = activeTerms.map((t, i) => {
+            const imagePromises = activeTerms.map(async (t, i) => {
                 if (isUrl(t)) {
-                    return new Promise(resolve => {
-                        const img = new Image();
-                        img.crossOrigin = "anonymous";
-                        img.onload = () => { loadedImages[i] = img; resolve(); };
-                        img.onerror = () => { resolve(); }; // Fail gracefully without crashing
-                        img.src = t;
-                    });
+                    const img = await getSafeImage(t);
+                    if (img) loadedImages[i] = img;
                 }
-                return Promise.resolve();
             });
 
             await Promise.all(imagePromises);
@@ -818,7 +830,7 @@
                 link.href = canvas.toDataURL('image/png');
                 link.click();
             } catch (error) {
-                alert("Security restriction: One of your image links blocked the download. You can still use the 'Copy Text' feature instead!");
+                alert("Security restriction: One of your image links securely blocked the download. You can still use the 'Copy Text' feature instead!");
             }
         });
     </script>
