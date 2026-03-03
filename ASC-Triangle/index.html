@@ -495,11 +495,11 @@
         copyTextBtn.addEventListener('click', async () => {
             const htmlContent = `
                 <h2>ASSOCIATION TRIANGLE SUMMARY</h2><br>
-                <p><strong>Connection:</strong> <strong>${isUrl(activeTerms[0]) ? 'Image A' : activeTerms[0]}</strong> ↔ <strong>${isUrl(activeTerms[1]) ? 'Image B' : activeTerms[1]}</strong></p>
+                <p><strong>Connection:</strong> <strong>${isUrl(activeTerms[0]) ? 'Source A' : activeTerms[0]}</strong> ↔ <strong>${isUrl(activeTerms[1]) ? 'Source B' : activeTerms[1]}</strong></p>
                 <p>${explanations.e12}</p><br>
-                <p><strong>Connection:</strong> <strong>${isUrl(activeTerms[1]) ? 'Image B' : activeTerms[1]}</strong> ↔ <strong>${isUrl(activeTerms[2]) ? 'Image C' : activeTerms[2]}</strong></p>
+                <p><strong>Connection:</strong> <strong>${isUrl(activeTerms[1]) ? 'Source B' : activeTerms[1]}</strong> ↔ <strong>${isUrl(activeTerms[2]) ? 'Source C' : activeTerms[2]}</strong></p>
                 <p>${explanations.e23}</p><br>
-                <p><strong>Connection:</strong> <strong>${isUrl(activeTerms[2]) ? 'Image C' : activeTerms[2]}</strong> ↔ <strong>${isUrl(activeTerms[0]) ? 'Image A' : activeTerms[0]}</strong></p>
+                <p><strong>Connection:</strong> <strong>${isUrl(activeTerms[2]) ? 'Source C' : activeTerms[2]}</strong> ↔ <strong>${isUrl(activeTerms[0]) ? 'Source A' : activeTerms[0]}</strong></p>
                 <p>${explanations.e31}</p><br>
                 <p><strong>Core Scenario Summary:</strong> ${activeTerms.map(t => isUrl(t) ? '[Image]' : t).join(' • ')}</p>
                 <p>${explanations.center}</p>`;
@@ -512,30 +512,34 @@
         saveImgBtn.addEventListener('click', () => {
             const canvas = document.getElementById('export-canvas'), ctx = canvas.getContext('2d');
             const maxWidth = 700;
-            const lineHeight = 22;
+            const lineHeight = 24; // Increased for readability
             const padding = 50;
 
-            // Helper to measure required lines for a block of text
-            function getLines(text, maxWidth) {
-                if (!text) return [];
-                const words = text.split(' ');
-                let lines = [];
-                let currentLine = '';
-                words.forEach(word => {
-                    let test = currentLine + (currentLine ? ' ' : '') + word;
-                    if (ctx.measureText(test).width > maxWidth) {
-                        lines.push(currentLine);
-                        currentLine = word;
-                    } else {
-                        currentLine = test;
-                    }
+            // Robust text wrapping that respects manual newlines
+            function getWrappedLines(text, maxWidth, font) {
+                ctx.font = font;
+                if (!text) return ["(No response provided)"];
+                const paragraphs = text.split('\n');
+                let allLines = [];
+                paragraphs.forEach(p => {
+                    const words = p.split(' ');
+                    let currentLine = '';
+                    words.forEach(word => {
+                        let test = currentLine + (currentLine ? ' ' : '') + word;
+                        if (ctx.measureText(test).width > maxWidth) {
+                            allLines.push(currentLine);
+                            currentLine = word;
+                        } else {
+                            currentLine = test;
+                        }
+                    });
+                    allLines.push(currentLine);
                 });
-                lines.push(currentLine);
-                return lines;
+                return allLines;
             }
 
-            // Prep text sections
-            ctx.font = "14px sans-serif";
+            // Prep text sections with accurate line splitting
+            const bodyFont = "15px sans-serif";
             const sections = [
                 { title: `Connection: ${isUrl(activeTerms[0]) ? 'Source A' : activeTerms[0]} ↔ ${isUrl(activeTerms[1]) ? 'Source B' : activeTerms[1]}`, text: explanations.e12 },
                 { title: `Connection: ${isUrl(activeTerms[1]) ? 'Source B' : activeTerms[1]} ↔ ${isUrl(activeTerms[2]) ? 'Source C' : activeTerms[2]}`, text: explanations.e23 },
@@ -543,16 +547,23 @@
                 { title: "Core Scenario Summary", text: explanations.center, isFinal: true }
             ];
 
-            let totalContentHeight = 600; // Starting space for the triangle
-            sections.forEach(s => {
-                const lines = getLines(s.text, maxWidth);
-                s.lines = lines;
-                totalContentHeight += 40 + (lines.length * lineHeight) + 30; // Title + Lines + Spacer
+            let calculatedSections = sections.map(s => {
+                const lines = getWrappedLines(s.text, maxWidth, bodyFont);
+                return { ...s, lines };
             });
+
+            // Calculate total height needed
+            let totalHeightNeeded = 600; // Visual triangle space
+            calculatedSections.forEach(s => {
+                totalHeightNeeded += 40; // Title space
+                totalHeightNeeded += s.lines.length * lineHeight;
+                totalHeightNeeded += 40; // Section padding/divider
+            });
+            totalHeightNeeded += padding; // Final bottom margin
 
             // Set final Canvas Dimensions
             canvas.width = 800;
-            canvas.height = totalContentHeight + padding;
+            canvas.height = totalHeightNeeded;
 
             // Draw Background
             ctx.fillStyle = "#f8fafc";
@@ -561,6 +572,7 @@
             // Draw Visual Triangle at Top
             ctx.strokeStyle = "#cbd5e1";
             ctx.lineWidth = 8;
+            ctx.lineJoin = "round";
             ctx.beginPath();
             ctx.moveTo(400, 100);
             ctx.lineTo(600, 450);
@@ -573,6 +585,7 @@
                 let x = [400, 200, 600][i], y = [100, 450, 450][i];
                 ctx.fillStyle = "white";
                 ctx.strokeStyle = "#4f46e5";
+                ctx.lineWidth = 3;
                 ctx.beginPath();
                 ctx.roundRect(x - 110, y - 40, 220, 80, 12);
                 ctx.fill();
@@ -580,13 +593,13 @@
                 ctx.fillStyle = "#1e1b4b";
                 ctx.font = "bold 13px sans-serif";
                 ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
                 
                 if (isUrl(t)) {
-                    ctx.fillText("[Image Content]", x, y + 5);
+                    ctx.fillText("[Image Content]", x, y);
                 } else {
-                    // Simple wrapping for nodes
-                    const nodeLines = getLines(t, 200);
-                    let nodeStartY = y + 5 - ((nodeLines.length - 1) * 16) / 2;
+                    const nodeLines = getWrappedLines(t, 200, "bold 13px sans-serif");
+                    let nodeStartY = y - ((nodeLines.length - 1) * 16) / 2;
                     nodeLines.forEach((l, idx) => {
                         ctx.fillText(l, x, nodeStartY + (idx * 16));
                     });
@@ -596,31 +609,33 @@
             // Draw All Text Sections below triangle
             let currentY = 550;
             ctx.textAlign = "left";
+            ctx.textBaseline = "top";
 
-            sections.forEach(s => {
+            calculatedSections.forEach(s => {
                 // Section Title
                 ctx.fillStyle = s.isFinal ? "#f59e0b" : "#4f46e5";
                 ctx.font = "bold 18px sans-serif";
                 ctx.fillText(s.title, padding, currentY);
-                currentY += 30;
+                currentY += 35;
 
                 // Section Body
                 ctx.fillStyle = "#334155";
-                ctx.font = "14px sans-serif";
+                ctx.font = bodyFont;
                 s.lines.forEach(line => {
                     ctx.fillText(line, padding, currentY);
                     currentY += lineHeight;
                 });
                 
                 // Horizontal divider
+                currentY += 15;
                 ctx.strokeStyle = "#e2e8f0";
                 ctx.lineWidth = 1;
                 ctx.beginPath();
-                ctx.moveTo(padding, currentY + 10);
-                ctx.lineTo(canvas.width - padding, currentY + 10);
+                ctx.moveTo(padding, currentY);
+                ctx.lineTo(canvas.width - padding, currentY);
                 ctx.stroke();
 
-                currentY += 40;
+                currentY += 30; // Spacer before next section
             });
 
             // Trigger Download
