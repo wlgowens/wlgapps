@@ -459,8 +459,16 @@
                 }).join('<span class="text-gray-300 mx-2 text-2xl">•</span>');
                 modalTermsDisplay.innerHTML = `<div class="flex items-center justify-center flex-wrap gap-2">${itemsHtml}</div>`;
                 saveModalBtn.innerHTML = "Save Response";
-                if (explanations.center) { exportZone.classList.remove('hidden'); saveModalBtn.classList.add('hidden'); closeModalBtn.innerHTML = "Done"; } 
-                else { exportZone.classList.add('hidden'); saveModalBtn.classList.remove('hidden'); closeModalBtn.innerHTML = "Cancel"; }
+                saveModalBtn.classList.remove('hidden'); // Always allow updating the response
+                
+                if (explanations.center) { 
+                    exportZone.classList.remove('hidden'); 
+                    closeModalBtn.innerHTML = "Done"; 
+                } 
+                else { 
+                    exportZone.classList.add('hidden'); 
+                    closeModalBtn.innerHTML = "Cancel"; 
+                }
             } else {
                 modalTitle.textContent = "Explain the Connection";
                 modalDesc.textContent = "Explain how these two relate, connect, or influence each other:";
@@ -475,7 +483,10 @@
                         ${contentB}
                     </div>
                 `;
-                saveModalBtn.innerHTML = "Save Response"; exportZone.classList.add('hidden'); saveModalBtn.classList.remove('hidden'); closeModalBtn.innerHTML = "Cancel";
+                saveModalBtn.innerHTML = "Save Response"; 
+                saveModalBtn.classList.remove('hidden');
+                exportZone.classList.add('hidden'); 
+                closeModalBtn.innerHTML = "Cancel";
             }
             modal.classList.remove('hidden'); setTimeout(() => modalTextarea.focus(), 100);
         };
@@ -483,10 +494,26 @@
         saveModalBtn.addEventListener('click', () => {
             if (!modalTextarea.value.trim()) return alert("Please write an explanation.");
             explanations[currentTarget] = modalTextarea.value;
-            let btn = currentTarget === 'center' ? btnCenter : document.getElementById('edge-' + currentTarget.substring(1));
-            btn.classList.add('completed'); btn.innerHTML = "✓ Done";
-            if (explanations.e12 && explanations.e23 && explanations.e31 && !explanations.center) { btnCenter.classList.add('unlocked'); btnCenter.innerHTML = "🔓 Summary"; }
-            if (currentTarget === 'center') { exportZone.classList.remove('hidden'); saveModalBtn.classList.add('hidden'); closeModalBtn.innerHTML = "Done"; } 
+            
+            let btnId = currentTarget === 'center' ? 'center-node' : 'edge-' + currentTarget.substring(1);
+            let btn = document.getElementById(btnId);
+            
+            btn.classList.add('completed'); 
+            btn.innerHTML = "✓ Done";
+            
+            if (explanations.e12 && explanations.e23 && explanations.e31 && !explanations.center) { 
+                btnCenter.classList.add('unlocked'); 
+                btnCenter.innerHTML = "🔓 Summary"; 
+            }
+            
+            if (currentTarget === 'center') { 
+                exportZone.classList.remove('hidden'); 
+                closeModalBtn.innerHTML = "Done"; 
+                // Don't close immediately so they can see the export options, 
+                // but allow them to click Save again if they edit.
+                exportZone.classList.add('scale-105');
+                setTimeout(() => exportZone.classList.remove('scale-105'), 300);
+            } 
             else modal.classList.add('hidden');
         });
 
@@ -512,10 +539,9 @@
         saveImgBtn.addEventListener('click', () => {
             const canvas = document.getElementById('export-canvas'), ctx = canvas.getContext('2d');
             const maxWidth = 700;
-            const lineHeight = 24; // Increased for readability
+            const lineHeight = 24; 
             const padding = 50;
 
-            // Robust text wrapping that respects manual newlines
             function getWrappedLines(text, maxWidth, font) {
                 ctx.font = font;
                 if (!text) return ["(No response provided)"];
@@ -538,7 +564,6 @@
                 return allLines;
             }
 
-            // Prep text sections with accurate line splitting
             const bodyFont = "15px sans-serif";
             const sections = [
                 { title: `Connection: ${isUrl(activeTerms[0]) ? 'Source A' : activeTerms[0]} ↔ ${isUrl(activeTerms[1]) ? 'Source B' : activeTerms[1]}`, text: explanations.e12 },
@@ -552,24 +577,22 @@
                 return { ...s, lines };
             });
 
-            // Calculate total height needed
-            let totalHeightNeeded = 600; // Visual triangle space
+            // Re-calculate height with proper spacing
+            let currentYCalc = 650; // Extra room for triangle
             calculatedSections.forEach(s => {
-                totalHeightNeeded += 40; // Title space
-                totalHeightNeeded += s.lines.length * lineHeight;
-                totalHeightNeeded += 40; // Section padding/divider
+                currentYCalc += 50; // Header space
+                currentYCalc += s.lines.length * lineHeight;
+                currentYCalc += 50; // Spacing/divider
             });
-            totalHeightNeeded += padding; // Final bottom margin
 
-            // Set final Canvas Dimensions
             canvas.width = 800;
-            canvas.height = totalHeightNeeded;
+            canvas.height = currentYCalc + padding;
 
             // Draw Background
             ctx.fillStyle = "#f8fafc";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Draw Visual Triangle at Top
+            // Triangle
             ctx.strokeStyle = "#cbd5e1";
             ctx.lineWidth = 8;
             ctx.lineJoin = "round";
@@ -580,7 +603,7 @@
             ctx.closePath();
             ctx.stroke();
 
-            // Draw Triangle Nodes
+            // Nodes
             activeTerms.forEach((t, i) => {
                 let x = [400, 200, 600][i], y = [100, 450, 450][i];
                 ctx.fillStyle = "white";
@@ -596,7 +619,7 @@
                 ctx.textBaseline = "middle";
                 
                 if (isUrl(t)) {
-                    ctx.fillText("[Image Content]", x, y);
+                    ctx.fillText("[Image Source]", x, y);
                 } else {
                     const nodeLines = getWrappedLines(t, 200, "bold 13px sans-serif");
                     let nodeStartY = y - ((nodeLines.length - 1) * 16) / 2;
@@ -606,8 +629,8 @@
                 }
             });
 
-            // Draw All Text Sections below triangle
-            let currentY = 550;
+            // Start drawing text further down to avoid overlap with nodes
+            let currentY = 600; 
             ctx.textAlign = "left";
             ctx.textBaseline = "top";
 
@@ -616,7 +639,7 @@
                 ctx.fillStyle = s.isFinal ? "#f59e0b" : "#4f46e5";
                 ctx.font = "bold 18px sans-serif";
                 ctx.fillText(s.title, padding, currentY);
-                currentY += 35;
+                currentY += 40;
 
                 // Section Body
                 ctx.fillStyle = "#334155";
@@ -626,8 +649,8 @@
                     currentY += lineHeight;
                 });
                 
-                // Horizontal divider
-                currentY += 15;
+                // Divider
+                currentY += 20;
                 ctx.strokeStyle = "#e2e8f0";
                 ctx.lineWidth = 1;
                 ctx.beginPath();
@@ -635,10 +658,9 @@
                 ctx.lineTo(canvas.width - padding, currentY);
                 ctx.stroke();
 
-                currentY += 30; // Spacer before next section
+                currentY += 30; 
             });
 
-            // Trigger Download
             const link = document.createElement('a');
             link.download = `association-triangle-${Date.now()}.png`;
             link.href = canvas.toDataURL('image/png');
