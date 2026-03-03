@@ -28,23 +28,24 @@
             top: 50%;
             left: calc(50% + 150px);
             transform: translate(-50%, -50%);
-            width: 600px;
-            height: 520px;
+            width: 650px;
+            height: 550px;
         }
 
         .triangle-node {
             position: absolute;
-            width: 180px;
+            width: 200px;
             background: white;
             border: 4px solid #4f46e5;
             border-radius: 16px;
-            padding: 12px;
+            padding: 14px;
             text-align: center;
             font-weight: 900;
             color: #1e1b4b;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
             transform: translate(-50%, -50%);
             z-index: 20;
+            font-size: 1.1rem;
         }
 
         .edge-btn {
@@ -54,7 +55,11 @@
             border: 2px dashed #94a3b8;
             color: #64748b;
             font-weight: 800;
-            padding: 8px 16px;
+            width: 150px; /* Fixed width for uniform ovals */
+            height: 44px; /* Fixed height */
+            display: flex;
+            align-items: center;
+            justify-content: center;
             border-radius: 999px;
             cursor: pointer;
             z-index: 30;
@@ -63,7 +68,7 @@
         }
 
         .edge-btn:hover { border-style: solid; border-color: #4f46e5; color: #4f46e5; transform: translate(-50%, -50%) scale(1.05); }
-        .edge-btn.completed { background: #10b981; border: 2px solid #059669; color: white; }
+        .edge-btn.completed { background: #10b981; border: 2px solid #059669; color: white; border-style: solid; }
 
         .center-btn {
             position: absolute;
@@ -73,7 +78,8 @@
             background: #e2e8f0;
             color: #94a3b8;
             border: none;
-            padding: 16px 24px;
+            width: 180px;
+            padding: 16px 0;
             border-radius: 16px;
             font-weight: 900;
             text-transform: uppercase;
@@ -82,6 +88,7 @@
             transition: all 0.3s;
             pointer-events: none;
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+            text-align: center;
         }
 
         .center-btn.unlocked {
@@ -138,16 +145,18 @@
     <div id="workspace">
         <div id="triangle-container">
             <svg class="absolute inset-0 w-full h-full" style="z-index: 10;">
-                <polygon points="300,40 500,400 100,400" fill="none" stroke="#cbd5e1" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+                <polygon points="325,40 525,430 125,430" fill="none" stroke="#cbd5e1" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
-            <div id="node-1" class="triangle-node" style="left: 50%; top: 8%;">[Term 1]</div>
-            <div id="node-2" class="triangle-node" style="left: 16.6%; top: 77%;">[Term 2]</div>
-            <div id="node-3" class="triangle-node" style="left: 83.3%; top: 77%;">[Term 3]</div>
 
-            <button id="edge-12" class="edge-btn" style="left: 33.3%; top: 42.5%;" onclick="openModal('e12')">+ Explain Connection</button>
-            <button id="edge-23" class="edge-btn" style="left: 50%; top: 77%;" onclick="openModal('e23')">+ Explain Connection</button>
-            <button id="edge-31" class="edge-btn" style="left: 66.6%; top: 42.5%;" onclick="openModal('e31')">+ Explain Connection</button>
-            <button id="center-node" class="center-btn" onclick="openModal('center')">🔒 Complete Outside First</button>
+            <div id="node-1" class="triangle-node" style="left: 50%; top: 8%;">[Term 1]</div>
+            <div id="node-2" class="triangle-node" style="left: 19%; top: 78%;">[Term 2]</div>
+            <div id="node-3" class="triangle-node" style="left: 81%; top: 78%;">[Term 3]</div>
+
+            <button id="edge-12" class="edge-btn" style="left: 34.5%; top: 43%;" onclick="openModal('e12')">Connection</button>
+            <button id="edge-23" class="edge-btn" style="left: 50%; top: 78%;" onclick="openModal('e23')">Connection</button>
+            <button id="edge-31" class="edge-btn" style="left: 65.5%; top: 43%;" onclick="openModal('e31')">Connection</button>
+            
+            <button id="center-node" class="center-btn" onclick="openModal('center')">🔒 Summary</button>
         </div>
     </div>
     <canvas id="export-canvas"></canvas>
@@ -211,11 +220,11 @@
             
             [btnE12, btnE23, btnE31].forEach(btn => {
                 btn.classList.remove('completed');
-                btn.innerHTML = "+ Explain Connection";
+                btn.innerHTML = "Connection";
             });
             
             btnCenter.classList.remove('unlocked', 'completed');
-            btnCenter.innerHTML = "🔒 Complete Outside First";
+            btnCenter.innerHTML = "🔒 Summary";
             saveImgBtn.classList.add('hidden');
         }
 
@@ -224,13 +233,11 @@
             if (t) {
                 const terms = decodeURIComponent(t).split('|');
                 termInput.value = terms.join('\n');
-                
                 termInput.readOnly = true;
                 termInput.classList.add('bg-gray-100', 'text-gray-500', 'cursor-not-allowed');
                 addBtn.classList.add('hidden');
                 linkBtn.classList.add('hidden');
                 termsLabel.textContent = "Assigned Terms (3 randomly selected)";
-                
                 buildTriangle(terms);
             }
         });
@@ -239,10 +246,8 @@
             const raw = termInput.value.trim();
             if (!raw) return;
             const terms = raw.split(/\r?\n|,/).map(t => t.trim()).filter(t => t.length > 0);
-            
             if (terms.length < 3) return alert("Please enter at least 3 terms.");
             if (terms.length > 9) return alert("Please limit your list to a maximum of 9 terms.");
-            
             buildTriangle(terms);
         });
 
@@ -250,10 +255,8 @@
             const raw = termInput.value.trim();
             if (!raw) return alert("Enter terms first!");
             const terms = raw.split(/\r?\n|,/).map(t => t.trim()).filter(t => t.length > 0);
-            
             if (terms.length < 3) return alert("Please enter at least 3 terms.");
             if (terms.length > 9) return alert("Please limit your list to a maximum of 9 terms.");
-
             const url = new URL(window.location.href);
             url.searchParams.set('t', encodeURIComponent(terms.join('|')));
             navigator.clipboard.writeText(url.toString()).then(() => alert("Student Link Copied!"));
@@ -303,7 +306,7 @@
             if (explanations.e12 && explanations.e23 && explanations.e31) {
                 if (!explanations.center) {
                     btnCenter.classList.add('unlocked');
-                    btnCenter.innerHTML = "⭐ Summarize Scenario";
+                    btnCenter.innerHTML = "⭐ Summary";
                 }
             }
 
@@ -312,18 +315,13 @@
             }
 
             modal.classList.add('hidden');
-
-            if (currentTarget === 'center') {
-                saveImgBtn.click();
-            }
+            if (currentTarget === 'center') saveImgBtn.click();
         });
 
         saveImgBtn.addEventListener('click', () => {
             const canvas = document.getElementById('export-canvas');
             const ctx = canvas.getContext('2d');
-            
             const width = 800;
-            let currentY = 550; 
             
             function getLines(text, maxWidth) {
                 if (!text) return [];
@@ -339,7 +337,6 @@
 
             ctx.font = "15px sans-serif";
             const maxTextWidth = 720;
-            
             const l12 = getLines(explanations.e12, maxTextWidth);
             const l23 = getLines(explanations.e23, maxTextWidth);
             const l31 = getLines(explanations.e31, maxTextWidth);
@@ -350,40 +347,22 @@
             
             canvas.width = width;
             canvas.height = height;
-
             ctx.fillStyle = "#f8fafc";
             ctx.fillRect(0, 0, width, height);
 
             ctx.save();
             ctx.translate(100, 50); 
-            
             ctx.beginPath();
-            ctx.moveTo(300, 40); 
-            ctx.lineTo(500, 400); 
-            ctx.lineTo(100, 400); 
-            ctx.closePath();
-            ctx.strokeStyle = "#cbd5e1";
-            ctx.lineWidth = 8;
-            ctx.lineJoin = "round";
-            ctx.stroke();
+            ctx.moveTo(300, 40); ctx.lineTo(500, 400); ctx.lineTo(100, 400); ctx.closePath();
+            ctx.strokeStyle = "#cbd5e1"; ctx.lineWidth = 8; ctx.lineJoin = "round"; ctx.stroke();
 
             function drawNode(text, cx, cy) {
-                const boxW = 180;
-                const boxH = 50;
+                const boxW = 180, boxH = 50;
                 ctx.fillStyle = "white";
-                
-                ctx.beginPath();
-                ctx.roundRect(cx - boxW/2, cy - boxH/2, boxW, boxH, 12);
-                ctx.fill();
-                ctx.strokeStyle = "#4f46e5";
-                ctx.lineWidth = 4;
-                ctx.stroke();
-
-                ctx.fillStyle = "#1e1b4b";
-                ctx.font = "bold 16px sans-serif";
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-                ctx.fillText(text, cx, cy);
+                ctx.beginPath(); ctx.roundRect(cx - boxW/2, cy - boxH/2, boxW, boxH, 12); ctx.fill();
+                ctx.strokeStyle = "#4f46e5"; ctx.lineWidth = 4; ctx.stroke();
+                ctx.fillStyle = "#1e1b4b"; ctx.font = "bold 16px sans-serif"; ctx.textAlign = "center";
+                ctx.textBaseline = "middle"; ctx.fillText(text, cx, cy);
             }
 
             drawNode(activeTerms[0], 300, 40);
@@ -391,47 +370,30 @@
             drawNode(activeTerms[2], 500, 400);
             ctx.restore();
 
-            ctx.textAlign = "left";
-            ctx.textBaseline = "top";
+            ctx.textAlign = "left"; ctx.textBaseline = "top";
             const padding = 40;
+            let currentY = 550;
             
             function printSection(title, linesArray, isCenter = false) {
                 ctx.fillStyle = isCenter ? "#f59e0b" : "#4f46e5";
                 ctx.font = "900 18px sans-serif";
-                ctx.fillText(title, padding, currentY);
-                currentY += 28;
-                
-                ctx.fillStyle = "#334155";
-                ctx.font = "16px sans-serif";
-                linesArray.forEach(line => {
-                    ctx.fillText(line, padding, currentY);
-                    currentY += 24;
-                });
+                ctx.fillText(title, padding, currentY); currentY += 28;
+                ctx.fillStyle = "#334155"; ctx.font = "16px sans-serif";
+                linesArray.forEach(line => { ctx.fillText(line, padding, currentY); currentY += 24; });
                 currentY += 30; 
             }
 
             ctx.fillStyle = "white";
-            ctx.beginPath();
-            ctx.roundRect(20, 520, width - 40, height - 540, 16);
-            ctx.fill();
-            ctx.strokeStyle = "#e2e8f0";
-            ctx.lineWidth = 2;
-            ctx.stroke();
+            ctx.beginPath(); ctx.roundRect(20, 520, width - 40, height - 540, 16); ctx.fill();
+            ctx.strokeStyle = "#e2e8f0"; ctx.lineWidth = 2; ctx.stroke();
             
-            currentY = 550;
-            printSection(`Edge: ${activeTerms[0]} ↔ ${activeTerms[1]}`, l12);
-            printSection(`Edge: ${activeTerms[1]} ↔ ${activeTerms[2]}`, l23);
-            printSection(`Edge: ${activeTerms[2]} ↔ ${activeTerms[0]}`, l31);
-            
-            ctx.beginPath();
-            ctx.moveTo(padding, currentY - 10);
-            ctx.lineTo(width - padding, currentY - 10);
-            ctx.strokeStyle = "#e2e8f0";
-            ctx.lineWidth = 2;
-            ctx.stroke();
+            printSection(`Connection: ${activeTerms[0]} ↔ ${activeTerms[1]}`, l12);
+            printSection(`Connection: ${activeTerms[1]} ↔ ${activeTerms[2]}`, l23);
+            printSection(`Connection: ${activeTerms[2]} ↔ ${activeTerms[0]}`, l31);
+            ctx.beginPath(); ctx.moveTo(padding, currentY - 10); ctx.lineTo(width - padding, currentY - 10);
+            ctx.strokeStyle = "#e2e8f0"; ctx.lineWidth = 2; ctx.stroke();
             currentY += 10;
-
-            printSection(`Core Scenario Summary`, lCenter, true);
+            printSection(`Scenario Summary`, lCenter, true);
 
             const link = document.createElement('a');
             link.download = `association-triangle-${Date.now()}.png`;
