@@ -48,12 +48,6 @@
             position: absolute;
             top: 50%; left: calc(50% + 150px); transform: translate(-50%, -50%);
             width: 650px; height: 550px; z-index: 10;
-            animation: float-triangle 6s ease-in-out infinite alternate;
-        }
-
-        @keyframes float-triangle {
-            0% { margin-top: 0px; }
-            100% { margin-top: -15px; }
         }
 
         /* --- Premium Gradient Term Nodes --- */
@@ -115,10 +109,12 @@
 </head>
 <body>
 
+    <!-- Animated Orbs -->
     <div id="orb-1" class="bg-blob blob-1"></div>
     <div id="orb-2" class="bg-blob blob-2"></div>
     <div id="orb-3" class="bg-blob blob-3"></div>
     
+    <!-- Thematic Floating Icons -->
     <div id="icon-layer"></div>
 
     <div class="controls-panel">
@@ -145,6 +141,7 @@
 
     <div id="workspace">
         <div id="triangle-container">
+            <!-- The visually appealing SVG triangle -->
             <svg class="absolute inset-0 w-full h-full" style="z-index: 10; filter: drop-shadow(0 10px 15px rgba(99, 102, 241, 0.15));">
                 <defs>
                     <linearGradient id="tri-grad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -332,7 +329,10 @@
 
             const url = new URL(window.location.href);
             url.searchParams.set('t', encodeURIComponent(terms.join('|')));
-            navigator.clipboard.writeText(url.toString()).then(() => alert("Student Link Copied!"));
+            // For Canvas preview, writeText might throw an error if not focused, so we catch it
+            navigator.clipboard.writeText(url.toString()).then(() => alert("Student Link Copied!")).catch(err => {
+                prompt("Copy this link:", url.toString());
+            });
         });
 
         window.openModal = function(target) {
