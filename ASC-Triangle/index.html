@@ -530,15 +530,26 @@
 
             function buildConnectionHtml(tA, tB, exp, index) {
                 if (isUrl(tA) || isUrl(tB)) {
-                    // Uses vertical-align and inline-block layout so text stays nicely boxed next to the image in Google Docs
+                    // Uses HTML tables for layout to guarantee Google Docs keeps items on the same line and wraps text cleanly
                     let formatItem = (t) => {
                         if (isUrl(t)) {
-                            return `<img src="${t}" style="height: 100px; width: auto; max-width: 144px; object-fit: contain; vertical-align: middle; border-radius: 4px; border: 1px solid #e2e8f0; margin: 0 8px;" alt="Image" />`;
+                            // Fixed width explicitly applied to force Google Docs/Word to size the image at ~1.5 inches (144px)
+                            return `<img src="${t}" width="144" style="width: 144px; max-width: 144px; border-radius: 4px; border: 1px solid #e2e8f0; display: block;" alt="Image" />`;
                         } else {
-                            return `<span style="display: inline-block; vertical-align: middle; max-width: 300px; word-wrap: break-word;"><strong>${t}</strong></span>`;
+                            return `<strong>${t}</strong>`;
                         }
                     };
-                    return `<p><strong>Connection ${index}:</strong><br>${formatItem(tA)} <span style="vertical-align: middle;">&harr;</span> ${formatItem(tB)}</p>\n<p>${exp}</p><br>`;
+                    return `
+                        <p style="margin-bottom: 4px;"><strong>Connection ${index}:</strong></p>
+                        <table style="border: none; border-collapse: collapse; margin-bottom: 8px;">
+                            <tr>
+                                <td style="vertical-align: middle; padding-right: 12px; border: none;">${formatItem(tA)}</td>
+                                <td style="vertical-align: middle; padding-right: 12px; border: none;"><strong>&harr;</strong></td>
+                                <td style="vertical-align: middle; border: none;">${formatItem(tB)}</td>
+                            </tr>
+                        </table>
+                        <p style="margin-top: 4px;">${exp}</p><br>
+                    `;
                 } else {
                     return `<p><strong>Connection ${index}:</strong><br><strong>${tA}</strong><br><strong>${tB}</strong></p>\n<p>${exp}</p><br>`;
                 }
