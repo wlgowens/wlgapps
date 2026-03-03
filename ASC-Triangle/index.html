@@ -185,8 +185,12 @@
             <label id="urls-label" class="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Image URLs (one per line)</label>
             <textarea id="url-input" placeholder="Paste links to graphs/photos...&#10;https://example.com/image1.png...&#10;One per line..." rows="3" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-400 outline-none mb-4 text-sm"></textarea>
             
-            <button id="add-btn" class="btn-primary w-full mb-2">Preview Triangle</button>
-            <button id="link-btn" class="bg-emerald-100 text-emerald-700 font-bold py-2 rounded-xl w-full text-sm">Copy Student Link</button>
+            <button id="add-btn" class="btn-primary w-full mb-6">Preview Triangle</button>
+            
+            <div class="mb-2 p-3 bg-emerald-50 rounded-lg text-[11px] text-emerald-800 border border-emerald-100">
+                <strong>Share with Students:</strong> Copy this unique link below to share this activity through Google Classroom or another platform.
+            </div>
+            <button id="link-btn" class="bg-emerald-100 text-emerald-700 font-bold py-3 rounded-xl w-full text-sm hover:bg-emerald-200 transition-all active:scale-95 shadow-sm">Copy Student Link</button>
         </div>
         
         <div id="info-box" class="mt-4 p-3 bg-indigo-50 rounded-lg text-[12px] text-indigo-800 leading-tight">
@@ -225,7 +229,7 @@
     <div id="prompt-modal" class="fixed inset-0 z-[2000] hidden flex items-center justify-center p-4">
         <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-2xl w-full border border-gray-100 relative">
             <h2 id="modal-title" class="text-2xl font-black text-indigo-800 mb-2 text-center">Explain the Connection</h2>
-            <p id="modal-desc" class="text-gray-500 mb-6 text-sm font-bold uppercase tracking-wider text-center">Explain how these two relate, connect, or influence each other:</p>
+            <p id="modal-desc" class="text-gray-500 mb-6 text-sm font-bold uppercase tracking-wider text-center">Describe exactly how these two relate, connect, or influence each other:</p>
             
             <div id="modal-terms-display" class="flex items-center justify-center gap-4 mb-6 p-4 bg-indigo-50 rounded-2xl border border-indigo-100 font-black text-indigo-900 text-lg text-center"></div>
             
@@ -264,7 +268,6 @@
         const iconLayer = document.getElementById('icon-layer');
         const exportZone = document.getElementById('student-export-zone');
         const teacherInputs = document.getElementById('teacher-inputs');
-        const termsLabel = document.getElementById('terms-label');
         
         const copyTextBtn = document.getElementById('copy-text-btn');
         const saveImgBtn = document.getElementById('save-img-btn');
@@ -448,7 +451,7 @@
             modalTextarea.value = explanations[target]; 
             if (target === 'center') {
                 modalTitle.textContent = "Core Scenario Summary";
-                modalDesc.textContent = "Summarize the entire scenario using all three sources:";
+                modalDesc.textContent = "Summarize the entire scenario. How does they all relate?";
                 const itemsHtml = activeTerms.map(item => {
                     const content = isUrl(item) ? formatDisplayItem(item, "modal-item-img") : `<span class="text-fuchsia-600">${item}</span>`;
                     return `<div>${content}</div>`;
@@ -459,7 +462,7 @@
                 else { exportZone.classList.add('hidden'); saveModalBtn.classList.remove('hidden'); closeModalBtn.innerHTML = "Cancel"; }
             } else {
                 modalTitle.textContent = "Explain the Connection";
-                modalDesc.textContent = "Explain how these two relate, connect, or influence each other:";
+                modalDesc.textContent = "Describe exactly how these two relate, connect, or influence each other:";
                 let tA = target === 'e12' ? activeTerms[0] : (target === 'e23' ? activeTerms[1] : activeTerms[2]);
                 let tB = target === 'e12' ? activeTerms[1] : (target === 'e23' ? activeTerms[2] : activeTerms[0]);
                 const contentA = isUrl(tA) ? formatDisplayItem(tA, "modal-item-img") : `<span class="text-indigo-600">${tA}</span>`;
