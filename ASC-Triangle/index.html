@@ -511,43 +511,123 @@
 
         saveImgBtn.addEventListener('click', () => {
             const canvas = document.getElementById('export-canvas'), ctx = canvas.getContext('2d');
-            
-            function wrapText(context, text, x, y, maxWidth, lineHeight) {
-                let words = text.split(' ');
-                let line = '';
+            const maxWidth = 700;
+            const lineHeight = 22;
+            const padding = 50;
+
+            // Helper to measure required lines for a block of text
+            function getLines(text, maxWidth) {
+                if (!text) return [];
+                const words = text.split(' ');
                 let lines = [];
-                for (let n = 0; n < words.length; n++) {
-                    let testLine = line + words[n] + ' ';
-                    let metrics = context.measureText(testLine);
-                    if (metrics.width > maxWidth && n > 0) {
-                        lines.push(line);
-                        line = words[n] + ' ';
+                let currentLine = '';
+                words.forEach(word => {
+                    let test = currentLine + (currentLine ? ' ' : '') + word;
+                    if (ctx.measureText(test).width > maxWidth) {
+                        lines.push(currentLine);
+                        currentLine = word;
                     } else {
-                        line = testLine;
+                        currentLine = test;
                     }
-                }
-                lines.push(line);
-                let startY = y - ((lines.length - 1) * lineHeight) / 2;
-                lines.forEach((l, i) => context.fillText(l.trim(), x, startY + i * lineHeight));
+                });
+                lines.push(currentLine);
+                return lines;
             }
 
-            canvas.width = 800; canvas.height = 1000; ctx.fillStyle = "#f8fafc"; ctx.fillRect(0, 0, 800, 1000);
-            ctx.strokeStyle = "#cbd5e1"; ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(400, 100); ctx.lineTo(600, 450); ctx.lineTo(200, 450); ctx.closePath(); ctx.stroke();
-            
+            // Prep text sections
+            ctx.font = "14px sans-serif";
+            const sections = [
+                { title: `Connection: ${isUrl(activeTerms[0]) ? 'Source A' : activeTerms[0]} ↔ ${isUrl(activeTerms[1]) ? 'Source B' : activeTerms[1]}`, text: explanations.e12 },
+                { title: `Connection: ${isUrl(activeTerms[1]) ? 'Source B' : activeTerms[1]} ↔ ${isUrl(activeTerms[2]) ? 'Source C' : activeTerms[2]}`, text: explanations.e23 },
+                { title: `Connection: ${isUrl(activeTerms[2]) ? 'Source C' : activeTerms[2]} ↔ ${isUrl(activeTerms[0]) ? 'Source A' : activeTerms[0]}`, text: explanations.e31 },
+                { title: "Core Scenario Summary", text: explanations.center, isFinal: true }
+            ];
+
+            let totalContentHeight = 600; // Starting space for the triangle
+            sections.forEach(s => {
+                const lines = getLines(s.text, maxWidth);
+                s.lines = lines;
+                totalContentHeight += 40 + (lines.length * lineHeight) + 30; // Title + Lines + Spacer
+            });
+
+            // Set final Canvas Dimensions
+            canvas.width = 800;
+            canvas.height = totalContentHeight + padding;
+
+            // Draw Background
+            ctx.fillStyle = "#f8fafc";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Visual Triangle at Top
+            ctx.strokeStyle = "#cbd5e1";
+            ctx.lineWidth = 8;
+            ctx.beginPath();
+            ctx.moveTo(400, 100);
+            ctx.lineTo(600, 450);
+            ctx.lineTo(200, 450);
+            ctx.closePath();
+            ctx.stroke();
+
+            // Draw Triangle Nodes
             activeTerms.forEach((t, i) => {
                 let x = [400, 200, 600][i], y = [100, 450, 450][i];
-                ctx.fillStyle = "white"; ctx.strokeStyle = "#4f46e5"; ctx.beginPath(); ctx.roundRect(x-110, y-40, 220, 80, 12); ctx.fill(); ctx.stroke();
-                ctx.fillStyle = "#1e1b4b"; ctx.font = "bold 13px sans-serif"; ctx.textAlign = "center";
+                ctx.fillStyle = "white";
+                ctx.strokeStyle = "#4f46e5";
+                ctx.beginPath();
+                ctx.roundRect(x - 110, y - 40, 220, 80, 12);
+                ctx.fill();
+                ctx.stroke();
+                ctx.fillStyle = "#1e1b4b";
+                ctx.font = "bold 13px sans-serif";
+                ctx.textAlign = "center";
+                
                 if (isUrl(t)) {
-                    ctx.fillText("[Image Content]", x, y+5);
+                    ctx.fillText("[Image Content]", x, y + 5);
                 } else {
-                    wrapText(ctx, t, x, y+5, 200, 16);
+                    // Simple wrapping for nodes
+                    const nodeLines = getLines(t, 200);
+                    let nodeStartY = y + 5 - ((nodeLines.length - 1) * 16) / 2;
+                    nodeLines.forEach((l, idx) => {
+                        ctx.fillText(l, x, nodeStartY + (idx * 16));
+                    });
                 }
             });
 
-            ctx.textAlign = "left"; ctx.fillStyle = "#1e1b4b"; ctx.font = "bold 18px sans-serif"; ctx.fillText("Summary:", 50, 550);
-            ctx.font = "14px sans-serif"; let ty = 580; explanations.center.split('\n').forEach(l => { ctx.fillText(l, 50, ty); ty += 20; });
-            const link = document.createElement('a'); link.download = `triangle-${Date.now()}.png`; link.href = canvas.toDataURL(); link.click();
+            // Draw All Text Sections below triangle
+            let currentY = 550;
+            ctx.textAlign = "left";
+
+            sections.forEach(s => {
+                // Section Title
+                ctx.fillStyle = s.isFinal ? "#f59e0b" : "#4f46e5";
+                ctx.font = "bold 18px sans-serif";
+                ctx.fillText(s.title, padding, currentY);
+                currentY += 30;
+
+                // Section Body
+                ctx.fillStyle = "#334155";
+                ctx.font = "14px sans-serif";
+                s.lines.forEach(line => {
+                    ctx.fillText(line, padding, currentY);
+                    currentY += lineHeight;
+                });
+                
+                // Horizontal divider
+                ctx.strokeStyle = "#e2e8f0";
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(padding, currentY + 10);
+                ctx.lineTo(canvas.width - padding, currentY + 10);
+                ctx.stroke();
+
+                currentY += 40;
+            });
+
+            // Trigger Download
+            const link = document.createElement('a');
+            link.download = `association-triangle-${Date.now()}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
         });
     </script>
 </body>
