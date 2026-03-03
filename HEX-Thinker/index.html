@@ -157,7 +157,7 @@
         const GRID_DX = 90, GRID_DY = 104;
         const THEME_COLOR = "#d97706"; // Amber-Brown for all hex borders
         let colorIndex = 0;
-        const COLORS = [THEME_COLOR]; // Consistent color as requested
+        const COLORS = [THEME_COLOR];
 
         let currentMode = 'pair';
         let pairText = "";
@@ -232,7 +232,6 @@
                 });
             }
             
-            // Show button only if all nodes are reachable and minimum count met
             if (visited.size === occupied.size && hexes.length >= 6) {
                 promptBtn.classList.remove('hidden');
             } else {
@@ -435,7 +434,11 @@
                 for (let i = 1; i < words.length; i++) { if (context.measureText(currentLine + " " + words[i]).width < maxWidth) currentLine += " " + words[i]; else { lines.push(currentLine); currentLine = words[i]; } }
                 lines.push(currentLine); return lines;
             }
-            canvas.width = Math.max(bW, 800); canvas.height = bH + 250;
+            
+            // Calculate height for both if selectedNode exists
+            let contentHeight = selectedNode ? 400 : 250;
+            canvas.width = Math.max(bW, 800); canvas.height = bH + contentHeight;
+            
             drawHoneycombGrid(ctx, canvas.width, canvas.height);
             hexes.forEach(h => {
                 const x = parseFloat(h.style.left)-minX+80, y = parseFloat(h.style.top)-minY+80, tLines = h.querySelectorAll('tspan');
@@ -444,11 +447,32 @@
                 ctx.fillStyle = "#374151"; ctx.font = "800 11px sans-serif"; ctx.textAlign = "center";
                 tLines.forEach((tl, i) => ctx.fillText(tl.textContent, 60, (52-(tLines.length-1)*8) + (i*16))); ctx.restore();
             });
-            const py = bH - 20; ctx.fillStyle = "white"; ctx.fillRect(40, py, canvas.width-80, 240); ctx.strokeStyle = "#fbbf24"; ctx.lineWidth = 2; ctx.strokeRect(40, py, canvas.width-80, 240);
-            ctx.textAlign = "left"; let curY = py + 40; ctx.font = "bold 16px sans-serif"; ctx.fillStyle = "#d97706";
+            
+            const py = bH - 20; 
+            ctx.fillStyle = "white"; 
+            ctx.fillRect(40, py, canvas.width-80, contentHeight - 40); 
+            ctx.strokeStyle = "#fbbf24"; 
+            ctx.lineWidth = 2; 
+            ctx.strokeRect(40, py, canvas.width-80, contentHeight - 40);
+            
+            ctx.textAlign = "left"; 
+            let curY = py + 40; 
+            
+            // Pair Challenge
+            ctx.font = "bold 16px sans-serif"; ctx.fillStyle = "#d97706";
             ctx.fillText("Pair Challenge: " + selectedPair.map(s => s.text).join(" + "), 60, curY);
             curY += 25; ctx.font = "14px sans-serif"; ctx.fillStyle = "#4b5563";
             getLines(ctx, pairText, canvas.width - 120).forEach(l => { ctx.fillText(l, 60, curY); curY += 20; });
+            
+            // Node Challenge (if exists)
+            if (selectedNode) {
+                curY += 40;
+                ctx.font = "bold 16px sans-serif"; ctx.fillStyle = "#d97706";
+                ctx.fillText("Node Challenge: " + selectedNode.map(s => s.text).join(" • "), 60, curY);
+                curY += 25; ctx.font = "14px sans-serif"; ctx.fillStyle = "#4b5563";
+                getLines(ctx, nodeText, canvas.width - 120).forEach(l => { ctx.fillText(l, 60, curY); curY += 20; });
+            }
+            
             const a = document.createElement('a'); a.download = `hex-thinking-${Date.now()}.png`; a.href = canvas.toDataURL(); a.click();
         }
 
