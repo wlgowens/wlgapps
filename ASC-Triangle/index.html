@@ -535,7 +535,7 @@
         closeModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
 
         copyTextBtn.addEventListener('click', async () => {
-            const formatHtml = (t) => isUrl(t) ? `<img src="${t}" style="max-height: 100px; max-width: 200px; vertical-align: middle; border-radius: 4px;" alt="Source Image" />` : `<strong>${t}</strong>`;
+            const formatHtml = (t) => isUrl(t) ? `<img src="${t}" height="60" style="height: 60px; width: auto; vertical-align: middle; border-radius: 4px; margin: 0 4px; display: inline-block;" alt="Source Image" />` : `<strong>${t}</strong>`;
             const formatPlain = (t) => isUrl(t) ? `[Image Link: ${t}]` : t;
 
             const htmlContent = `
@@ -606,27 +606,114 @@
                 return allLines;
             }
 
+            // Custom function to measure rich text combining text strings and images
+            function measureInlineRichText(ctx, segments, maxWidth, lineHeight) {
+                let currentX = 0;
+                let lines = 1;
+                segments.forEach(seg => {
+                    if (seg.type === 'text') {
+                        const words = seg.text.split(' ');
+                        words.forEach(word => {
+                            if (!word) return;
+                            let w = ctx.measureText(word + ' ').width;
+                            if (currentX + w > maxWidth && currentX !== 0) {
+                                currentX = 0;
+                                lines++;
+                            }
+                            currentX += w;
+                        });
+                    } else if (seg.type === 'image') {
+                        let w = seg.img.width * (40 / seg.img.height) + 8; // 40px height
+                        if (currentX + w > maxWidth && currentX !== 0) {
+                            currentX = 0;
+                            lines++;
+                        }
+                        currentX += w;
+                    }
+                });
+                return lines * lineHeight;
+            }
+
+            // Custom function to draw rich text combining text strings and scaled images
+            function drawInlineRichText(ctx, segments, x, y, maxWidth, lineHeight) {
+                let currentX = x;
+                let currentY = y;
+                
+                segments.forEach(seg => {
+                    if (seg.type === 'text') {
+                        const words = seg.text.split(' ');
+                        words.forEach(word => {
+                            if (!word) return;
+                            let w = ctx.measureText(word + ' ').width;
+                            if (currentX + w > x + maxWidth && currentX !== x) {
+                                currentX = x;
+                                currentY += lineHeight;
+                            }
+                            ctx.fillText(word + ' ', currentX, currentY);
+                            currentX += w;
+                        });
+                    } else if (seg.type === 'image') {
+                        const img = seg.img;
+                        let h = 40; // Image header scaled height
+                        let w = img.width * (h / img.height);
+                        if (currentX + w > x + maxWidth && currentX !== x) {
+                            currentX = x;
+                            currentY += lineHeight;
+                        }
+                        ctx.drawImage(img, currentX, currentY - h/2, w, h);
+                        currentX += w + 8; // Margin
+                    }
+                });
+                return currentY + lineHeight;
+            }
+
+            // Factory to build title components based on content types
+            function getTitleSegments(tA, tB, loadedImages, indexA, indexB) {
+                let segments = [{type: 'text', text: 'Connection: '}];
+                
+                if (isUrl(tA) && loadedImages[indexA]) {
+                    segments.push({type: 'image', img: loadedImages[indexA]});
+                    segments.push({type: 'text', text: ' '});
+                } else if (isUrl(tA)) {
+                    segments.push({type: 'text', text: `[Image ${indexA+1}] `});
+                } else {
+                    segments.push({type: 'text', text: tA + ' '});
+                }
+                
+                segments.push({type: 'text', text: '↔ '});
+                
+                if (isUrl(tB) && loadedImages[indexB]) {
+                    segments.push({type: 'image', img: loadedImages[indexB]});
+                } else if (isUrl(tB)) {
+                    segments.push({type: 'text', text: `[Image ${indexB+1}]`});
+                } else {
+                    segments.push({type: 'text', text: tB});
+                }
+                
+                return segments;
+            }
+
             const bodyFont = "15px sans-serif";
             const titleFont = "bold 18px sans-serif";
-            const getTermLabel = (t, i) => isUrl(t) ? `[Image ${i+1}]` : t;
 
             const sections = [
-                { title: `Connection: ${getTermLabel(activeTerms[0], 0)} ↔ ${getTermLabel(activeTerms[1], 1)}`, text: explanations.e12 },
-                { title: `Connection: ${getTermLabel(activeTerms[1], 1)} ↔ ${getTermLabel(activeTerms[2], 2)}`, text: explanations.e23 },
-                { title: `Connection: ${getTermLabel(activeTerms[2], 2)} ↔ ${getTermLabel(activeTerms[0], 0)}`, text: explanations.e31 },
-                { title: "Scenario Summary", text: explanations.center, isFinal: true }
+                { titleSegments: getTitleSegments(activeTerms[0], activeTerms[1], loadedImages, 0, 1), text: explanations.e12 },
+                { titleSegments: getTitleSegments(activeTerms[1], activeTerms[2], loadedImages, 1, 2), text: explanations.e23 },
+                { titleSegments: getTitleSegments(activeTerms[2], activeTerms[0], loadedImages, 2, 0), text: explanations.e31 },
+                { titleSegments: [{type: 'text', text: 'Scenario Summary'}], text: explanations.center, isFinal: true }
             ];
 
             let calculatedSections = sections.map(s => {
-                const titleLines = getWrappedLines(s.title, maxWidth, titleFont);
+                ctx.font = titleFont; // Important: setup font before measure
+                const titleHeight = measureInlineRichText(ctx, s.titleSegments, maxWidth, 30);
                 const lines = getWrappedLines(s.text, maxWidth, bodyFont);
-                return { ...s, titleLines, lines };
+                return { ...s, titleHeight, lines };
             });
 
-            // Re-calculate height with proper spacing for wrapped titles
+            // Re-calculate height with proper spacing for wrapped titles + images
             let currentYCalc = 650; // Extra room for triangle
             calculatedSections.forEach(s => {
-                currentYCalc += s.titleLines.length * 26 + 15; // Header space
+                currentYCalc += s.titleHeight + 15; // Header space
                 currentYCalc += s.lines.length * lineHeight;
                 currentYCalc += 50; // Spacing/divider
             });
@@ -690,21 +777,20 @@
             // Start drawing text further down to avoid overlap with nodes
             let currentY = 600; 
             ctx.textAlign = "left";
-            ctx.textBaseline = "top";
-
+            
             calculatedSections.forEach(s => {
-                // Section Title
+                // Section Title (Handles wrapping mixed with Images!)
                 ctx.fillStyle = s.isFinal ? "#f59e0b" : "#4f46e5";
                 ctx.font = titleFont;
-                s.titleLines.forEach(tLine => {
-                    ctx.fillText(tLine, padding, currentY);
-                    currentY += 26;
-                });
-                currentY += 10; // Extra gap before body text
+                ctx.textBaseline = "middle";
+                
+                drawInlineRichText(ctx, s.titleSegments, padding, currentY + 15, maxWidth, 30);
+                currentY += s.titleHeight + 10; 
 
                 // Section Body
                 ctx.fillStyle = "#334155";
                 ctx.font = bodyFont;
+                ctx.textBaseline = "top";
                 s.lines.forEach(line => {
                     ctx.fillText(line, padding, currentY);
                     currentY += lineHeight;
