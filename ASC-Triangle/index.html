@@ -12,25 +12,10 @@
             width: 100vw; height: 100vh; position: relative; overflow: hidden; background-color: #f8fafc; 
         }
 
-        /* --- Animated Background Orbs --- */
-        .bg-blob {
-            position: absolute;
-            filter: blur(90px);
-            opacity: 0.6;
-            z-index: 1;
-            animation: float 12s infinite alternate ease-in-out;
-            border-radius: 50%;
-        }
-        .blob-1 { top: -10%; left: 10%; width: 500px; height: 500px; background: #c7d2fe; animation-delay: 0s; }
-        .blob-2 { bottom: -10%; right: 10%; width: 600px; height: 600px; background: #fbcfe8; animation-delay: -4s; }
-        .blob-3 { top: 30%; left: 50%; width: 450px; height: 450px; background: #bbf7d0; animation-delay: -8s; transform: translateX(-50%); }
-
-        @keyframes float {
-            0% { transform: translateY(0) scale(1) translateX(0); }
-            100% { transform: translateY(-40px) scale(1.05) translateX(20px); }
-        }
+        /* Controls the dynamic background canvas */
+        #network-bg { position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: 0.6; }
         
-        .controls-panel { position: fixed; top: 20px; left: 20px; z-index: 100; background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); padding: 24px; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); width: 340px; border: 1px solid rgba(255,255,255,0.4); }
+        .controls-panel { position: fixed; top: 20px; left: 20px; z-index: 100; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); padding: 24px; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); width: 340px; border: 1px solid rgba(255,255,255,0.4); }
         .actions-panel { position: fixed; bottom: 24px; right: 24px; z-index: 100; display: flex; gap: 12px; }
         
         .btn-primary { background: #4f46e5; color: white; padding: 10px 20px; border-radius: 10px; font-weight: 700; transition: all 0.2s; }
@@ -54,7 +39,6 @@
             position: absolute;
             width: 200px;
             background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(5px);
             border: 4px solid #4f46e5;
             border-radius: 16px;
             padding: 14px;
@@ -84,7 +68,6 @@
             z-index: 30;
             transition: all 0.2s;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-            backdrop-filter: blur(5px);
         }
 
         .edge-btn:hover { border-style: solid; border-color: #4f46e5; color: #4f46e5; transform: translate(-50%, -50%) scale(1.05); box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.2); }
@@ -109,7 +92,6 @@
             pointer-events: none;
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
             text-align: center;
-            backdrop-filter: blur(5px);
         }
 
         .center-btn.unlocked {
@@ -135,81 +117,117 @@
 </head>
 <body>
 
-    <div class="bg-blob blob-1"></div>
-    <div class="bg-blob blob-2"></div>
-    <div class="bg-blob blob-3"></div>
-
-    <div class="controls-panel">
-        <h1 class="text-2xl font-black mb-6 text-gray-800 flex items-center gap-2">
-            <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="3" fill="none" class="text-indigo-600"><polygon points="12 2 22 20 2 20"></polygon></svg>
-            Association Triangles
-        </h1>
-        <div class="mb-5">
-            <label id="terms-label" class="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Terms (Min: 3 | Max: 9 | One term per line)</label>
-            <div class="flex flex-col gap-2">
-                <textarea id="term-input" placeholder="Term 1&#10;Term 2&#10;Term 3..." rows="6" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all text-sm font-medium"></textarea>
-                <button id="add-btn" class="btn-primary shadow-lg shadow-indigo-200 w-full">Preview Triangle</button>
-                <button id="link-btn" class="bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold py-2.5 rounded-xl w-full hover:bg-emerald-200 transition shadow-sm flex items-center justify-center gap-2 text-sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-                    Copy Student Link
-                </button>
-            </div>
-        </div>
-        <div class="p-4 bg-white/80 rounded-xl border border-indigo-100 text-xs text-indigo-800 font-medium leading-relaxed shadow-sm">
-            <strong>Teacher Tip:</strong> The app will randomly select exactly 3 terms for each student to analyze when they open the link, giving them a unique challenge! The more terms you enter, the more possible combinations, so choose carefully.
-        </div>
-    </div>
-
-    <div class="actions-panel">
-        <button id="save-img-btn" class="hidden bg-indigo-600 text-white border border-indigo-700 px-8 py-3 rounded-xl hover:bg-indigo-700 transition font-black flex items-center gap-2 shadow-lg shadow-indigo-200 text-lg">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Save & Download
-        </button>
-    </div>
-
     <div id="workspace">
+        <canvas id="network-bg"></canvas>
+
         <div id="triangle-container">
             <svg class="absolute inset-0 w-full h-full" style="z-index: 10;">
                 <polygon points="325,40 525,430 125,430" fill="none" stroke="#cbd5e1" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
-
             <div id="node-1" class="triangle-node" style="left: 50%; top: 8%;">[Term 1]</div>
             <div id="node-2" class="triangle-node" style="left: 19%; top: 78%;">[Term 2]</div>
             <div id="node-3" class="triangle-node" style="left: 81%; top: 78%;">[Term 3]</div>
-
+            
             <button id="edge-12" class="edge-btn" style="left: 34.5%; top: 43%;" onclick="openModal('e12')">Connection</button>
             <button id="edge-23" class="edge-btn" style="left: 50%; top: 78%;" onclick="openModal('e23')">Connection</button>
             <button id="edge-31" class="edge-btn" style="left: 65.5%; top: 43%;" onclick="openModal('e31')">Connection</button>
-            
             <button id="center-node" class="center-btn" onclick="openModal('center')">🔒 Summary</button>
         </div>
     </div>
-    <canvas id="export-canvas"></canvas>
+
+    <div class="controls-panel">
+        <h1 class="text-2xl font-black mb-6 text-gray-800 flex items-center gap-2">Association Triangles</h1>
+        <label id="terms-label" class="block text-[10px] font-bold uppercase text-gray-500 mb-2">Terms (Min: 3 | Max: 9 | One per line)</label>
+        <textarea id="term-input" placeholder="Term 1&#10;Term 2&#10;Term 3..." rows="5" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-400 outline-none mb-2 text-sm"></textarea>
+        <button id="add-btn" class="btn-primary w-full mb-2">Preview Triangle</button>
+        <button id="link-btn" class="bg-emerald-100 text-emerald-700 font-bold py-2 rounded-xl w-full text-sm">Copy Student Link</button>
+        
+        <div id="info-box" class="mt-4 p-3 bg-indigo-50 rounded-lg text-[12px] text-indigo-800 leading-tight">
+            <strong>Teacher Tip:</strong> The app will randomly select exactly 3 terms for each student to analyze when they open the link, giving them a unique challenge! The more terms you enter, the more possible combinations, so choose carefully.
+        </div>
+    </div>
 
     <div id="prompt-modal" class="fixed inset-0 z-[2000] hidden flex items-center justify-center p-4">
-        <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-2xl w-full border border-gray-100 relative">
-            <h2 id="modal-title" class="text-2xl font-black text-indigo-800 mb-2 text-center">Explain the Connection</h2>
-            <p id="modal-desc" class="text-gray-500 mb-6 text-sm font-bold uppercase tracking-wider text-center">Describe exactly how these two concepts relate, connect, or influence each other:</p>
-            
-            <div id="modal-terms-display" class="flex items-center justify-center gap-4 mb-6 p-4 bg-indigo-50 rounded-2xl border border-indigo-100 font-black text-indigo-900 text-lg text-center"></div>
-            
-            <textarea id="prompt-textarea" class="w-full h-44 p-5 border-2 border-gray-200 rounded-2xl focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 outline-none transition-all mb-6 text-gray-700 text-base" placeholder="Type your explanation here..."></textarea>
-            
+        <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-2xl w-full">
+            <h2 id="modal-title" class="text-2xl font-black text-indigo-800 mb-2">Explain the Connection</h2>
+            <p id="modal-desc" class="text-gray-500 mb-6 text-sm">Describe exactly how these two concepts relate, connect, or influence each other:</p>
+            <div id="modal-terms-display" class="flex items-center justify-center gap-4 mb-6 p-4 bg-indigo-50 rounded-2xl border border-indigo-100 font-black text-indigo-900 text-lg"></div>
+            <textarea id="prompt-textarea" class="w-full h-44 p-5 border-2 border-gray-200 rounded-2xl outline-none mb-6" placeholder="Type your explanation here..."></textarea>
             <div class="flex justify-end gap-3">
-                <button id="close-modal-btn" class="px-6 py-3 rounded-xl font-bold text-gray-400 hover:text-gray-600 transition-colors">Cancel</button>
-                <button id="save-modal-btn" class="bg-indigo-600 text-white px-8 py-3 rounded-xl font-black hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 flex items-center gap-2">
-                    Save Response
-                </button>
+                <button onclick="document.getElementById('prompt-modal').classList.add('hidden')" class="px-6 py-3 font-bold text-gray-400">Cancel</button>
+                <button id="save-modal-btn" class="bg-indigo-600 text-white px-8 py-3 rounded-xl font-black">Save Response</button>
             </div>
         </div>
     </div>
 
+    <canvas id="export-canvas"></canvas>
+
     <script>
+        // --- Animated Network Background Logic ---
+        const bgCanvas = document.getElementById('network-bg');
+        const bgCtx = bgCanvas.getContext('2d');
+        let particles = [];
+        
+        function initNetworkBg() {
+            bgCanvas.width = window.innerWidth;
+            bgCanvas.height = window.innerHeight;
+            particles = [];
+            const numParticles = Math.floor((window.innerWidth * window.innerHeight) / 12000); // Scale dots to screen size
+            
+            for(let i = 0; i < numParticles; i++) {
+                particles.push({
+                    x: Math.random() * bgCanvas.width,
+                    y: Math.random() * bgCanvas.height,
+                    vx: (Math.random() - 0.5) * 0.4, // Speed X
+                    vy: (Math.random() - 0.5) * 0.4, // Speed Y
+                    radius: Math.random() * 2 + 1
+                });
+            }
+        }
+        
+        function animateNetworkBg() {
+            requestAnimationFrame(animateNetworkBg);
+            bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+            
+            for(let i = 0; i < particles.length; i++) {
+                let p = particles[i];
+                p.x += p.vx; 
+                p.y += p.vy;
+                
+                if(p.x < 0 || p.x > bgCanvas.width) p.vx *= -1;
+                if(p.y < 0 || p.y > bgCanvas.height) p.vy *= -1;
+                
+                bgCtx.beginPath();
+                bgCtx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                bgCtx.fillStyle = '#94a3b8';
+                bgCtx.fill();
+                
+                // Check distance to other particles to draw connection lines
+                for(let j = i + 1; j < particles.length; j++) {
+                    let p2 = particles[j];
+                    let dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+                    if(dist < 150) {
+                        bgCtx.beginPath();
+                        bgCtx.lineWidth = 1 - (dist / 150); // Line fades out as they move apart
+                        bgCtx.moveTo(p.x, p.y);
+                        bgCtx.lineTo(p2.x, p2.y);
+                        bgCtx.strokeStyle = 'rgba(148, 163, 184, 0.4)';
+                        bgCtx.stroke();
+                    }
+                }
+            }
+        }
+        
+        window.addEventListener('resize', initNetworkBg);
+        initNetworkBg();
+        animateNetworkBg();
+        // ------------------------------------------
+
         const termInput = document.getElementById('term-input');
         const addBtn = document.getElementById('add-btn');
         const linkBtn = document.getElementById('link-btn');
         const termsLabel = document.getElementById('terms-label');
-        const saveImgBtn = document.getElementById('save-img-btn');
+        const infoBox = document.getElementById('info-box');
         
         const node1 = document.getElementById('node-1');
         const node2 = document.getElementById('node-2');
@@ -234,7 +252,6 @@
         function buildTriangle(termsArray) {
             if (termsArray.length < 3) return;
             
-            // Logic Update: If exactly 3 terms, do NOT shuffle. Otherwise, shuffle and pick 3.
             if (termsArray.length === 3) {
                 activeTerms = [...termsArray];
             } else {
@@ -255,12 +272,12 @@
             
             btnCenter.classList.remove('unlocked', 'completed');
             btnCenter.innerHTML = "🔒 Summary";
-            saveImgBtn.classList.add('hidden');
         }
 
         window.addEventListener('DOMContentLoaded', () => {
             const t = new URLSearchParams(window.location.search).get('t');
             if (t) {
+                // STUDENT VIEW
                 const terms = decodeURIComponent(t).split('|');
                 termInput.value = terms.join('\n');
                 
@@ -269,6 +286,11 @@
                 addBtn.classList.add('hidden');
                 linkBtn.classList.add('hidden');
                 termsLabel.textContent = "Assigned Terms";
+                
+                // Change Teacher Tip to Student Instructions
+                infoBox.classList.replace('bg-indigo-50', 'bg-emerald-50');
+                infoBox.classList.replace('text-indigo-800', 'text-emerald-800');
+                infoBox.innerHTML = "<strong>Instructions:</strong> Click each <strong>Connection</strong> button to explain how the terms link together. Complete all three outer edges to unlock the final Summary challenge in the center!";
                 
                 buildTriangle(terms);
             }
@@ -337,7 +359,7 @@
             if (currentTarget === 'center') btn = btnCenter;
 
             btn.classList.add('completed');
-            btn.innerHTML = "✓ Completed (Edit)";
+            btn.innerHTML = "✓ Done";
 
             if (explanations.e12 && explanations.e23 && explanations.e31) {
                 if (!explanations.center) {
@@ -346,15 +368,15 @@
                 }
             }
 
-            if (explanations.e12 && explanations.e23 && explanations.e31 && explanations.center) {
-                saveImgBtn.classList.remove('hidden');
-            }
-
             modal.classList.add('hidden');
-            if (currentTarget === 'center') saveImgBtn.click();
+            
+            // Auto download on center complete
+            if (currentTarget === 'center') {
+                generateImage();
+            }
         });
 
-        saveImgBtn.addEventListener('click', () => {
+        function generateImage() {
             const canvas = document.getElementById('export-canvas');
             const ctx = canvas.getContext('2d');
             const width = 800;
@@ -435,7 +457,7 @@
             link.download = `association-triangle-${Date.now()}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
-        });
+        }
     </script>
 </body>
 </html>
