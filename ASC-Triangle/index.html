@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Association Triangles</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Added html2canvas for taking direct screenshots of the triangle -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body { background-color: #f8fafc; overflow: hidden; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
         
@@ -122,9 +120,6 @@
         .center-btn.unlocked:hover { transform: translate(-50%, -50%) scale(1.05); }
         .center-btn.completed { background: #10b981; color: white; animation: none; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3); }
 
-        @keyframes glow { 0%, 100% { box-shadow: 0 0 5px rgba(245,158,11,0.5); } 50% { box-shadow: 0 0 20px rgba(245,158,11,0.8); } }
-        #export-canvas { display: none; }
-
         .modal-item-img {
             max-width: 120px;
             max-height: 80px;
@@ -226,8 +221,6 @@
         </div>
     </div>
     
-    <canvas id="export-canvas"></canvas>
-
     <div id="prompt-modal" class="fixed inset-0 z-[2000] hidden flex items-center justify-center p-4">
         <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-2xl w-full border border-gray-100 relative">
             <h2 id="modal-title" class="text-2xl font-black text-indigo-800 mb-2 text-center">Explain the Connection</h2>
@@ -239,15 +232,11 @@
             
             <div id="student-export-zone" class="hidden mt-6 pt-6 border-t border-gray-100">
                 <p class="text-center font-black text-indigo-900 mb-1 text-lg">Share with your Teacher</p>
-                <p class="text-center text-xs text-gray-500 mb-4 px-4">Choose 'Copy Text' to paste your work into Google Classroom or a Doc, or 'Download Image' to save the visual diagram.</p>
+                <p class="text-center text-xs text-gray-500 mb-4 px-4">Choose 'Copy Text' to paste your work into Google Classroom or a Doc.</p>
                 <div class="flex flex-wrap justify-center gap-3">
-                    <button id="copy-text-btn" class="bg-white text-indigo-600 border-2 border-indigo-600 px-6 py-2.5 rounded-xl hover:bg-indigo-50 transition font-black flex items-center gap-2 shadow-sm text-base">
+                    <button id="copy-text-btn" class="bg-indigo-600 text-white border border-indigo-700 px-8 py-3 rounded-xl hover:bg-indigo-700 transition font-black flex items-center gap-2 shadow-lg shadow-indigo-200 text-base">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                        Copy Text
-                    </button>
-                    <button id="save-img-btn" class="bg-indigo-600 text-white border border-indigo-700 px-6 py-2.5 rounded-xl hover:bg-indigo-700 transition font-black flex items-center gap-2 shadow-sm text-base">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                        Download Image
+                        Copy Text to Clipboard
                     </button>
                 </div>
             </div>
@@ -274,7 +263,6 @@
         const termsLabel = document.getElementById('terms-label');
         
         const copyTextBtn = document.getElementById('copy-text-btn');
-        const saveImgBtn = document.getElementById('save-img-btn');
 
         const node1 = document.getElementById('node-1');
         const node2 = document.getElementById('node-2');
@@ -325,10 +313,10 @@
             lightbox.style.display = 'flex';
         };
 
-        // Securely handle images to guarantee Canvas Export works using crossorigin and proxy fallback
+        // Simplified display function for much faster native loading
         function formatDisplayItem(content, className = "") {
             if (isUrl(content)) {
-                return `<img src="${content}" crossorigin="anonymous" class="${className}" onclick="zoomImage('${content}')" onerror="if(!this.dataset.proxied){ this.dataset.proxied='true'; this.src='https://api.allorigins.win/raw?url=' + encodeURIComponent('${content}'); } else { this.parentElement.innerHTML='[Invalid Image URL]'; }">`;
+                return `<img src="${content}" class="${className}" onclick="zoomImage('${content}')" onerror="this.parentElement.innerHTML='[Invalid Image URL]'">`;
             }
             return `<span>${content}</span>`;
         }
@@ -538,7 +526,6 @@
         closeModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
 
         copyTextBtn.addEventListener('click', async () => {
-            // Updated formatHtml to enforce standard thumbnail sizing (approx 1.5 to 2 inches)
             const formatHtml = (t) => isUrl(t) ? `<img src="${t}" width="144" height="144" style="width: 144px; height: 144px; object-fit: contain; vertical-align: middle; border-radius: 4px; margin: 4px; display: inline-block; border: 1px solid #e2e8f0;" alt="Source Image" />` : `<strong>${t}</strong>`;
             const formatPlain = (t) => isUrl(t) ? `[Image Link: ${t}]` : t;
 
@@ -559,140 +546,6 @@
                 const clipboardItem = new ClipboardItem({ "text/plain": new Blob([plainContent], { type: "text/plain" }), "text/html": new Blob([htmlContent], { type: "text/html" }) });
                 await navigator.clipboard.write([clipboardItem]); alert("Text copied to clipboard! (Images will appear small when pasted into a rich text editor like Google Docs)");
             } catch (err) { alert("Failed to copy. Try selecting manually."); }
-        });
-
-        saveImgBtn.addEventListener('click', async () => {
-            const originalBtnContent = saveImgBtn.innerHTML;
-            saveImgBtn.innerHTML = `<span class="animate-pulse font-bold">Generating Diagram...</span>`;
-
-            try {
-                // 1. Take a screenshot of the actual triangle using html2canvas
-                const container = document.getElementById('triangle-container');
-                const canvasObj = await html2canvas(container, {
-                    useCORS: true,
-                    allowTaint: true,
-                    backgroundColor: null,
-                    scale: 2 // Keep it high resolution
-                });
-
-                // 2. Setup the export canvas
-                const canvas = document.getElementById('export-canvas');
-                const ctx = canvas.getContext('2d');
-                const maxWidth = 700;
-                const lineHeight = 24; 
-                const padding = 50;
-
-                function getWrappedLines(text, maxWidth) {
-                    if (!text) return ["(No response provided)"];
-                    const paragraphs = text.split('\n');
-                    let allLines = [];
-                    paragraphs.forEach(p => {
-                        const words = p.split(' ');
-                        let currentLine = '';
-                        words.forEach(word => {
-                            let test = currentLine + (currentLine ? ' ' : '') + word;
-                            if (ctx.measureText(test).width > maxWidth) {
-                                allLines.push(currentLine);
-                                currentLine = word;
-                            } else {
-                                currentLine = test;
-                            }
-                        });
-                        allLines.push(currentLine);
-                    });
-                    return allLines;
-                }
-
-                const bodyFont = "15px sans-serif";
-                const titleFont = "bold 18px sans-serif";
-                
-                // Simple label references to match the screenshot visually
-                const getTermLabel = (t, i) => isUrl(t) ? `[Image ${i+1}]` : t;
-
-                const sections = [
-                    { title: `Connection: ${getTermLabel(activeTerms[0], 0)} ↔ ${getTermLabel(activeTerms[1], 1)}`, text: explanations.e12 },
-                    { title: `Connection: ${getTermLabel(activeTerms[1], 1)} ↔ ${getTermLabel(activeTerms[2], 2)}`, text: explanations.e23 },
-                    { title: `Connection: ${getTermLabel(activeTerms[2], 2)} ↔ ${getTermLabel(activeTerms[0], 0)}`, text: explanations.e31 },
-                    { title: "Scenario Summary", text: explanations.center, isFinal: true }
-                ];
-
-                // Measure required space
-                let calculatedSections = sections.map(s => {
-                    ctx.font = titleFont; 
-                    const titleLines = getWrappedLines(s.title, maxWidth);
-                    ctx.font = bodyFont;
-                    const lines = getWrappedLines(s.text, maxWidth);
-                    return { ...s, titleLines, lines };
-                });
-
-                // Target width for screenshot mapping
-                const tWidth = 800;
-                const tHeight = (canvasObj.height / canvasObj.width) * tWidth;
-
-                let currentYCalc = tHeight + 40; 
-                calculatedSections.forEach(s => {
-                    currentYCalc += s.titleLines.length * 26 + 15; 
-                    currentYCalc += s.lines.length * lineHeight;
-                    currentYCalc += 50; 
-                });
-
-                canvas.width = 800;
-                canvas.height = currentYCalc + padding;
-
-                // Draw Background
-                ctx.fillStyle = "#f8fafc";
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-                // Draw the actual Screenshot of the Triangle
-                ctx.drawImage(canvasObj, 0, 20, tWidth, tHeight);
-
-                // Draw the Text Sections Below
-                let currentY = tHeight + 40; 
-                ctx.textAlign = "left";
-                ctx.textBaseline = "top";
-                
-                calculatedSections.forEach(s => {
-                    // Title
-                    ctx.fillStyle = s.isFinal ? "#f59e0b" : "#4f46e5";
-                    ctx.font = titleFont;
-                    s.titleLines.forEach(tLine => {
-                        ctx.fillText(tLine, padding, currentY);
-                        currentY += 26;
-                    });
-                    currentY += 10; 
-
-                    // Body
-                    ctx.fillStyle = "#334155";
-                    ctx.font = bodyFont;
-                    s.lines.forEach(line => {
-                        ctx.fillText(line, padding, currentY);
-                        currentY += lineHeight;
-                    });
-                    
-                    // Divider
-                    currentY += 20;
-                    ctx.strokeStyle = "#e2e8f0";
-                    ctx.lineWidth = 1;
-                    ctx.beginPath();
-                    ctx.moveTo(padding, currentY);
-                    ctx.lineTo(canvas.width - padding, currentY);
-                    ctx.stroke();
-
-                    currentY += 30; 
-                });
-
-                // Reset Button and Trigger Download
-                saveImgBtn.innerHTML = originalBtnContent;
-                const link = document.createElement('a');
-                link.download = `association-triangle-${Date.now()}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-                
-            } catch (error) {
-                console.error(error);
-                saveImgBtn.innerHTML = originalBtnContent;
-                alert("Security restriction: Could not capture screenshot. You can still use the 'Copy Text' feature instead!");
-            }
         });
     </script>
 </body>
