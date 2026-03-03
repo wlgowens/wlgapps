@@ -224,7 +224,7 @@
     <div id="prompt-modal" class="fixed inset-0 z-[2000] hidden flex items-center justify-center p-4">
         <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-2xl w-full border border-gray-100 relative">
             <h2 id="modal-title" class="text-2xl font-black text-indigo-800 mb-2 text-center">Explain the Connection</h2>
-            <p id="modal-desc" class="text-gray-500 mb-6 text-sm font-bold uppercase tracking-wider text-center">Describe exactly how these two concepts relate, connect, or influence each other:</p>
+            <p id="modal-desc" class="text-gray-500 mb-6 text-sm font-bold uppercase tracking-wider text-center">Explain how these two relate, connect, or influence each other:</p>
             
             <div id="modal-terms-display" class="flex items-center justify-center gap-4 mb-6 p-4 bg-indigo-50 rounded-2xl border border-indigo-100 font-black text-indigo-900 text-lg text-center"></div>
             
@@ -447,7 +447,7 @@
             modalTextarea.value = explanations[target]; 
             if (target === 'center') {
                 modalTitle.textContent = "Core Scenario Summary";
-                modalDesc.textContent = "Summarize the entire scenario using all three concepts:";
+                modalDesc.textContent = "Summarize the entire scenario using all three sources:";
                 const itemsHtml = activeTerms.map(item => {
                     const content = isUrl(item) ? formatDisplayItem(item, "modal-item-img") : `<span class="text-fuchsia-600">${item}</span>`;
                     return `<div>${content}</div>`;
@@ -458,7 +458,7 @@
                 else { exportZone.classList.add('hidden'); saveModalBtn.classList.remove('hidden'); closeModalBtn.innerHTML = "Cancel"; }
             } else {
                 modalTitle.textContent = "Explain the Connection";
-                modalDesc.textContent = "Describe exactly how these two concepts relate, connect, or influence each other:";
+                modalDesc.textContent = "Explain how these two relate, connect, or influence each other:";
                 let tA = target === 'e12' ? activeTerms[0] : (target === 'e23' ? activeTerms[1] : activeTerms[2]);
                 let tB = target === 'e12' ? activeTerms[1] : (target === 'e23' ? activeTerms[2] : activeTerms[0]);
                 const contentA = isUrl(tA) ? formatDisplayItem(tA, "modal-item-img") : `<span class="text-indigo-600">${tA}</span>`;
