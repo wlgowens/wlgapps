@@ -27,7 +27,9 @@
         .choice-btn { flex: 1; padding: 12px; border-radius: 12px; border: 2px solid #eef2ff; font-weight: bold; transition: all 0.2s; text-align: center; cursor: pointer; color: #6366f1; }
         .choice-btn:hover { background-color: #f5f7ff; }
         .choice-btn.active { background-color: #6366f1; border-color: #6366f1; color: white; }
-        #prompt-modal { background-color: rgba(0, 0, 0, 0.1); backdrop-filter: blur(2px); pointer-events: none; }
+        
+        /* Modal specific styles - Removed background blur/dimming for full clarity */
+        #prompt-modal { pointer-events: none; }
         #modal-content { pointer-events: auto; cursor: grab; }
         #modal-content:active { cursor: grabbing; }
         #prompt-textarea, #save-modal-btn, #close-modal-btn, #mode-selector { cursor: auto; }
@@ -124,6 +126,7 @@
         let colorIndex = 0, savedExplanation = "", savedTermsHeader = "", currentPairs = [], currentNodeGroups = [];
         const GRID_DX = 90, GRID_DY = 104;
 
+        // Modal Draggable Logic
         let isModalDragging = false, modalOffsetX, modalOffsetY;
         modalContent.addEventListener('mousedown', (e) => {
             if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'BUTTON' || e.target.closest('#mode-selector')) return;
@@ -327,7 +330,9 @@
             if (currentNodeGroups.length === 0) { btnNode.classList.add('hidden'); } 
             else { btnNode.classList.remove('hidden'); }
             
-            modalContent.style.left = '50%'; modalContent.style.top = '50%'; modalContent.style.transform = 'translate(-50%, -50%)';
+            modalContent.style.left = '50%';
+            modalContent.style.top = '50%';
+            modalContent.style.transform = 'translate(-50%, -50%)';
             setChallengeMode('pair');
             promptModal.classList.remove('hidden');
         });
@@ -388,7 +393,7 @@
             const t = new URLSearchParams(window.location.search).get('t');
             if (t) {
                 hexInput.value = decodeURIComponent(t).split('|').join('\n');
-                setTimeout(() => { addBtn.click(); hexInput.readOnly = true; hexInput.classList.add('bg-gray-50'); addBtn.classList.add('hidden'); linkBtn.classList.add('hidden'); termsLabel.textContent = "Assigned Terms"; }, 100);
+                setTimeout(() => { addBtn.click(); hexInput.readOnly = true; hexInput.classList.add('bg-gray-50'); addBtn.classList.add('hidden'); linkBtn.classList.add('hidden'); document.getElementById('terms-label').textContent = "Assigned Terms"; }, 100);
             }
         });
         clearBtn.onclick = () => { if(confirm("Clear board?")) { workspace.innerHTML = ""; savedExplanation = ""; promptBtn.classList.add('hidden'); if(hexInput.readOnly) setTimeout(()=>addBtn.click(), 100); } };
