@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Association Triangles</title>
+    <title>Association Triangle</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #f8fafc; overflow: hidden; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
@@ -172,7 +172,7 @@
     <div class="controls-panel">
         <h1 class="text-2xl font-black mb-6 text-gray-800 flex items-center gap-2">
             <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="3" fill="none" class="text-indigo-600"><polygon points="12 2 22 20 2 20"></polygon></svg>
-            Association Triangles
+            Association Triangle
         </h1>
         
         <div id="teacher-inputs">
@@ -526,14 +526,21 @@
         closeModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
 
         copyTextBtn.addEventListener('click', async () => {
-            const formatHtmlMixed = (t) => isUrl(t) ? `<img src="${t}" width="144" height="144" style="width: 144px; height: 144px; object-fit: contain; vertical-align: middle; border-radius: 4px; margin: 4px; display: inline-block; border: 1px solid #e2e8f0;" alt="Source Image" />` : `<strong>${t}</strong>`;
             const formatPlainMixed = (t) => isUrl(t) ? `[Image Link: ${t}]` : t;
 
             function buildConnectionHtml(tA, tB, exp, index) {
                 if (isUrl(tA) || isUrl(tB)) {
-                    return `<p><strong>Connection ${index}:</strong><br>${formatHtmlMixed(tA)} &harr; ${formatHtmlMixed(tB)}</p>\n<p>${exp}</p><br>`;
+                    // Uses vertical-align and inline-block layout so text stays nicely boxed next to the image in Google Docs
+                    let formatItem = (t) => {
+                        if (isUrl(t)) {
+                            return `<img src="${t}" style="height: 100px; width: auto; max-width: 144px; object-fit: contain; vertical-align: middle; border-radius: 4px; border: 1px solid #e2e8f0; margin: 0 8px;" alt="Image" />`;
+                        } else {
+                            return `<span style="display: inline-block; vertical-align: middle; max-width: 300px; word-wrap: break-word;"><strong>${t}</strong></span>`;
+                        }
+                    };
+                    return `<p><strong>Connection ${index}:</strong><br>${formatItem(tA)} <span style="vertical-align: middle;">&harr;</span> ${formatItem(tB)}</p>\n<p>${exp}</p><br>`;
                 } else {
-                    return `<p><strong>Connection ${index}:</strong><br>&quot;${tA}&quot;<br>&quot;${tB}&quot;</p>\n<p>${exp}</p><br>`;
+                    return `<p><strong>Connection ${index}:</strong><br><strong>${tA}</strong><br><strong>${tB}</strong></p>\n<p>${exp}</p><br>`;
                 }
             }
 
@@ -541,19 +548,19 @@
                 if (isUrl(tA) || isUrl(tB)) {
                     return `Connection ${index}:\n${formatPlainMixed(tA)} ↔ ${formatPlainMixed(tB)}\n${exp}\n\n`;
                 } else {
-                    return `Connection ${index}:\n"${tA}"\n"${tB}"\n${exp}\n\n`;
+                    return `Connection ${index}:\n${tA}\n${tB}\n${exp}\n\n`;
                 }
             }
 
             const htmlContent = `
-                <h2>ASSOCIATION TRIANGLE SUMMARY</h2><br>
+                <h2>Association Triangle</h2><br>
                 ${buildConnectionHtml(activeTerms[0], activeTerms[1], explanations.e12, 1)}
                 ${buildConnectionHtml(activeTerms[1], activeTerms[2], explanations.e23, 2)}
                 ${buildConnectionHtml(activeTerms[2], activeTerms[0], explanations.e31, 3)}
                 <h2>Scenario Summary</h2>
                 <p>${explanations.center}</p>`;
 
-            const plainContent = `ASSOCIATION TRIANGLE SUMMARY\n\n` +
+            const plainContent = `Association Triangle\n\n` +
                 buildConnectionPlain(activeTerms[0], activeTerms[1], explanations.e12, 1) +
                 buildConnectionPlain(activeTerms[1], activeTerms[2], explanations.e23, 2) +
                 buildConnectionPlain(activeTerms[2], activeTerms[0], explanations.e31, 3) +
