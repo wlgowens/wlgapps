@@ -8,7 +8,6 @@
     <style>
         body { background-color: #f1f5f9; overflow: hidden; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
         
-        /* Subtle dot background */
         #workspace { 
             width: 100vw; height: 100vh; position: relative; overflow: hidden; background-color: #f1f5f9; 
             background-image: radial-gradient(#cbd5e1 2px, transparent 2px); background-size: 30px 30px;
@@ -22,14 +21,12 @@
         textarea { resize: none; scrollbar-width: thin; line-height: 1.4; }
         .hidden { display: none !important; }
         
-        /* Modal specific styles */
         #prompt-modal { background-color: rgba(15, 23, 42, 0.4); backdrop-filter: blur(3px); }
         
-        /* Triangle Layout Specifics */
         #triangle-container {
             position: absolute;
             top: 50%;
-            left: calc(50% + 150px); /* Offset to account for sidebar */
+            left: calc(50% + 150px);
             transform: translate(-50%, -50%);
             width: 600px;
             height: 520px;
@@ -116,7 +113,7 @@
             Association Triangles
         </h1>
         <div class="mb-5">
-            <label id="terms-label" class="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Terms (Min: 3 | Paste or Type)</label>
+            <label id="terms-label" class="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Terms (Min: 3 | Max: 9)</label>
             <div class="flex flex-col gap-2">
                 <textarea id="term-input" placeholder="Term 1&#10;Term 2&#10;Term 3..." rows="6" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all text-sm font-medium"></textarea>
                 <button id="add-btn" class="btn-primary shadow-lg shadow-indigo-200 w-full">Preview Triangle</button>
@@ -127,7 +124,7 @@
             </div>
         </div>
         <div class="p-4 bg-indigo-50 rounded-xl border border-indigo-100 text-xs text-indigo-800 font-medium leading-relaxed">
-            <strong>Teacher Tip:</strong> Enter as many terms as you want. The app will randomly select 3 for the student to analyze when they open the link!
+            <strong>Teacher Tip:</strong> Enter between 3 and 9 terms. The app will randomly select exactly 3 for each student to analyze when they open the link, giving them a unique challenge!
         </div>
     </div>
 
@@ -143,7 +140,6 @@
             <svg class="absolute inset-0 w-full h-full" style="z-index: 10;">
                 <polygon points="300,40 500,400 100,400" fill="none" stroke="#cbd5e1" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
-
             <div id="node-1" class="triangle-node" style="left: 50%; top: 8%;">[Term 1]</div>
             <div id="node-2" class="triangle-node" style="left: 16.6%; top: 77%;">[Term 2]</div>
             <div id="node-3" class="triangle-node" style="left: 83.3%; top: 77%;">[Term 3]</div>
@@ -151,7 +147,6 @@
             <button id="edge-12" class="edge-btn" style="left: 33.3%; top: 42.5%;" onclick="openModal('e12')">+ Link Ideas</button>
             <button id="edge-23" class="edge-btn" style="left: 50%; top: 77%;" onclick="openModal('e23')">+ Link Ideas</button>
             <button id="edge-31" class="edge-btn" style="left: 66.6%; top: 42.5%;" onclick="openModal('e31')">+ Link Ideas</button>
-
             <button id="center-node" class="center-btn" onclick="openModal('center')">🔒 Complete Outside First</button>
         </div>
     </div>
@@ -162,8 +157,7 @@
             <h2 id="modal-title" class="text-2xl font-black text-indigo-800 mb-2 text-center">Impact Analysis</h2>
             <p id="modal-desc" class="text-gray-500 mb-6 text-sm font-bold uppercase tracking-wider text-center">Explain exactly how these two things impact each other:</p>
             
-            <div id="modal-terms-display" class="flex items-center justify-center gap-4 mb-6 p-4 bg-indigo-50 rounded-2xl border border-indigo-100 font-black text-indigo-900 text-lg text-center">
-                </div>
+            <div id="modal-terms-display" class="flex items-center justify-center gap-4 mb-6 p-4 bg-indigo-50 rounded-2xl border border-indigo-100 font-black text-indigo-900 text-lg text-center"></div>
             
             <textarea id="prompt-textarea" class="w-full h-44 p-5 border-2 border-gray-200 rounded-2xl focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 outline-none transition-all mb-6 text-gray-700 text-base" placeholder="Type your explanation here..."></textarea>
             
@@ -177,14 +171,12 @@
     </div>
 
     <script>
-        // DOM Elements
         const termInput = document.getElementById('term-input');
         const addBtn = document.getElementById('add-btn');
         const linkBtn = document.getElementById('link-btn');
         const termsLabel = document.getElementById('terms-label');
         const saveImgBtn = document.getElementById('save-img-btn');
         
-        // Triangle Elements
         const node1 = document.getElementById('node-1');
         const node2 = document.getElementById('node-2');
         const node3 = document.getElementById('node-3');
@@ -193,7 +185,6 @@
         const btnE31 = document.getElementById('edge-31');
         const btnCenter = document.getElementById('center-node');
 
-        // Modal Elements
         const modal = document.getElementById('prompt-modal');
         const modalTitle = document.getElementById('modal-title');
         const modalDesc = document.getElementById('modal-desc');
@@ -202,25 +193,20 @@
         const closeModalBtn = document.getElementById('close-modal-btn');
         const saveModalBtn = document.getElementById('save-modal-btn');
 
-        // Application State
-        let activeTerms = ["Term 1", "Term 2", "Term 3"];
+        let activeTerms = ["[Term 1]", "[Term 2]", "[Term 3]"];
         let explanations = { e12: "", e23: "", e31: "", center: "" };
-        let currentTarget = ""; // tracks which button opened the modal
+        let currentTarget = "";
 
-        // Initialize or Update the Triangle
         function buildTriangle(termsArray) {
             if (termsArray.length < 3) return;
             
-            // Randomly select 3 terms if more are provided
             let shuffled = [...termsArray].sort(() => 0.5 - Math.random());
             activeTerms = [shuffled[0], shuffled[1], shuffled[2]];
 
-            // Update UI
             node1.textContent = activeTerms[0];
             node2.textContent = activeTerms[1];
             node3.textContent = activeTerms[2];
 
-            // Reset state
             explanations = { e12: "", e23: "", e31: "", center: "" };
             
             [btnE12, btnE23, btnE31].forEach(btn => {
@@ -233,54 +219,49 @@
             saveImgBtn.classList.add('hidden');
         }
 
-        // Handle URL parameters (Student View)
         window.addEventListener('DOMContentLoaded', () => {
             const t = new URLSearchParams(window.location.search).get('t');
             if (t) {
-                // We are in Student Mode
                 const terms = decodeURIComponent(t).split('|');
                 termInput.value = terms.join('\n');
                 
-                // Lock the sidebar
                 termInput.readOnly = true;
                 termInput.classList.add('bg-gray-100', 'text-gray-500', 'cursor-not-allowed');
                 addBtn.classList.add('hidden');
                 linkBtn.classList.add('hidden');
-                termsLabel.textContent = "Assigned Terms (3 randomly selected for you)";
+                termsLabel.textContent = "Assigned Terms (3 randomly selected)";
                 
                 buildTriangle(terms);
-            } else {
-                // Teacher default
-                buildTriangle(["Trade", "Geography", "Population"]);
             }
         });
 
-        // Teacher Preview Button
         addBtn.addEventListener('click', () => {
             const raw = termInput.value.trim();
             if (!raw) return;
             const terms = raw.split(/\r?\n|,/).map(t => t.trim()).filter(t => t.length > 0);
             
             if (terms.length < 3) return alert("Please enter at least 3 terms.");
+            if (terms.length > 9) return alert("Please limit your list to a maximum of 9 terms.");
+            
             buildTriangle(terms);
         });
 
-        // Teacher Link Generator
         linkBtn.addEventListener('click', () => {
             const raw = termInput.value.trim();
             if (!raw) return alert("Enter terms first!");
             const terms = raw.split(/\r?\n|,/).map(t => t.trim()).filter(t => t.length > 0);
+            
             if (terms.length < 3) return alert("Please enter at least 3 terms.");
+            if (terms.length > 9) return alert("Please limit your list to a maximum of 9 terms.");
 
             const url = new URL(window.location.href);
             url.searchParams.set('t', encodeURIComponent(terms.join('|')));
             navigator.clipboard.writeText(url.toString()).then(() => alert("Student Link Copied!"));
         });
 
-        // Modal Logic
         window.openModal = function(target) {
             currentTarget = target;
-            modalTextarea.value = explanations[target]; // Load saved text if editing
+            modalTextarea.value = explanations[target]; 
 
             if (target === 'center') {
                 modalTitle.textContent = "Core Scenario Summary";
@@ -306,10 +287,8 @@
             const text = modalTextarea.value.trim();
             if (!text) return alert("Please write an explanation.");
             
-            // Save text to state
             explanations[currentTarget] = text;
             
-            // Update UI of the clicked button
             let btn;
             if (currentTarget === 'e12') btn = btnE12;
             if (currentTarget === 'e23') btn = btnE23;
@@ -319,7 +298,6 @@
             btn.classList.add('completed');
             btn.innerHTML = "✓ Completed (Edit)";
 
-            // Logic Check: Did they finish the outside edges?
             if (explanations.e12 && explanations.e23 && explanations.e31) {
                 if (!explanations.center) {
                     btnCenter.classList.add('unlocked');
@@ -327,7 +305,6 @@
                 }
             }
 
-            // Logic Check: Did they finish everything?
             if (explanations.e12 && explanations.e23 && explanations.e31 && explanations.center) {
                 saveImgBtn.classList.remove('hidden');
             }
@@ -335,15 +312,12 @@
             modal.classList.add('hidden');
         });
 
-        // --- Export to Image Logic ---
         saveImgBtn.addEventListener('click', () => {
             const canvas = document.getElementById('export-canvas');
             const ctx = canvas.getContext('2d');
             
-            // Setup canvas size
             const width = 800;
-            // Calculate height based on text content later, start with a base
-            let currentY = 550; // Space for the triangle diagram
+            let currentY = 550; 
             
             function getLines(text, maxWidth) {
                 if (!text) return [];
@@ -360,44 +334,38 @@
             ctx.font = "15px sans-serif";
             const maxTextWidth = 720;
             
-            // Measure all paragraphs to determine final canvas height
             const l12 = getLines(explanations.e12, maxTextWidth);
             const l23 = getLines(explanations.e23, maxTextWidth);
             const l31 = getLines(explanations.e31, maxTextWidth);
             const lCenter = getLines(explanations.center, maxTextWidth);
             
             const totalLines = l12.length + l23.length + l31.length + lCenter.length;
-            const height = 550 + (totalLines * 24) + 250; // base + text space + padding
+            const height = 550 + (totalLines * 24) + 250;
             
             canvas.width = width;
             canvas.height = height;
 
-            // Fill background
             ctx.fillStyle = "#f8fafc";
             ctx.fillRect(0, 0, width, height);
 
-            // --- DRAW TRIANGLE DIAGRAM ---
             ctx.save();
-            ctx.translate(100, 50); // Center the 600x500 triangle in the 800px canvas
+            ctx.translate(100, 50); 
             
-            // Draw lines
             ctx.beginPath();
-            ctx.moveTo(300, 40);  // Top
-            ctx.lineTo(500, 400); // BR
-            ctx.lineTo(100, 400); // BL
+            ctx.moveTo(300, 40); 
+            ctx.lineTo(500, 400); 
+            ctx.lineTo(100, 400); 
             ctx.closePath();
             ctx.strokeStyle = "#cbd5e1";
             ctx.lineWidth = 8;
             ctx.lineJoin = "round";
             ctx.stroke();
 
-            // Function to draw node boxes
             function drawNode(text, cx, cy) {
                 const boxW = 180;
                 const boxH = 50;
                 ctx.fillStyle = "white";
                 
-                // Rounded rect
                 ctx.beginPath();
                 ctx.roundRect(cx - boxW/2, cy - boxH/2, boxW, boxH, 12);
                 ctx.fill();
@@ -417,7 +385,6 @@
             drawNode(activeTerms[2], 500, 400);
             ctx.restore();
 
-            // --- DRAW TEXT RESPONSES ---
             ctx.textAlign = "left";
             ctx.textBaseline = "top";
             const padding = 40;
@@ -434,10 +401,9 @@
                     ctx.fillText(line, padding, currentY);
                     currentY += 24;
                 });
-                currentY += 30; // space between sections
+                currentY += 30; 
             }
 
-            // Draw a neat bounding box for the text
             ctx.fillStyle = "white";
             ctx.beginPath();
             ctx.roundRect(20, 520, width - 40, height - 540, 16);
@@ -451,7 +417,6 @@
             printSection(`Edge: ${activeTerms[1]} ↔ ${activeTerms[2]}`, l23);
             printSection(`Edge: ${activeTerms[2]} ↔ ${activeTerms[0]}`, l31);
             
-            // Draw a separator line before the summary
             ctx.beginPath();
             ctx.moveTo(padding, currentY - 10);
             ctx.lineTo(width - padding, currentY - 10);
@@ -462,7 +427,6 @@
 
             printSection(`Core Scenario Summary`, lCenter, true);
 
-            // Download
             const link = document.createElement('a');
             link.download = `association-triangle-${Date.now()}.png`;
             link.href = canvas.toDataURL('image/png');
