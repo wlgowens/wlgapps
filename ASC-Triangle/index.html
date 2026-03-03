@@ -6,18 +6,35 @@
     <title>Association Triangles</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #f1f5f9; overflow: hidden; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        body { background-color: #f8fafc; overflow: hidden; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
         
         #workspace { 
-            width: 100vw; height: 100vh; position: relative; overflow: hidden; background-color: #f1f5f9; 
-            background-image: radial-gradient(#cbd5e1 2px, transparent 2px); background-size: 30px 30px;
+            width: 100vw; height: 100vh; position: relative; overflow: hidden; background-color: #f8fafc; 
+        }
+
+        /* --- Animated Background Orbs --- */
+        .bg-blob {
+            position: absolute;
+            filter: blur(90px);
+            opacity: 0.6;
+            z-index: 1;
+            animation: float 12s infinite alternate ease-in-out;
+            border-radius: 50%;
+        }
+        .blob-1 { top: -10%; left: 10%; width: 500px; height: 500px; background: #c7d2fe; animation-delay: 0s; }
+        .blob-2 { bottom: -10%; right: 10%; width: 600px; height: 600px; background: #fbcfe8; animation-delay: -4s; }
+        .blob-3 { top: 30%; left: 50%; width: 450px; height: 450px; background: #bbf7d0; animation-delay: -8s; transform: translateX(-50%); }
+
+        @keyframes float {
+            0% { transform: translateY(0) scale(1) translateX(0); }
+            100% { transform: translateY(-40px) scale(1.05) translateX(20px); }
         }
         
-        .controls-panel { position: fixed; top: 20px; left: 20px; z-index: 100; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); padding: 24px; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); width: 340px; border: 1px solid rgba(255,255,255,0.3); }
+        .controls-panel { position: fixed; top: 20px; left: 20px; z-index: 100; background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); padding: 24px; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); width: 340px; border: 1px solid rgba(255,255,255,0.4); }
         .actions-panel { position: fixed; bottom: 24px; right: 24px; z-index: 100; display: flex; gap: 12px; }
         
         .btn-primary { background: #4f46e5; color: white; padding: 10px 20px; border-radius: 10px; font-weight: 700; transition: all 0.2s; }
-        .btn-primary:hover { background: #4338ca; transform: translateY(-1px); }
+        .btn-primary:hover { background: #4338ca; transform: translateY(-1px); box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3); }
         textarea { resize: none; scrollbar-width: thin; line-height: 1.4; }
         .hidden { display: none !important; }
         
@@ -30,19 +47,21 @@
             transform: translate(-50%, -50%);
             width: 650px;
             height: 550px;
+            z-index: 10;
         }
 
         .triangle-node {
             position: absolute;
             width: 200px;
-            background: white;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(5px);
             border: 4px solid #4f46e5;
             border-radius: 16px;
             padding: 14px;
             text-align: center;
             font-weight: 900;
             color: #1e1b4b;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 20px -3px rgba(0, 0, 0, 0.1);
             transform: translate(-50%, -50%);
             z-index: 20;
             font-size: 1.1rem;
@@ -51,12 +70,12 @@
         .edge-btn {
             position: absolute;
             transform: translate(-50%, -50%);
-            background: white;
+            background: rgba(255, 255, 255, 0.95);
             border: 2px dashed #94a3b8;
             color: #64748b;
             font-weight: 800;
-            width: 150px; /* Fixed width for uniform ovals */
-            height: 44px; /* Fixed height */
+            width: 150px; 
+            height: 44px; 
             display: flex;
             align-items: center;
             justify-content: center;
@@ -65,9 +84,10 @@
             z-index: 30;
             transition: all 0.2s;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(5px);
         }
 
-        .edge-btn:hover { border-style: solid; border-color: #4f46e5; color: #4f46e5; transform: translate(-50%, -50%) scale(1.05); }
+        .edge-btn:hover { border-style: solid; border-color: #4f46e5; color: #4f46e5; transform: translate(-50%, -50%) scale(1.05); box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.2); }
         .edge-btn.completed { background: #10b981; border: 2px solid #059669; color: white; border-style: solid; }
 
         .center-btn {
@@ -75,7 +95,7 @@
             top: 58%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: #e2e8f0;
+            background: rgba(226, 232, 240, 0.9);
             color: #94a3b8;
             border: none;
             width: 180px;
@@ -89,6 +109,7 @@
             pointer-events: none;
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
             text-align: center;
+            backdrop-filter: blur(5px);
         }
 
         .center-btn.unlocked {
@@ -104,7 +125,7 @@
         .center-btn.completed { background: #10b981; color: white; animation: none; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3); }
 
         @keyframes pulse-glow {
-            0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+            0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.5); }
             70% { box-shadow: 0 0 0 15px rgba(245, 158, 11, 0); }
             100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
         }
@@ -113,6 +134,10 @@
     </style>
 </head>
 <body>
+
+    <div class="bg-blob blob-1"></div>
+    <div class="bg-blob blob-2"></div>
+    <div class="bg-blob blob-3"></div>
 
     <div class="controls-panel">
         <h1 class="text-2xl font-black mb-6 text-gray-800 flex items-center gap-2">
@@ -130,7 +155,7 @@
                 </button>
             </div>
         </div>
-        <div class="p-4 bg-indigo-50 rounded-xl border border-indigo-100 text-xs text-indigo-800 font-medium leading-relaxed">
+        <div class="p-4 bg-white/80 rounded-xl border border-indigo-100 text-xs text-indigo-800 font-medium leading-relaxed shadow-sm">
             <strong>Teacher Tip:</strong> The app will randomly select exactly 3 terms for each student to analyze when they open the link, giving them a unique challenge! The more terms you enter, the more possible combinations, so choose carefully.
         </div>
     </div>
@@ -209,8 +234,13 @@
         function buildTriangle(termsArray) {
             if (termsArray.length < 3) return;
             
-            let shuffled = [...termsArray].sort(() => 0.5 - Math.random());
-            activeTerms = [shuffled[0], shuffled[1], shuffled[2]];
+            // Logic Update: If exactly 3 terms, do NOT shuffle. Otherwise, shuffle and pick 3.
+            if (termsArray.length === 3) {
+                activeTerms = [...termsArray];
+            } else {
+                let shuffled = [...termsArray].sort(() => 0.5 - Math.random());
+                activeTerms = [shuffled[0], shuffled[1], shuffled[2]];
+            }
 
             node1.textContent = activeTerms[0];
             node2.textContent = activeTerms[1];
@@ -233,11 +263,13 @@
             if (t) {
                 const terms = decodeURIComponent(t).split('|');
                 termInput.value = terms.join('\n');
+                
                 termInput.readOnly = true;
                 termInput.classList.add('bg-gray-100', 'text-gray-500', 'cursor-not-allowed');
                 addBtn.classList.add('hidden');
                 linkBtn.classList.add('hidden');
-                termsLabel.textContent = "Assigned Terms (3 randomly selected)";
+                termsLabel.textContent = "Assigned Terms";
+                
                 buildTriangle(terms);
             }
         });
@@ -246,8 +278,10 @@
             const raw = termInput.value.trim();
             if (!raw) return;
             const terms = raw.split(/\r?\n|,/).map(t => t.trim()).filter(t => t.length > 0);
+            
             if (terms.length < 3) return alert("Please enter at least 3 terms.");
             if (terms.length > 9) return alert("Please limit your list to a maximum of 9 terms.");
+            
             buildTriangle(terms);
         });
 
@@ -255,8 +289,10 @@
             const raw = termInput.value.trim();
             if (!raw) return alert("Enter terms first!");
             const terms = raw.split(/\r?\n|,/).map(t => t.trim()).filter(t => t.length > 0);
+            
             if (terms.length < 3) return alert("Please enter at least 3 terms.");
             if (terms.length > 9) return alert("Please limit your list to a maximum of 9 terms.");
+
             const url = new URL(window.location.href);
             url.searchParams.set('t', encodeURIComponent(terms.join('|')));
             navigator.clipboard.writeText(url.toString()).then(() => alert("Student Link Copied!"));
@@ -306,7 +342,7 @@
             if (explanations.e12 && explanations.e23 && explanations.e31) {
                 if (!explanations.center) {
                     btnCenter.classList.add('unlocked');
-                    btnCenter.innerHTML = "⭐ Summary";
+                    btnCenter.innerHTML = "🔓 Summary";
                 }
             }
 
