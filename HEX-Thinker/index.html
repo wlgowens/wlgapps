@@ -6,53 +6,104 @@
     <title>Hexagonal Thinking Workspace</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #d8d2e1; overflow: hidden; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
-        #workspace { width: 100vw; height: 100vh; position: relative; cursor: grab; overflow: hidden; background-color: #d8d2e1; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='208' viewBox='0 0 180 208'%3E%3Cpath d='M30 0 L90 0 L120 52 L90 104 L30 104 L0 52 Z M120 104 L180 104 L210 156 L180 208 L120 208 L90 156 Z M30 104 L90 104 L120 156 L90 208 L30 208 L0 156 Z' fill='none' stroke='%23b4acc3' stroke-width='1' stroke-dasharray='4,4'/%3E%3C/svg%3E"); background-size: 180px 208px; }
-        #workspace.grid-hidden { background-image: none; }
+        body { background-color: #fffdf0; overflow: hidden; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        
+        #workspace { 
+            width: 100vw; 
+            height: 100vh; 
+            position: relative; 
+            cursor: grab; 
+            overflow: hidden; 
+            background-color: #fef3c7;
+            /* Realistic High-Contrast Honeycomb Background for UI */
+            background-image: 
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='208' viewBox='0 0 180 208'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='50%25' r='50%25'%3E%3Cstop offset='0%25' stop-color='%23f59e0b' stop-opacity='0.4'/%3E%3Cstop offset='80%25' stop-color='%23fef3c7' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cpath d='M30 0 L90 0 L120 52 L90 104 L30 104 L0 52 Z M120 104 L180 104 L210 156 L180 208 L120 208 L90 156 Z M30 104 L90 104 L120 156 L90 208 L30 208 L0 156 Z' fill='url(%23g)'/%3E%3Cpath d='M30 0 L90 0 L120 52 L90 104 L30 104 L0 52 Z M120 104 L180 104 L210 156 L180 208 L120 208 L90 156 Z M30 104 L90 104 L120 156 L90 208 L30 208 L0 156 Z' fill='none' stroke='%23fcd34d' stroke-width='4' stroke-opacity='0.5' stroke-linejoin='round'/%3E%3C/svg%3E"); 
+            background-size: 180px 208px;
+            box-shadow: inset 0 0 200px rgba(251, 191, 36, 0.2);
+        }
+
         #workspace:active { cursor: grabbing; }
-        .hex-container { position: absolute; width: 120px; height: 104px; cursor: move; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05)); transition: transform 0.1s ease-out, filter 0.2s, left 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); user-select: none; touch-action: none; z-index: 10; }
+
+        /* --- Bee Animations --- */
+        .bee { position: absolute; font-size: 28px; z-index: 5; pointer-events: none; top: 0; left: 0; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15)); }
+        .bee-inner { display: inline-block; animation: bob 1s infinite ease-in-out; }
+        @keyframes bob { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-12px) rotate(8deg); } }
+        
+        .bee-1 { animation: fly1 35s infinite linear; }
+        .bee-2 { animation: fly2 45s infinite linear; animation-delay: -5s; }
+        .bee-3 { animation: fly3 40s infinite linear; animation-delay: -15s; }
+        .bee-4 { animation: fly4 38s infinite linear; animation-delay: -2s; }
+        .bee-5 { animation: fly5 50s infinite linear; animation-delay: -10s; }
+        .bee-6 { animation: fly1 32s infinite linear; animation-delay: -20s; opacity: 0.8; }
+        .bee-7 { animation: fly3 48s infinite linear; animation-delay: -8s; opacity: 0.9; }
+
+        @keyframes fly1 { 0% { transform: translate(-10vw, 20vh) scaleX(-1); } 50% { transform: translate(80vw, 10vh) scaleX(1); } 100% { transform: translate(-10vw, 20vh) scaleX(-1); } }
+        @keyframes fly2 { 0% { transform: translate(110vw, 50vh) scaleX(1); } 50% { transform: translate(10vw, 60vh) scaleX(-1); } 100% { transform: translate(110vw, 50vh) scaleX(1); } }
+        @keyframes fly3 { 0% { transform: translate(50vw, -10vh) scaleX(-1); } 50% { transform: translate(85vw, 70vh) scaleX(1); } 100% { transform: translate(50vw, -10vh) scaleX(-1); } }
+        @keyframes fly4 { 0% { transform: translate(20vw, 110vh) scaleX(1); } 50% { transform: translate(70vw, 20vh) scaleX(-1); } 100% { transform: translate(20vw, 110vh) scaleX(1); } }
+        @keyframes fly5 { 0% { transform: translate(0vw, 50vh) scaleX(1); } 50% { transform: translate(100vw, 50vh) scaleX(-1); } 100% { transform: translate(0vw, 50vh) scaleX(1); } }
+
+        /* Hexagon Styling */
+        .hex-container { position: absolute; width: 120px; height: 104px; cursor: move; filter: drop-shadow(0 6px 12px rgba(217, 119, 6, 0.1)); transition: transform 0.1s ease-out, filter 0.2s, left 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); user-select: none; touch-action: none; z-index: 10; }
         .hex-container.dragging { filter: drop-shadow(0 20px 30px rgba(0,0,0,0.15)); z-index: 1000; transition: none; }
-        .hex-shape-outer { fill: white; stroke-width: 5; stroke-linejoin: round; }
-        .hex-text { pointer-events: none; font-size: 11px; font-weight: 800; text-anchor: middle; dominant-baseline: middle; fill: #374151; font-family: 'Inter', system-ui, sans-serif; }
+        .hex-shape-outer { fill: white; stroke-width: 2; stroke-linejoin: round; }
+        .hex-text { pointer-events: none; font-size: 11px; font-weight: 800; text-anchor: middle; dominant-baseline: middle; fill: #4b5563; font-family: 'Inter', system-ui, sans-serif; }
+
+        /* Golden Honey Ooze */
+        .honey-ooze {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            pointer-events: none;
+            z-index: 2000;
+            animation: ooze-and-fade 0.8s ease-out forwards;
+            filter: drop-shadow(0 2px 4px rgba(217, 119, 6, 0.4));
+        }
+        @keyframes ooze-and-fade {
+            0% { transform: scale(0.5) translateY(0); opacity: 0; }
+            30% { transform: scale(1.3) translateY(5px); opacity: 1; }
+            100% { transform: scale(1) translateY(20px); opacity: 0; }
+        }
+
         .controls-panel { position: fixed; top: 20px; left: 20px; z-index: 100; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); padding: 24px; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); width: 340px; border: 1px solid rgba(255,255,255,0.3); }
         .actions-panel { position: fixed; bottom: 24px; right: 24px; z-index: 100; display: flex; gap: 12px; }
         .delete-zone { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); width: 260px; height: 80px; border: 3px dashed #f43f5e; border-radius: 20px; display: flex; align-items: center; justify-content: center; color: #f43f5e; background: rgba(255, 241, 242, 0.9); opacity: 0; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); pointer-events: none; z-index: 50; }
         .delete-zone.visible { opacity: 1; }
         .delete-zone.active { background: #ffe4e6; transform: translateX(-50%) scale(1.05); border-style: solid; }
+        
         #export-canvas { display: none; }
         .btn-primary { background: #6366f1; color: white; padding: 10px 20px; border-radius: 10px; font-weight: 700; transition: all 0.2s; }
         .btn-primary:hover { background: #4f46e5; transform: translateY(-1px); }
         textarea { resize: none; scrollbar-width: thin; line-height: 1.4; }
         .hidden { display: none !important; }
+        
         .choice-btn { flex: 1; padding: 12px; border-radius: 12px; border: 2px solid #eef2ff; font-weight: bold; transition: all 0.2s; text-align: center; cursor: pointer; color: #6366f1; }
         .choice-btn:hover { background-color: #f5f7ff; }
         .choice-btn.active { background-color: #6366f1; border-color: #6366f1; color: white; }
-        
-        /* Removed all blur and background color from the full-screen overlay */
         #prompt-modal { pointer-events: none; }
-        
         #modal-content { pointer-events: auto; cursor: grab; }
-        #modal-content:active { cursor: grabbing; }
-        #prompt-textarea, #save-modal-btn, #close-modal-btn, #mode-selector { cursor: auto; }
         #term-container svg { max-height: 180px; max-width: 100%; drop-shadow: 0 4px 6px rgba(0,0,0,0.05); }
     </style>
 </head>
 <body>
 
     <div class="controls-panel">
-        <h1 class="text-2xl font-black mb-6 text-gray-800 flex items-center gap-2 text-shadow-sm">
-            <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="3" fill="none" class="text-indigo-600"><path d="M12 2l9 4.9V17.1L12 22l-9-4.9V6.9L12 2z"/></svg>
+        <h1 class="text-2xl font-black mb-6 text-gray-800 flex items-center gap-2">
+            <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="3" fill="none" class="text-amber-600"><path d="M12 2l9 4.9V17.1L12 22l-9-4.9V6.9L12 2z"/></svg>
             Hexagonal Thinking
         </h1>
         <div class="mb-5">
-            <label id="terms-label" class="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2 text-[10px]">Terms (Min: 6 | Max: 24 | Paste list or type line by line)</label>
+            <label id="terms-label" class="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2 text-[10px]">Terms (Min: 6 | Max: 24)</label>
             <div class="flex flex-col gap-2">
                 <textarea id="hex-input" placeholder="Concept 1&#10;Concept 2&#10;Concept 3..." rows="5" class="w-full px-4 py-3 border-2 border-gray-100 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all text-sm"></textarea>
                 <button id="add-btn" class="btn-primary shadow-lg shadow-indigo-200 w-full">Scatter Hexagons</button>
-                <button id="link-btn" class="bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold py-2.5 rounded-xl w-full hover:bg-emerald-200 transition shadow-sm flex items-center justify-center gap-2 text-sm">
+                <button id="link-btn" class="bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold py-2.5 rounded-xl w-full hover:bg-emerald-200 transition shadow-sm flex items-center justify-center gap-2 text-sm mt-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
                     Copy Student Link
                 </button>
+                <p class="text-[10px] text-amber-600/60 italic text-center -mt-1 font-medium">
+                    Share with students (paste into Classroom, etc)
+                </p>
             </div>
         </div>
     </div>
@@ -72,7 +123,16 @@
         </span>
     </div>
 
-    <div id="workspace"></div>
+    <div id="workspace">
+        <div class="bee bee-1"><div class="bee-inner">🐝</div></div>
+        <div class="bee bee-2"><div class="bee-inner">🐝</div></div>
+        <div class="bee bee-3"><div class="bee-inner">🐝</div></div>
+        <div class="bee bee-4"><div class="bee-inner">🐝</div></div>
+        <div class="bee bee-5"><div class="bee-inner">🐝</div></div>
+        <div class="bee bee-6"><div class="bee-inner">🐝</div></div>
+        <div class="bee bee-7"><div class="bee-inner">🐝</div></div>
+    </div>
+   
     <canvas id="export-canvas"></canvas>
 
     <div id="prompt-modal" class="fixed inset-0 z-[2000] hidden flex items-center justify-center p-4">
@@ -82,72 +142,47 @@
                 <div id="select-pair" class="choice-btn active">Pair Challenge</div>
                 <div id="select-node" class="choice-btn">Node Challenge</div>
             </div>
-            
             <p id="challenge-desc" class="text-gray-500 mb-4 text-xs font-black uppercase tracking-[0.2em] text-center pointer-events-none">Explain how these two concepts are connected:</p>
-            
             <div id="term-container" class="flex items-center justify-center mb-6 p-4 bg-indigo-50/40 rounded-2xl border border-indigo-100/50 pointer-events-none w-full h-52"></div>
-            
             <textarea id="prompt-textarea" class="w-full h-40 p-5 border-2 border-indigo-50 rounded-2xl focus:border-indigo-400 focus:ring-8 focus:ring-indigo-100 outline-none transition-all mb-6 text-gray-700 bg-white/80" placeholder="Analyze the relationship here..."></textarea>
-            
             <div class="flex justify-between items-center gap-3">
                 <span id="completion-hint" class="text-sm font-bold text-rose-500 animate-pulse">Complete both tabs to finish!</span>
                 <div class="flex gap-3 ml-auto">
                     <button id="close-modal-btn" class="px-6 py-3 rounded-xl font-bold text-gray-400 hover:text-gray-600 transition-colors">Cancel</button>
-                    <button id="save-modal-btn" class="hidden bg-indigo-600 text-white px-8 py-3 rounded-xl font-black hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-200 flex items-center gap-3 active:scale-95">
-                        Save & Download
-                    </button>
+                    <button id="save-modal-btn" class="hidden bg-indigo-600 text-white px-8 py-3 rounded-xl font-black hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-200 flex items-center gap-3 active:scale-95">Save & Download</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        const workspace = document.getElementById('workspace');
-        const hexInput = document.getElementById('hex-input');
-        const addBtn = document.getElementById('add-btn');
-        const linkBtn = document.getElementById('link-btn');
-        const clearBtn = document.getElementById('clear-btn');
-        const promptBtn = document.getElementById('prompt-btn');
-        const deleteZone = document.getElementById('delete-zone');
-        
-        const promptModal = document.getElementById('prompt-modal');
-        const modalContent = document.getElementById('modal-content');
-        const closeModalBtn = document.getElementById('close-modal-btn');
-        const saveModalBtn = document.getElementById('save-modal-btn');
-        const completionHint = document.getElementById('completion-hint');
-        const termContainer = document.getElementById('term-container');
-        const challengeDesc = document.getElementById('challenge-desc');
-        const promptTextarea = document.getElementById('prompt-textarea');
-        const btnPair = document.getElementById('select-pair');
-        const btnNode = document.getElementById('select-node');
-        
-        const COLORS = ['#EAB308', '#10B981', '#F43F5E', '#0EA5E9', '#F97316', '#8B5CF6', '#EC4899'];
-        let colorIndex = 0;
-        
+        const workspace = document.getElementById('workspace'), 
+              hexInput = document.getElementById('hex-input'), 
+              addBtn = document.getElementById('add-btn'), 
+              linkBtn = document.getElementById('link-btn'), 
+              clearBtn = document.getElementById('clear-btn'), 
+              promptBtn = document.getElementById('prompt-btn'), 
+              deleteZone = document.getElementById('delete-zone');
+
+        const promptModal = document.getElementById('prompt-modal'), 
+              modalContent = document.getElementById('modal-content'), 
+              closeModalBtn = document.getElementById('close-modal-btn'), 
+              saveModalBtn = document.getElementById('save-modal-btn'), 
+              completionHint = document.getElementById('completion-hint'), 
+              termContainer = document.getElementById('term-container'), 
+              promptTextarea = document.getElementById('prompt-textarea'), 
+              btnPair = document.getElementById('select-pair'), 
+              btnNode = document.getElementById('select-node');
+
+        const GRID_DX = 90, GRID_DY = 104;
+        const THEME_COLOR = "#d97706"; // Amber border color for hexes
+        const BG_COLOR = "#fef3c7";
+
         let currentMode = 'pair';
         let pairText = "";
         let nodeText = "";
         let selectedPair = null;
         let selectedNode = null;
-
-        const GRID_DX = 90, GRID_DY = 104;
-
-        let isModalDragging = false, modalOffsetX, modalOffsetY;
-        modalContent.addEventListener('mousedown', (e) => {
-            if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'BUTTON' || e.target.closest('#mode-selector')) return;
-            isModalDragging = true;
-            modalOffsetX = e.clientX - modalContent.offsetLeft;
-            modalOffsetY = e.clientY - modalContent.offsetTop;
-            modalContent.style.transition = 'none';
-        });
-        document.addEventListener('mousemove', (e) => {
-            if (!isModalDragging) return;
-            modalContent.style.position = 'absolute';
-            modalContent.style.left = (e.clientX - modalOffsetX) + 'px';
-            modalContent.style.top = (e.clientY - modalOffsetY) + 'px';
-            modalContent.style.transform = 'none';
-        });
-        document.addEventListener('mouseup', () => isModalDragging = false);
 
         function getSnapPos(x, y) {
             const col = Math.round(x / GRID_DX);
@@ -159,28 +194,68 @@
         function getNeighbors(col, row) {
             col = parseInt(col); row = parseInt(row);
             const neighbors = [ {c: col, r: row - 1}, {c: col, r: row + 1} ];
-            if (col % 2 === 0) { 
-                neighbors.push({c: col - 1, r: row - 1}, {c: col - 1, r: row}, {c: col + 1, r: row - 1}, {c: col + 1, r: row});
-            } else { 
-                neighbors.push({c: col - 1, r: row}, {c: col - 1, r: row + 1}, {c: col + 1, r: row}, {c: col + 1, r: row + 1});
-            }
+            if (col % 2 === 0) neighbors.push({c: col - 1, r: row - 1}, {c: col - 1, r: row}, {c: col + 1, r: row - 1}, {c: col + 1, r: row});
+            else neighbors.push({c: col - 1, r: row}, {c: col - 1, r: row + 1}, {c: col + 1, r: row}, {c: col + 1, r: row + 1});
             return neighbors;
+        }
+
+        function triggerHoneyOoze(hexEl, col, row) {
+            const hexes = document.querySelectorAll('.hex-container');
+            const occupied = new Set();
+            hexes.forEach(h => { if (h !== hexEl) occupied.add(`${h.dataset.col},${h.dataset.row}`); });
+
+            const neighbors = getNeighbors(col, row);
+            neighbors.forEach((n, i) => {
+                if (occupied.has(`${n.c},${n.r}`)) {
+                    const drip = document.createElement('div');
+                    drip.className = 'honey-ooze';
+                    drip.innerHTML = `
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 21.5c-3.6 0-6.5-2.9-6.5-6.5 0-3.3 4.2-8.5 5.7-10.3.4-.5 1.2-.5 1.6 0 1.5 1.8 5.7 7 5.7 10.3 0 3.6-2.9 6.5-6.5 6.5z" fill="#f59e0b"/>
+                            <path d="M10 16.5c0-1.1.9-2 2-2" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+                        </svg>
+                    `;
+                    const angle = (i * 60) - 90;
+                    const rad = (angle * Math.PI) / 180;
+                    drip.style.left = (parseFloat(hexEl.style.left) + 60 + Math.cos(rad) * 45 - 12) + 'px';
+                    drip.style.top = (parseFloat(hexEl.style.top) + 52 + Math.sin(rad) * 45 - 12) + 'px';
+                    workspace.appendChild(drip);
+                    setTimeout(() => drip.remove(), 800);
+                }
+            });
         }
 
         function checkAllConnected() {
             const hexes = document.querySelectorAll('.hex-container');
             if (hexes.length === 0) { promptBtn.classList.add('hidden'); return; }
-            const occupied = new Set(); let startNode = null;
-            hexes.forEach(h => { const pos = `${h.dataset.col},${h.dataset.row}`; occupied.add(pos); if (!startNode) startNode = pos; });
-            const visited = new Set(), queue = [startNode]; visited.add(startNode);
+           
+            const occupied = new Set();
+            let startNode = null;
+            hexes.forEach(h => {
+                const pos = `${h.dataset.col},${h.dataset.row}`;
+                occupied.add(pos);
+                if (!startNode) startNode = pos;
+            });
+
+            const visited = new Set(), queue = [startNode];
+            visited.add(startNode);
+           
             while(queue.length > 0) {
                 const current = queue.shift(), [c, r] = current.split(',');
                 getNeighbors(c, r).forEach(n => {
                     const nPos = `${n.c},${n.r}`;
-                    if (occupied.has(nPos) && !visited.has(nPos)) { visited.add(nPos); queue.push(nPos); }
+                    if (occupied.has(nPos) && !visited.has(nPos)) {
+                        visited.add(nPos);
+                        queue.push(nPos);
+                    }
                 });
             }
-            visited.size === occupied.size && hexes.length >= 6 ? promptBtn.classList.remove('hidden') : promptBtn.classList.add('hidden');
+           
+            if (visited.size === occupied.size && hexes.length >= 6) {
+                promptBtn.classList.remove('hidden');
+            } else {
+                promptBtn.classList.add('hidden');
+            }
         }
 
         function makeDraggable(el) {
@@ -207,10 +282,18 @@
                 el.style.transition = 'transform 0.1s ease-out, filter 0.2s, left 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
                 const cx = e.type === 'touchend' ? e.changedTouches[0].clientX : e.clientX;
                 const cy = e.type === 'touchend' ? e.changedTouches[0].clientY : e.clientY;
-                const dr = deleteZone.getBoundingClientRect(), mp = document.querySelector('.controls-panel').getBoundingClientRect(), ap = document.querySelector('.actions-panel').getBoundingClientRect();
+                const dr = deleteZone.getBoundingClientRect(), 
+                      mp = document.querySelector('.controls-panel').getBoundingClientRect(), 
+                      ap = document.querySelector('.actions-panel').getBoundingClientRect();
+               
                 if (cx > dr.left && cx < dr.right && cy > dr.top) el.remove();
                 else if ((cx < mp.right + 20 && cy < mp.bottom + 20) || (cx > ap.left - 20 && cy > ap.top - 20)) { el.style.left = originalLeft; el.style.top = originalTop; }
-                else { const snap = getSnapPos(parseFloat(el.style.left), parseFloat(el.style.top)); el.style.left = snap.x + "px"; el.style.top = snap.y + "px"; el.dataset.col = snap.col; el.dataset.row = snap.row; }
+                else {
+                    const snap = getSnapPos(parseFloat(el.style.left), parseFloat(el.style.top));
+                    el.style.left = snap.x + "px"; el.style.top = snap.y + "px";
+                    el.dataset.col = snap.col; el.dataset.row = snap.row;
+                    triggerHoneyOoze(el, snap.col, snap.row);
+                }
                 el.classList.remove('dragging'); deleteZone.classList.remove('visible'); deleteZone.classList.remove('active');
                 document.onmouseup = document.onmousemove = document.ontouchend = document.ontouchmove = null;
                 checkAllConnected();
@@ -221,13 +304,12 @@
             const raw = hexInput.value.trim();
             if (!raw) return;
             const terms = raw.split(/\r?\n|,/).map(t => t.trim()).filter(t => t.length > 0);
-            
             if (terms.length < 6 || terms.length > 24) return alert("Please enter between 6 and 24 terms.");
-            
+           
             const occupied = new Set();
             document.querySelectorAll('.hex-container').forEach(h => occupied.add(`${h.dataset.col},${h.dataset.row}`));
             const sw = Math.max(window.innerWidth - 540, 100), sh = Math.max(window.innerHeight - 240, 100);
-            
+           
             terms.forEach(term => {
                 let found = false, attempts = 0, snap;
                 while (!found && attempts < 100) {
@@ -237,12 +319,10 @@
                     if (!isTouching) found = true;
                     attempts++;
                 }
-                const hexColor = COLORS[colorIndex % COLORS.length];
-                const hex = createHex(term, hexColor, snap.x, snap.y);
+                const hex = createHex(term, THEME_COLOR, snap.x, snap.y);
                 workspace.appendChild(hex); occupied.add(`${snap.col},${snap.row}`);
-                colorIndex++;
+                triggerHoneyOoze(hex, snap.col, snap.row);
             });
-            if (!hexInput.readOnly) hexInput.focus();
             checkAllConnected();
         });
 
@@ -251,7 +331,7 @@
             container.className = 'hex-container';
             const snap = getSnapPos(x, y);
             container.style.left = `${x}px`; container.style.top = `${y}px`;
-            container.dataset.col = snap.col; container.dataset.row = snap.row; 
+            container.dataset.col = snap.col; container.dataset.row = snap.row;
             container.dataset.fullText = text; container.dataset.borderColor = color;
             const lines = text.split(' ').reduce((acc, word) => {
                 let last = acc[acc.length-1];
@@ -270,12 +350,8 @@
                 if (h.x < minX) minX = h.x; if (h.y < minY) minY = h.y;
                 if (h.x > maxX) maxX = h.x; if (h.y > maxY) maxY = h.y;
             });
-            
-            const w = (maxX - minX) + 120;
-            const h_size = (maxY - minY) + 104;
-            
+            const w = (maxX - minX) + 120, h_size = (maxY - minY) + 104;
             let svgContent = `<svg viewBox="0 0 ${w} ${h_size}">`;
-            
             group.forEach(h => {
                 const lines = h.text.split(' ').reduce((acc, word) => {
                     let last = acc[acc.length-1];
@@ -283,17 +359,8 @@
                     else acc[acc.length-1] += word + " ";
                     return acc;
                 }, []).slice(0, 4);
-
                 const textSVG = lines.map((l, i) => `<tspan x="60" dy="${i === 0 ? 0 : 16}">${l.trim()}</tspan>`).join('');
-                
-                svgContent += `
-                    <g transform="translate(${h.x - minX}, ${h.y - minY})">
-                        <path d="M 30 2 L 90 2 L 118 52 L 90 102 L 30 102 L 2 52 Z" fill="white" stroke="${h.color}" stroke-width="5" stroke-linejoin="round" />
-                        <text x="60" y="${52 - (lines.length - 1) * 8}" font-family="Inter, system-ui, sans-serif" font-size="11px" font-weight="800" text-anchor="middle" dominant-baseline="middle" fill="#374151">
-                            ${textSVG}
-                        </text>
-                    </g>
-                `;
+                svgContent += `<g transform="translate(${h.x - minX}, ${h.y - minY})"><path d="M 30 2 L 90 2 L 118 52 L 90 102 L 30 102 L 2 52 Z" fill="white" stroke="${THEME_COLOR}" stroke-width="2" stroke-linejoin="round" /><text x="60" y="${52 - (lines.length - 1) * 8}" font-family="Inter, system-ui, sans-serif" font-size="11px" font-weight="800" text-anchor="middle" dominant-baseline="middle" fill="#4b5563">${textSVG}</text></g>`;
             });
             svgContent += `</svg>`;
             return svgContent;
@@ -302,31 +369,20 @@
         promptBtn.addEventListener('click', () => {
             const hexes = document.querySelectorAll('.hex-container');
             const gridMap = {};
-            
-            hexes.forEach(h => { 
-                gridMap[`${h.dataset.col},${h.dataset.row}`] = { 
-                    text: h.dataset.fullText, 
-                    color: h.dataset.borderColor,
-                    x: parseFloat(h.style.left),
-                    y: parseFloat(h.style.top)
-                }; 
+            hexes.forEach(h => {
+                gridMap[`${h.dataset.col},${h.dataset.row}`] = { text: h.dataset.fullText, x: parseFloat(h.style.left), y: parseFloat(h.style.top) };
             });
-
-            let allPairs = []; 
-            let allNodes = [];
+           
+            let allPairs = [], allNodes = [];
             const seenPairs = new Set(), seenNodes = new Set();
-
             for (const [pos, data] of Object.entries(gridMap)) {
                 const [c, r] = pos.split(',').map(Number), neighbors = getNeighbors(c, r);
                 const connectedNeighbors = neighbors.filter(n => gridMap[`${n.c},${n.r}`]);
-                
                 if (connectedNeighbors.length >= 2) {
-                    const limitedNeighbors = connectedNeighbors.slice(0, 3);
-                    const group = [data, ...limitedNeighbors.map(n => gridMap[`${n.c},${n.r}`])];
+                    const group = [data, ...connectedNeighbors.slice(0, 3).map(n => gridMap[`${n.c},${n.r}`])];
                     const key = group.map(g => g.text).sort().join('|');
                     if (!seenNodes.has(key)) { seenNodes.add(key); allNodes.push(group); }
                 }
-                
                 connectedNeighbors.forEach(n => {
                     const group = [data, gridMap[`${n.c},${n.r}`]];
                     const key = group.map(g => g.text).sort().join('|');
@@ -334,90 +390,42 @@
                 });
             }
 
-            selectedNode = null;
-            selectedPair = null;
-            pairText = "";
-            nodeText = "";
+            selectedNode = allNodes.length > 0 ? allNodes[Math.floor(Math.random() * allNodes.length)] : null;
+            selectedPair = allPairs[Math.floor(Math.random() * allPairs.length)];
+           
+            if (!selectedNode) btnNode.classList.add('hidden');
+            else btnNode.classList.remove('hidden');
 
-            if (allNodes.length > 0) {
-                const shuffledNodes = [...allNodes].sort(() => 0.5 - Math.random());
-                const shuffledPairs = [...allPairs].sort(() => 0.5 - Math.random());
-                
-                for (let node of shuffledNodes) {
-                    const nodeTerms = node.map(n => n.text);
-                    const validPair = shuffledPairs.find(p => !nodeTerms.includes(p[0].text) && !nodeTerms.includes(p[1].text));
-                    if (validPair) {
-                        selectedNode = node;
-                        selectedPair = validPair;
-                        break;
-                    }
-                }
-                if (!selectedNode) {
-                    selectedNode = shuffledNodes[0];
-                    selectedPair = shuffledPairs[0];
-                }
-            } else {
-                selectedPair = allPairs[Math.floor(Math.random() * allPairs.length)];
-            }
-
-            if (!selectedNode) { 
-                btnNode.classList.add('hidden'); 
-                completionHint.textContent = "Complete the challenge to finish!";
-            } else { 
-                btnNode.classList.remove('hidden'); 
-                completionHint.textContent = "Complete both tabs to finish!";
-            }
-            
-            modalContent.style.left = '50%';
-            modalContent.style.top = '50%';
-            modalContent.style.transform = 'translate(-50%, -50%)';
             setChallengeMode('pair');
-            checkCompletion();
             promptModal.classList.remove('hidden');
-        });
-
-        promptTextarea.addEventListener('input', (e) => {
-            if (currentMode === 'pair') pairText = e.target.value;
-            else nodeText = e.target.value;
-            checkCompletion();
         });
 
         function checkCompletion() {
             const isPairDone = pairText.trim().length > 0;
             const isNodeDone = selectedNode ? nodeText.trim().length > 0 : true;
-            
-            if (isPairDone && isNodeDone) {
-                saveModalBtn.classList.remove('hidden');
-                completionHint.classList.add('hidden');
-            } else {
-                saveModalBtn.classList.add('hidden');
-                completionHint.classList.remove('hidden');
-            }
+            if (isPairDone && isNodeDone) { saveModalBtn.classList.remove('hidden'); completionHint.classList.add('hidden'); }
+            else { saveModalBtn.classList.add('hidden'); completionHint.classList.remove('hidden'); }
         }
 
         function setChallengeMode(mode) {
             currentMode = mode;
             btnPair.classList.toggle('active', mode === 'pair');
             btnNode.classList.toggle('active', mode === 'node');
-            
             const group = mode === 'pair' ? selectedPair : selectedNode;
-            
-            challengeDesc.textContent = mode === 'pair' 
-                ? "Explain how these two concepts are connected:" 
-                : "Explain how these concepts are linked:";
-            
             termContainer.innerHTML = createClusterSVG(group);
             promptTextarea.value = mode === 'pair' ? pairText : nodeText;
+            checkCompletion();
         }
+
+        promptTextarea.addEventListener('input', (e) => {
+            if (currentMode === 'pair') pairText = e.target.value; else nodeText = e.target.value;
+            checkCompletion();
+        });
 
         btnPair.onclick = () => setChallengeMode('pair');
         btnNode.onclick = () => setChallengeMode('node');
         closeModalBtn.onclick = () => promptModal.classList.add('hidden');
-        
-        saveModalBtn.onclick = () => { 
-            promptModal.classList.add('hidden'); 
-            generateAndDownloadImage(); 
-        };
+        saveModalBtn.onclick = () => { promptModal.classList.add('hidden'); generateAndDownloadImage(); };
 
         function generateAndDownloadImage() {
             const hexes = document.querySelectorAll('.hex-container');
@@ -425,66 +433,58 @@
             hexes.forEach(h => { const x = parseFloat(h.style.left), y = parseFloat(h.style.top); minX = Math.min(minX, x); minY = Math.min(minY, y); maxX = Math.max(maxX, x + 120); maxY = Math.max(maxY, y + 104); });
             const canvas = document.getElementById('export-canvas'), ctx = canvas.getContext('2d'), bW = (maxX - minX) + 160, bH = (maxY - minY) + 160;
             
-            ctx.font = "15px sans-serif";
             function getLines(context, text, maxWidth) {
-                if (!text) return [];
-                const words = text.split(" "), lines = [];
-                let currentLine = words[0] || "";
-                for (let i = 1; i < words.length; i++) {
-                    if (context.measureText(currentLine + " " + words[i]).width < maxWidth) currentLine += " " + words[i];
-                    else { lines.push(currentLine); currentLine = words[i]; }
-                }
-                lines.push(currentLine);
-                return lines;
+                if (!text) return []; const words = text.split(" "), lines = []; let currentLine = words[0] || "";
+                for (let i = 1; i < words.length; i++) { if (context.measureText(currentLine + " " + words[i]).width < maxWidth) currentLine += " " + words[i]; else { lines.push(currentLine); currentLine = words[i]; } }
+                lines.push(currentLine); return lines;
             }
 
-            const maxWidth = Math.max(bW, 600) - 80;
-
-            ctx.font = "bold 16px sans-serif";
-            let pairHeaderLines = selectedPair ? getLines(ctx, "Pair Connection: " + selectedPair.map(g=>g.text).join(' + '), maxWidth) : [];
-            let nodeHeaderLines = selectedNode ? getLines(ctx, "Node Intersection: " + selectedNode.map(g=>g.text).join(' • '), maxWidth) : [];
-
-            ctx.font = "15px sans-serif";
-            let pairLines = selectedPair ? getLines(ctx, pairText, maxWidth) : [];
-            let nodeLines = selectedNode ? getLines(ctx, nodeText, maxWidth) : [];
+            const maxWidth = Math.max(bW, 800) - 120;
+            ctx.font = "14px sans-serif";
+            const pairLines = getLines(ctx, pairText, maxWidth);
+            const nodeLines = selectedNode ? getLines(ctx, nodeText, maxWidth) : [];
             
-            let extraHeight = 40;
-            if (selectedPair) extraHeight += (pairHeaderLines.length * 24) + (pairLines.length * 22) + 20;
-            if (selectedNode) extraHeight += (nodeHeaderLines.length * 24) + (nodeLines.length * 22) + 20;
+            let totalChallengeHeight = 40 + 25 + (pairLines.length * 20); 
+            if (selectedNode) {
+                totalChallengeHeight += 30 + 25 + (nodeLines.length * 20); 
+            }
 
-            canvas.width = Math.max(bW, 600); canvas.height = bH + extraHeight;
-            ctx.fillStyle = "#d8d2e1"; ctx.fillRect(0,0,canvas.width, canvas.height);
+            canvas.width = Math.max(bW, 800); 
+            canvas.height = bH + totalChallengeHeight + 100;
+            
+            // Clean Background for download - Set to White specifically
+            ctx.fillStyle = "#ffffff"; 
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
             
             hexes.forEach(h => {
-                const x = parseFloat(h.style.left)-minX+80, y = parseFloat(h.style.top)-minY+80, color = h.querySelector('.hex-shape-outer').getAttribute('stroke'), tLines = h.querySelectorAll('tspan');
+                const x = parseFloat(h.style.left)-minX+80, y = parseFloat(h.style.top)-minY+80, tLines = h.querySelectorAll('tspan');
                 ctx.save(); ctx.translate(x, y); ctx.beginPath(); [[30,2],[90,2],[118,52],[90,102],[30,102],[2,52]].forEach((p, i) => i === 0 ? ctx.moveTo(p[0],p[1]) : ctx.lineTo(p[0],p[1]));
-                ctx.closePath(); ctx.fillStyle = "white"; ctx.fill(); ctx.strokeStyle = color; ctx.lineWidth = 5; ctx.stroke();
-                ctx.fillStyle = "#374151"; ctx.font = "800 11px sans-serif"; ctx.textAlign = "center";
+                ctx.closePath(); ctx.fillStyle = "white"; ctx.fill(); ctx.strokeStyle = THEME_COLOR; ctx.lineWidth = 2; ctx.stroke();
+                ctx.fillStyle = "#4b5563"; ctx.font = "800 11px sans-serif"; ctx.textAlign = "center";
                 tLines.forEach((tl, i) => ctx.fillText(tl.textContent, 60, (52-(tLines.length-1)*8) + (i*16))); ctx.restore();
             });
-            
-            const py = bH - 20;
-            ctx.fillStyle = "white"; ctx.fillRect(20, py, canvas.width-40, extraHeight-20); 
-            ctx.strokeStyle = "#e5e7eb"; ctx.lineWidth = 2; ctx.strokeRect(20, py, canvas.width-40, extraHeight-20);
-            
-            let currentY = py + 35;
-            const textPadding = 40;
 
-            if (selectedPair) {
-                ctx.fillStyle = "#6366f1"; ctx.font = "bold 16px sans-serif"; ctx.textAlign = "left";
-                pairHeaderLines.forEach(l => { ctx.fillText(l, textPadding, currentY); currentY += 24; });
-                currentY += 5;
-                ctx.fillStyle = "#4a4a4a"; ctx.font = "15px sans-serif";
-                pairLines.forEach(l => { ctx.fillText(l, textPadding, currentY); currentY += 22; });
-                currentY += 25; 
-            }
+            const py = bH - 20; 
+            const boxPadding = 40;
+            ctx.fillStyle = "white"; 
+            ctx.fillRect(40, py, canvas.width-80, totalChallengeHeight + boxPadding); 
+            ctx.strokeStyle = "#fbbf24"; ctx.lineWidth = 2; 
+            ctx.strokeRect(40, py, canvas.width-80, totalChallengeHeight + boxPadding);
+            
+            ctx.textAlign = "left"; 
+            let curY = py + 40; 
+            
+            ctx.font = "bold 16px sans-serif"; ctx.fillStyle = "#d97706";
+            ctx.fillText("Pair Challenge: " + selectedPair.map(s => s.text).join(" + "), 60, curY);
+            curY += 25; ctx.font = "14px sans-serif"; ctx.fillStyle = "#4b5563";
+            pairLines.forEach(l => { ctx.fillText(l, 60, curY); curY += 20; });
 
             if (selectedNode) {
-                ctx.fillStyle = "#6366f1"; ctx.font = "bold 16px sans-serif"; ctx.textAlign = "left";
-                nodeHeaderLines.forEach(l => { ctx.fillText(l, textPadding, currentY); currentY += 24; });
-                currentY += 5;
-                ctx.fillStyle = "#4a4a4a"; ctx.font = "15px sans-serif";
-                nodeLines.forEach(l => { ctx.fillText(l, textPadding, currentY); currentY += 22; });
+                curY += 15; 
+                ctx.font = "bold 16px sans-serif"; ctx.fillStyle = "#d97706";
+                ctx.fillText("Node Challenge: " + selectedNode.map(s => s.text).join(" • "), 60, curY);
+                curY += 25; ctx.font = "14px sans-serif"; ctx.fillStyle = "#4b5563";
+                nodeLines.forEach(l => { ctx.fillText(l, 60, curY); curY += 20; });
             }
 
             const a = document.createElement('a'); a.download = `hex-thinking-${Date.now()}.png`; a.href = canvas.toDataURL(); a.click();
@@ -497,7 +497,7 @@
                 setTimeout(() => { addBtn.click(); hexInput.readOnly = true; hexInput.classList.add('bg-gray-50'); addBtn.classList.add('hidden'); linkBtn.classList.add('hidden'); document.getElementById('terms-label').textContent = "Assigned Terms"; }, 100);
             }
         });
-        clearBtn.onclick = () => { if(confirm("Clear board?")) { workspace.innerHTML = ""; savedExplanation = ""; promptBtn.classList.add('hidden'); if(hexInput.readOnly) setTimeout(()=>addBtn.click(), 100); } };
+        clearBtn.onclick = () => { if(confirm("Clear board?")) { workspace.querySelectorAll('.hex-container').forEach(h => h.remove()); promptBtn.classList.add('hidden'); } };
         linkBtn.onclick = () => { const t = hexInput.value.split(/[\n,]+/).map(x=>x.trim()).filter(x=>x).join('|'); if(!t) return; const u = new URL(window.location.href); u.searchParams.set('t', encodeURIComponent(t)); navigator.clipboard.writeText(u.toString()).then(()=>alert("Link Copied!")); };
     </script>
 </body>
