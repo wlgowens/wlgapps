@@ -526,21 +526,38 @@
         closeModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
 
         copyTextBtn.addEventListener('click', async () => {
-            const formatHtml = (t) => isUrl(t) ? `<img src="${t}" width="144" height="144" style="width: 144px; height: 144px; object-fit: contain; vertical-align: middle; border-radius: 4px; margin: 4px; display: inline-block; border: 1px solid #e2e8f0;" alt="Source Image" />` : `<strong>${t}</strong>`;
-            const formatPlain = (t) => isUrl(t) ? `[Image Link: ${t}]` : t;
+            const formatHtmlMixed = (t) => isUrl(t) ? `<img src="${t}" width="144" height="144" style="width: 144px; height: 144px; object-fit: contain; vertical-align: middle; border-radius: 4px; margin: 4px; display: inline-block; border: 1px solid #e2e8f0;" alt="Source Image" />` : `<strong>${t}</strong>`;
+            const formatPlainMixed = (t) => isUrl(t) ? `[Image Link: ${t}]` : t;
+
+            function buildConnectionHtml(tA, tB, exp, index) {
+                if (isUrl(tA) || isUrl(tB)) {
+                    return `<p><strong>Connection ${index}:</strong><br>${formatHtmlMixed(tA)} &harr; ${formatHtmlMixed(tB)}</p>\n<p>${exp}</p><br>`;
+                } else {
+                    return `<p><strong>Connection ${index}:</strong><br>&quot;${tA}&quot;<br>&quot;${tB}&quot;</p>\n<p>${exp}</p><br>`;
+                }
+            }
+
+            function buildConnectionPlain(tA, tB, exp, index) {
+                if (isUrl(tA) || isUrl(tB)) {
+                    return `Connection ${index}:\n${formatPlainMixed(tA)} ↔ ${formatPlainMixed(tB)}\n${exp}\n\n`;
+                } else {
+                    return `Connection ${index}:\n"${tA}"\n"${tB}"\n${exp}\n\n`;
+                }
+            }
 
             const htmlContent = `
                 <h2>ASSOCIATION TRIANGLE SUMMARY</h2><br>
-                <p><strong>Connection:</strong> ${formatHtml(activeTerms[0])} ↔ ${formatHtml(activeTerms[1])}</p>
-                <p>${explanations.e12}</p><br>
-                <p><strong>Connection:</strong> ${formatHtml(activeTerms[1])} ↔ ${formatHtml(activeTerms[2])}</p>
-                <p>${explanations.e23}</p><br>
-                <p><strong>Connection:</strong> ${formatHtml(activeTerms[2])} ↔ ${formatHtml(activeTerms[0])}</p>
-                <p>${explanations.e31}</p><br>
-                <p><strong>Scenario Summary:</strong> ${activeTerms.map(t => formatHtml(t)).join(' &bull; ')}</p>
+                ${buildConnectionHtml(activeTerms[0], activeTerms[1], explanations.e12, 1)}
+                ${buildConnectionHtml(activeTerms[1], activeTerms[2], explanations.e23, 2)}
+                ${buildConnectionHtml(activeTerms[2], activeTerms[0], explanations.e31, 3)}
+                <h2>Scenario Summary</h2>
                 <p>${explanations.center}</p>`;
 
-            const plainContent = `ASSOCIATION TRIANGLE SUMMARY\n\nConnection: ${formatPlain(activeTerms[0])} ↔ ${formatPlain(activeTerms[1])}\n${explanations.e12}\n\nConnection: ${formatPlain(activeTerms[1])} ↔ ${formatPlain(activeTerms[2])}\n${explanations.e23}\n\nConnection: ${formatPlain(activeTerms[2])} ↔ ${formatPlain(activeTerms[0])}\n${explanations.e31}\n\nScenario Summary: ${activeTerms.map(t => formatPlain(t)).join(' • ')}\n${explanations.center}`;
+            const plainContent = `ASSOCIATION TRIANGLE SUMMARY\n\n` +
+                buildConnectionPlain(activeTerms[0], activeTerms[1], explanations.e12, 1) +
+                buildConnectionPlain(activeTerms[1], activeTerms[2], explanations.e23, 2) +
+                buildConnectionPlain(activeTerms[2], activeTerms[0], explanations.e31, 3) +
+                `Scenario Summary\n${explanations.center}`;
 
             try {
                 const clipboardItem = new ClipboardItem({ "text/plain": new Blob([plainContent], { type: "text/plain" }), "text/html": new Blob([htmlContent], { type: "text/html" }) });
