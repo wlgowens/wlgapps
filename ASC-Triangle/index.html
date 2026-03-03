@@ -313,7 +313,6 @@
             lightbox.style.display = 'flex';
         };
 
-        // Simplified display function for much faster native loading
         function formatDisplayItem(content, className = "") {
             if (isUrl(content)) {
                 return `<img src="${content}" class="${className}" onclick="zoomImage('${content}')" onerror="this.parentElement.innerHTML='[Invalid Image URL]'">`;
@@ -526,6 +525,24 @@
         closeModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
 
         copyTextBtn.addEventListener('click', async () => {
+            const originalBtnHtml = copyTextBtn.innerHTML;
+            copyTextBtn.innerHTML = `<span class="animate-pulse">Processing...</span>`;
+
+            // Pre-load images to calculate exact aspect ratios and prevent stretching in Google Docs
+            const getImageDims = (src) => new Promise(resolve => {
+                const img = new Image();
+                img.onload = () => resolve({ w: img.width, h: img.height });
+                img.onerror = () => resolve({ w: 144, h: 144 }); // fallback to square
+                img.src = src;
+            });
+
+            const preloadedDims = {};
+            for (let t of activeTerms) {
+                if (isUrl(t) && !preloadedDims[t]) {
+                    preloadedDims[t] = await getImageDims(t);
+                }
+            }
+
             const formatPlainMixed = (t) => isUrl(t) ? `[Image Link: ${t}]` : t;
 
             function buildConnectionHtml(tA, tB, exp, index) {
@@ -533,25 +550,35 @@
                     // Uses HTML tables for layout to guarantee Google Docs keeps items on the same line and wraps text cleanly
                     let formatItem = (t) => {
                         if (isUrl(t)) {
-                            // Constrain BOTH max-width and max-height to ~1.5 inches (144px) so it preserves aspect ratio and doesn't get too tall
-                            return `<img src="${t}" style="max-width: 144px; max-height: 144px; width: auto; height: auto; border-radius: 4px; border: 1px solid #e2e8f0; display: block;" alt="Image" />`;
+                            const dim = preloadedDims[t];
+                            let finalW = 144, finalH = 144;
+                            // Calculate proper constrained 144px box (approx 1.5 inches)
+                            if (dim.w > dim.h) {
+                                finalH = Math.round((dim.h / dim.w) * 144);
+                            } else {
+                                finalW = Math.round((dim.w / dim.h) * 144);
+                            }
+                            
+                            // Hardcoded width and height attributes prevent stretching
+                            return `<img src="${t}" width="${finalW}" height="${finalH}" style="border-radius: 4px; border: 1px solid #e2e8f0; display: block;" alt="Image" />`;
                         } else {
-                            return `<strong>${t}</strong>`;
+                            return `<span>${t}</span>`;
                         }
                     };
                     return `
                         <p style="margin-bottom: 4px;"><strong>Connection ${index}:</strong></p>
                         <table style="border: none; border-collapse: collapse; margin-bottom: 8px;">
                             <tr>
-                                <td style="vertical-align: middle; padding-right: 12px; border: none; max-width: 250px; word-wrap: break-word;">${formatItem(tA)}</td>
+                                <td style="vertical-align: middle; padding-right: 12px; border: none; max-width: 300px;">${formatItem(tA)}</td>
                                 <td style="vertical-align: middle; padding-right: 12px; border: none;"><strong>&harr;</strong></td>
-                                <td style="vertical-align: middle; border: none; max-width: 250px; word-wrap: break-word;">${formatItem(tB)}</td>
+                                <td style="vertical-align: middle; border: none; max-width: 300px;">${formatItem(tB)}</td>
                             </tr>
                         </table>
                         <p style="margin-top: 4px;">${exp}</p><br>
                     `;
                 } else {
-                    return `<p><strong>Connection ${index}:</strong><br><strong>${tA}</strong><br><strong>${tB}</strong></p>\n<p>${exp}</p><br>`;
+                    // Clean text-only output (no quotes, no bold terms)
+                    return `<p><strong>Connection ${index}:</strong><br>${tA}<br>${tB}</p>\n<p>${exp}</p><br>`;
                 }
             }
 
@@ -559,6 +586,7 @@
                 if (isUrl(tA) || isUrl(tB)) {
                     return `Connection ${index}:\n${formatPlainMixed(tA)} ↔ ${formatPlainMixed(tB)}\n${exp}\n\n`;
                 } else {
+                    // Clean plain text output
                     return `Connection ${index}:\n${tA}\n${tB}\n${exp}\n\n`;
                 }
             }
@@ -579,8 +607,13 @@
 
             try {
                 const clipboardItem = new ClipboardItem({ "text/plain": new Blob([plainContent], { type: "text/plain" }), "text/html": new Blob([htmlContent], { type: "text/html" }) });
-                await navigator.clipboard.write([clipboardItem]); alert("Text copied to clipboard! (Images will appear small when pasted into a rich text editor like Google Docs)");
-            } catch (err) { alert("Failed to copy. Try selecting manually."); }
+                await navigator.clipboard.write([clipboardItem]); 
+                copyTextBtn.innerHTML = originalBtnHtml;
+                alert("Text copied to clipboard! (Images will paste clearly without distortion into Google Docs)");
+            } catch (err) { 
+                copyTextBtn.innerHTML = originalBtnHtml;
+                alert("Failed to copy. Try selecting manually."); 
+            }
         });
     </script>
 </body>
