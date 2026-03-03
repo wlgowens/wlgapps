@@ -251,6 +251,7 @@
             </div>
 
             <div class="flex justify-end gap-3 mt-6">
+                <button id="edit-modal-btn" class="hidden px-6 py-3 rounded-xl font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 hover:text-gray-800 transition-colors">Whoops! I Need to Edit More</button>
                 <button id="close-modal-btn" class="px-6 py-3 rounded-xl font-bold text-gray-400 hover:text-gray-600 transition-colors">Cancel</button>
                 <button id="save-modal-btn" class="bg-indigo-600 text-white px-8 py-3 rounded-xl font-black hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 flex items-center gap-2">
                     Save Response
@@ -288,6 +289,7 @@
         const modalTextarea = document.getElementById('prompt-textarea');
         const closeModalBtn = document.getElementById('close-modal-btn');
         const saveModalBtn = document.getElementById('save-modal-btn');
+        const editModalBtn = document.getElementById('edit-modal-btn');
 
         const lightbox = document.getElementById('image-lightbox');
         const lightboxImg = document.getElementById('lightbox-img');
@@ -421,7 +423,7 @@
                 teacherInputs.classList.add('hidden');
                 infoBox.classList.replace('bg-indigo-50', 'bg-emerald-50');
                 infoBox.classList.replace('text-indigo-800', 'text-emerald-800');
-                infoBox.innerHTML = "<strong>Instructions:</strong> Click each Connection button to explain how these sources link together. Complete all three to unlock the final Summary challenge!";
+                infoBox.innerHTML = "<strong>Instructions:</strong> Click each Connection button to explain how these sources link together. Then, click Summary and explain how they all relate";
                 buildTriangle(terms);
             } else {
                 updateTheme(activeTerms);
@@ -451,22 +453,25 @@
             currentTarget = target;
             modalTextarea.value = explanations[target]; 
             if (target === 'center') {
-                modalTitle.textContent = "Core Scenario Summary";
+                modalTitle.textContent = "Scenario Summary";
                 modalDesc.textContent = "Summarize the entire scenario. How do they all relate?";
                 const itemsHtml = activeTerms.map(item => {
                     const content = isUrl(item) ? formatDisplayItem(item, "modal-item-img") : `<span class="text-fuchsia-600">${item}</span>`;
                     return `<div>${content}</div>`;
                 }).join('<span class="text-gray-300 mx-2 text-2xl">•</span>');
                 modalTermsDisplay.innerHTML = `<div class="flex items-center justify-center flex-wrap gap-2">${itemsHtml}</div>`;
-                saveModalBtn.innerHTML = "Save Response";
-                saveModalBtn.classList.remove('hidden'); // Always allow updating the response
                 
                 if (explanations.center) { 
                     exportZone.classList.remove('hidden'); 
-                    closeModalBtn.innerHTML = "Done"; 
+                    saveModalBtn.classList.add('hidden');
+                    editModalBtn.classList.remove('hidden');
+                    closeModalBtn.innerHTML = "Close"; 
                 } 
                 else { 
                     exportZone.classList.add('hidden'); 
+                    saveModalBtn.classList.remove('hidden');
+                    saveModalBtn.innerHTML = "Save Response";
+                    editModalBtn.classList.add('hidden');
                     closeModalBtn.innerHTML = "Cancel"; 
                 }
             } else {
@@ -486,10 +491,19 @@
                 saveModalBtn.innerHTML = "Save Response"; 
                 saveModalBtn.classList.remove('hidden');
                 exportZone.classList.add('hidden'); 
+                editModalBtn.classList.add('hidden');
                 closeModalBtn.innerHTML = "Cancel";
             }
             modal.classList.remove('hidden'); setTimeout(() => modalTextarea.focus(), 100);
         };
+
+        editModalBtn.addEventListener('click', () => {
+            exportZone.classList.add('hidden');
+            editModalBtn.classList.add('hidden');
+            saveModalBtn.classList.remove('hidden');
+            closeModalBtn.innerHTML = "Cancel";
+            modalTextarea.focus();
+        });
 
         saveModalBtn.addEventListener('click', () => {
             if (!modalTextarea.value.trim()) return alert("Please write an explanation.");
@@ -508,9 +522,10 @@
             
             if (currentTarget === 'center') { 
                 exportZone.classList.remove('hidden'); 
-                closeModalBtn.innerHTML = "Done"; 
-                // Don't close immediately so they can see the export options, 
-                // but allow them to click Save again if they edit.
+                saveModalBtn.classList.add('hidden');
+                editModalBtn.classList.remove('hidden');
+                closeModalBtn.innerHTML = "Close"; 
+                
                 exportZone.classList.add('scale-105');
                 setTimeout(() => exportZone.classList.remove('scale-105'), 300);
             } 
@@ -531,10 +546,10 @@
                 <p>${explanations.e23}</p><br>
                 <p><strong>Connection:</strong> ${formatHtml(activeTerms[2])} ↔ ${formatHtml(activeTerms[0])}</p>
                 <p>${explanations.e31}</p><br>
-                <p><strong>Core Scenario Summary:</strong> ${activeTerms.map(t => formatHtml(t)).join(' &bull; ')}</p>
+                <p><strong>Scenario Summary:</strong> ${activeTerms.map(t => formatHtml(t)).join(' &bull; ')}</p>
                 <p>${explanations.center}</p>`;
 
-            const plainContent = `ASSOCIATION TRIANGLE SUMMARY\n\nConnection: ${formatPlain(activeTerms[0])} ↔ ${formatPlain(activeTerms[1])}\n${explanations.e12}\n\nConnection: ${formatPlain(activeTerms[1])} ↔ ${formatPlain(activeTerms[2])}\n${explanations.e23}\n\nConnection: ${formatPlain(activeTerms[2])} ↔ ${formatPlain(activeTerms[0])}\n${explanations.e31}\n\nCore Scenario Summary: ${activeTerms.map(t => formatPlain(t)).join(' • ')}\n${explanations.center}`;
+            const plainContent = `ASSOCIATION TRIANGLE SUMMARY\n\nConnection: ${formatPlain(activeTerms[0])} ↔ ${formatPlain(activeTerms[1])}\n${explanations.e12}\n\nConnection: ${formatPlain(activeTerms[1])} ↔ ${formatPlain(activeTerms[2])}\n${explanations.e23}\n\nConnection: ${formatPlain(activeTerms[2])} ↔ ${formatPlain(activeTerms[0])}\n${explanations.e31}\n\nScenario Summary: ${activeTerms.map(t => formatPlain(t)).join(' • ')}\n${explanations.center}`;
 
             try {
                 const clipboardItem = new ClipboardItem({ "text/plain": new Blob([plainContent], { type: "text/plain" }), "text/html": new Blob([htmlContent], { type: "text/html" }) });
@@ -542,11 +557,32 @@
             } catch (err) { alert("Failed to copy. Try selecting manually."); }
         });
 
-        saveImgBtn.addEventListener('click', () => {
+        saveImgBtn.addEventListener('click', async () => {
             const canvas = document.getElementById('export-canvas'), ctx = canvas.getContext('2d');
             const maxWidth = 700;
             const lineHeight = 24; 
             const padding = 50;
+            
+            // UI feedback while processing
+            const originalBtnContent = saveImgBtn.innerHTML;
+            saveImgBtn.innerHTML = `<span class="animate-pulse font-bold">Generating Diagram...</span>`;
+
+            // Wait for images to load safely
+            const loadedImages = {};
+            const imagePromises = activeTerms.map((t, i) => {
+                if (isUrl(t)) {
+                    return new Promise(resolve => {
+                        const img = new Image();
+                        img.crossOrigin = "anonymous";
+                        img.onload = () => { loadedImages[i] = img; resolve(); };
+                        img.onerror = () => { resolve(); }; // Fail gracefully without crashing
+                        img.src = t;
+                    });
+                }
+                return Promise.resolve();
+            });
+
+            await Promise.all(imagePromises);
 
             function getWrappedLines(text, maxWidth, font) {
                 ctx.font = font;
@@ -578,7 +614,7 @@
                 { title: `Connection: ${getTermLabel(activeTerms[0], 0)} ↔ ${getTermLabel(activeTerms[1], 1)}`, text: explanations.e12 },
                 { title: `Connection: ${getTermLabel(activeTerms[1], 1)} ↔ ${getTermLabel(activeTerms[2], 2)}`, text: explanations.e23 },
                 { title: `Connection: ${getTermLabel(activeTerms[2], 2)} ↔ ${getTermLabel(activeTerms[0], 0)}`, text: explanations.e31 },
-                { title: "Core Scenario Summary", text: explanations.center, isFinal: true }
+                { title: "Scenario Summary", text: explanations.center, isFinal: true }
             ];
 
             let calculatedSections = sections.map(s => {
@@ -629,7 +665,19 @@
                 ctx.textBaseline = "middle";
                 
                 if (isUrl(t)) {
-                    ctx.fillText(`[Image ${i+1}]`, x, y);
+                    if (loadedImages[i]) {
+                        const img = loadedImages[i];
+                        let drawW = img.width;
+                        let drawH = img.height;
+                        const ratio = Math.min(200 / drawW, 60 / drawH);
+                        drawW *= ratio;
+                        drawH *= ratio;
+                        // Draw image perfectly centered inside the 220x80 node box
+                        ctx.drawImage(img, x - drawW/2, y - drawH/2, drawW, drawH);
+                    } else {
+                        // Fallback text if image block failed to load
+                        ctx.fillText(`[Image ${i+1}]`, x, y);
+                    }
                 } else {
                     const nodeLines = getWrappedLines(t, 200, "bold 13px sans-serif");
                     let nodeStartY = y - ((nodeLines.length - 1) * 16) / 2;
@@ -674,10 +722,18 @@
                 currentY += 30; 
             });
 
-            const link = document.createElement('a');
-            link.download = `association-triangle-${Date.now()}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
+            // Revert original button UI
+            saveImgBtn.innerHTML = originalBtnContent;
+
+            // Trigger Download (try/catch in case canvas is tainted by bad image host)
+            try {
+                const link = document.createElement('a');
+                link.download = `association-triangle-${Date.now()}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            } catch (error) {
+                alert("Security restriction: One of your image links blocked the download. You can still use the 'Copy Text' feature instead!");
+            }
         });
     </script>
 </body>
