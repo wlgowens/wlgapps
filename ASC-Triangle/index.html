@@ -188,7 +188,7 @@
             <button id="add-btn" class="btn-primary w-full mb-6">Preview Triangle</button>
             
             <div class="mb-2 p-3 bg-emerald-50 rounded-lg text-[11px] text-emerald-800 border border-emerald-100">
-                <strong>Share with Students:</strong> Copy this unique link below to share this activity through Google Classroom or another platform.
+                <strong>Share with Students:</strong> Copy this unique link below to share with students (Google Classroom, etc).
             </div>
             <button id="link-btn" class="bg-emerald-100 text-emerald-700 font-bold py-3 rounded-xl w-full text-sm hover:bg-emerald-200 transition-all active:scale-95 shadow-sm">Copy Student Link</button>
         </div>
@@ -520,19 +520,25 @@
         closeModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
 
         copyTextBtn.addEventListener('click', async () => {
+            const formatHtml = (t) => isUrl(t) ? `<img src="${t}" style="max-height: 100px; max-width: 200px; vertical-align: middle; border-radius: 4px;" alt="Source Image" />` : `<strong>${t}</strong>`;
+            const formatPlain = (t) => isUrl(t) ? `[Image Link: ${t}]` : t;
+
             const htmlContent = `
                 <h2>ASSOCIATION TRIANGLE SUMMARY</h2><br>
-                <p><strong>Connection:</strong> <strong>${isUrl(activeTerms[0]) ? 'Source A' : activeTerms[0]}</strong> ↔ <strong>${isUrl(activeTerms[1]) ? 'Source B' : activeTerms[1]}</strong></p>
+                <p><strong>Connection:</strong> ${formatHtml(activeTerms[0])} ↔ ${formatHtml(activeTerms[1])}</p>
                 <p>${explanations.e12}</p><br>
-                <p><strong>Connection:</strong> <strong>${isUrl(activeTerms[1]) ? 'Source B' : activeTerms[1]}</strong> ↔ <strong>${isUrl(activeTerms[2]) ? 'Source C' : activeTerms[2]}</strong></p>
+                <p><strong>Connection:</strong> ${formatHtml(activeTerms[1])} ↔ ${formatHtml(activeTerms[2])}</p>
                 <p>${explanations.e23}</p><br>
-                <p><strong>Connection:</strong> <strong>${isUrl(activeTerms[2]) ? 'Source C' : activeTerms[2]}</strong> ↔ <strong>${isUrl(activeTerms[0]) ? 'Source A' : activeTerms[0]}</strong></p>
+                <p><strong>Connection:</strong> ${formatHtml(activeTerms[2])} ↔ ${formatHtml(activeTerms[0])}</p>
                 <p>${explanations.e31}</p><br>
-                <p><strong>Core Scenario Summary:</strong> ${activeTerms.map(t => isUrl(t) ? '[Image]' : t).join(' • ')}</p>
+                <p><strong>Core Scenario Summary:</strong> ${activeTerms.map(t => formatHtml(t)).join(' &bull; ')}</p>
                 <p>${explanations.center}</p>`;
+
+            const plainContent = `ASSOCIATION TRIANGLE SUMMARY\n\nConnection: ${formatPlain(activeTerms[0])} ↔ ${formatPlain(activeTerms[1])}\n${explanations.e12}\n\nConnection: ${formatPlain(activeTerms[1])} ↔ ${formatPlain(activeTerms[2])}\n${explanations.e23}\n\nConnection: ${formatPlain(activeTerms[2])} ↔ ${formatPlain(activeTerms[0])}\n${explanations.e31}\n\nCore Scenario Summary: ${activeTerms.map(t => formatPlain(t)).join(' • ')}\n${explanations.center}`;
+
             try {
-                const clipboardItem = new ClipboardItem({ "text/plain": new Blob([htmlContent.replace(/<[^>]*>/g, '')], { type: "text/plain" }), "text/html": new Blob([htmlContent], { type: "text/html" }) });
-                await navigator.clipboard.write([clipboardItem]); alert("Text copied to clipboard!");
+                const clipboardItem = new ClipboardItem({ "text/plain": new Blob([plainContent], { type: "text/plain" }), "text/html": new Blob([htmlContent], { type: "text/html" }) });
+                await navigator.clipboard.write([clipboardItem]); alert("Text copied to clipboard! (Images will appear when pasted into a rich text editor like Google Docs)");
             } catch (err) { alert("Failed to copy. Try selecting manually."); }
         });
 
@@ -565,22 +571,26 @@
             }
 
             const bodyFont = "15px sans-serif";
+            const titleFont = "bold 18px sans-serif";
+            const getTermLabel = (t, i) => isUrl(t) ? `[Image ${i+1}]` : t;
+
             const sections = [
-                { title: `Connection: ${isUrl(activeTerms[0]) ? 'Source A' : activeTerms[0]} ↔ ${isUrl(activeTerms[1]) ? 'Source B' : activeTerms[1]}`, text: explanations.e12 },
-                { title: `Connection: ${isUrl(activeTerms[1]) ? 'Source B' : activeTerms[1]} ↔ ${isUrl(activeTerms[2]) ? 'Source C' : activeTerms[2]}`, text: explanations.e23 },
-                { title: `Connection: ${isUrl(activeTerms[2]) ? 'Source C' : activeTerms[2]} ↔ ${isUrl(activeTerms[0]) ? 'Source A' : activeTerms[0]}`, text: explanations.e31 },
+                { title: `Connection: ${getTermLabel(activeTerms[0], 0)} ↔ ${getTermLabel(activeTerms[1], 1)}`, text: explanations.e12 },
+                { title: `Connection: ${getTermLabel(activeTerms[1], 1)} ↔ ${getTermLabel(activeTerms[2], 2)}`, text: explanations.e23 },
+                { title: `Connection: ${getTermLabel(activeTerms[2], 2)} ↔ ${getTermLabel(activeTerms[0], 0)}`, text: explanations.e31 },
                 { title: "Core Scenario Summary", text: explanations.center, isFinal: true }
             ];
 
             let calculatedSections = sections.map(s => {
+                const titleLines = getWrappedLines(s.title, maxWidth, titleFont);
                 const lines = getWrappedLines(s.text, maxWidth, bodyFont);
-                return { ...s, lines };
+                return { ...s, titleLines, lines };
             });
 
-            // Re-calculate height with proper spacing
+            // Re-calculate height with proper spacing for wrapped titles
             let currentYCalc = 650; // Extra room for triangle
             calculatedSections.forEach(s => {
-                currentYCalc += 50; // Header space
+                currentYCalc += s.titleLines.length * 26 + 15; // Header space
                 currentYCalc += s.lines.length * lineHeight;
                 currentYCalc += 50; // Spacing/divider
             });
@@ -619,7 +629,7 @@
                 ctx.textBaseline = "middle";
                 
                 if (isUrl(t)) {
-                    ctx.fillText("[Image Source]", x, y);
+                    ctx.fillText(`[Image ${i+1}]`, x, y);
                 } else {
                     const nodeLines = getWrappedLines(t, 200, "bold 13px sans-serif");
                     let nodeStartY = y - ((nodeLines.length - 1) * 16) / 2;
@@ -637,9 +647,12 @@
             calculatedSections.forEach(s => {
                 // Section Title
                 ctx.fillStyle = s.isFinal ? "#f59e0b" : "#4f46e5";
-                ctx.font = "bold 18px sans-serif";
-                ctx.fillText(s.title, padding, currentY);
-                currentY += 40;
+                ctx.font = titleFont;
+                s.titleLines.forEach(tLine => {
+                    ctx.fillText(tLine, padding, currentY);
+                    currentY += 26;
+                });
+                currentY += 10; // Extra gap before body text
 
                 // Section Body
                 ctx.fillStyle = "#334155";
