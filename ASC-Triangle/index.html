@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Association Triangles</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Added html2canvas for taking direct screenshots of the triangle -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body { background-color: #f8fafc; overflow: hidden; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
         
@@ -201,7 +203,7 @@
     <div id="workspace">
         <div id="triangle-container">
             <!-- The visually appealing SVG triangle -->
-            <svg class="absolute inset-0 w-full h-full" style="z-index: 10; filter: drop-shadow(0 10px 15 rgba(99, 102, 241, 0.15));">
+            <svg class="absolute inset-0 w-full h-full" style="z-index: 10; filter: drop-shadow(0 10px 15px rgba(99, 102, 241, 0.15));">
                 <defs>
                     <linearGradient id="tri-grad" x1="0%" y1="0%" x2="100%" y2="100%">
                         <stop offset="0%" stop-color="#818cf8" />
@@ -323,9 +325,10 @@
             lightbox.style.display = 'flex';
         };
 
+        // Securely handle images to guarantee Canvas Export works using crossorigin and proxy fallback
         function formatDisplayItem(content, className = "") {
             if (isUrl(content)) {
-                return `<img src="${content}" class="${className}" onclick="zoomImage('${content}')" onerror="this.parentElement.innerHTML='[Invalid Image URL]'">`;
+                return `<img src="${content}" crossorigin="anonymous" class="${className}" onclick="zoomImage('${content}')" onerror="if(!this.dataset.proxied){ this.dataset.proxied='true'; this.src='https://api.allorigins.win/raw?url=' + encodeURIComponent('${content}'); } else { this.parentElement.innerHTML='[Invalid Image URL]'; }">`;
             }
             return `<span>${content}</span>`;
         }
@@ -559,278 +562,136 @@
         });
 
         saveImgBtn.addEventListener('click', async () => {
-            const canvas = document.getElementById('export-canvas'), ctx = canvas.getContext('2d');
-            const maxWidth = 700;
-            const lineHeight = 24; 
-            const padding = 50;
-            
-            // UI feedback while processing
             const originalBtnContent = saveImgBtn.innerHTML;
             saveImgBtn.innerHTML = `<span class="animate-pulse font-bold">Generating Diagram...</span>`;
 
-            // Smart Image Loader to bypass basic CORS issues securely using an open proxy if needed
-            const getSafeImage = (url) => {
-                return new Promise(resolve => {
-                    const img = new Image();
-                    img.crossOrigin = "anonymous";
-                    img.onload = () => resolve(img);
-                    img.onerror = () => {
-                        const proxyImg = new Image();
-                        proxyImg.crossOrigin = "anonymous";
-                        proxyImg.onload = () => resolve(proxyImg);
-                        proxyImg.onerror = () => resolve(null); // If proxy also fails, gracefully fallback
-                        proxyImg.src = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
-                    };
-                    img.src = url;
-                });
-            };
-
-            // Wait for images to load securely
-            const loadedImages = {};
-            const imagePromises = activeTerms.map(async (t, i) => {
-                if (isUrl(t)) {
-                    const img = await getSafeImage(t);
-                    if (img) loadedImages[i] = img;
-                }
-            });
-
-            await Promise.all(imagePromises);
-
-            function getWrappedLines(text, maxWidth, font) {
-                ctx.font = font;
-                if (!text) return ["(No response provided)"];
-                const paragraphs = text.split('\n');
-                let allLines = [];
-                paragraphs.forEach(p => {
-                    const words = p.split(' ');
-                    let currentLine = '';
-                    words.forEach(word => {
-                        let test = currentLine + (currentLine ? ' ' : '') + word;
-                        if (ctx.measureText(test).width > maxWidth) {
-                            allLines.push(currentLine);
-                            currentLine = word;
-                        } else {
-                            currentLine = test;
-                        }
-                    });
-                    allLines.push(currentLine);
-                });
-                return allLines;
-            }
-
-            // Custom function to measure rich text combining text strings and images
-            function measureInlineRichText(ctx, segments, maxWidth, lineHeight) {
-                let currentX = 0;
-                let lines = 1;
-                segments.forEach(seg => {
-                    if (seg.type === 'text') {
-                        const words = seg.text.split(' ');
-                        words.forEach(word => {
-                            if (!word) return;
-                            let w = ctx.measureText(word + ' ').width;
-                            if (currentX + w > maxWidth && currentX !== 0) {
-                                currentX = 0;
-                                lines++;
-                            }
-                            currentX += w;
-                        });
-                    } else if (seg.type === 'image') {
-                        let w = seg.img.width * (40 / seg.img.height) + 8; // 40px height
-                        if (currentX + w > maxWidth && currentX !== 0) {
-                            currentX = 0;
-                            lines++;
-                        }
-                        currentX += w;
-                    }
-                });
-                return lines * lineHeight;
-            }
-
-            // Custom function to draw rich text combining text strings and scaled images
-            function drawInlineRichText(ctx, segments, x, y, maxWidth, lineHeight) {
-                let currentX = x;
-                let currentY = y;
-                
-                segments.forEach(seg => {
-                    if (seg.type === 'text') {
-                        const words = seg.text.split(' ');
-                        words.forEach(word => {
-                            if (!word) return;
-                            let w = ctx.measureText(word + ' ').width;
-                            if (currentX + w > x + maxWidth && currentX !== x) {
-                                currentX = x;
-                                currentY += lineHeight;
-                            }
-                            ctx.fillText(word + ' ', currentX, currentY);
-                            currentX += w;
-                        });
-                    } else if (seg.type === 'image') {
-                        const img = seg.img;
-                        let h = 40; // Image header scaled height
-                        let w = img.width * (h / img.height);
-                        if (currentX + w > x + maxWidth && currentX !== x) {
-                            currentX = x;
-                            currentY += lineHeight;
-                        }
-                        ctx.drawImage(img, currentX, currentY - h/2, w, h);
-                        currentX += w + 8; // Margin
-                    }
-                });
-                return currentY + lineHeight;
-            }
-
-            // Factory to build title components based on content types
-            function getTitleSegments(tA, tB, loadedImages, indexA, indexB) {
-                let segments = [{type: 'text', text: 'Connection: '}];
-                
-                if (isUrl(tA) && loadedImages[indexA]) {
-                    segments.push({type: 'image', img: loadedImages[indexA]});
-                    segments.push({type: 'text', text: ' '});
-                } else if (isUrl(tA)) {
-                    segments.push({type: 'text', text: `[Image ${indexA+1}] `});
-                } else {
-                    segments.push({type: 'text', text: tA + ' '});
-                }
-                
-                segments.push({type: 'text', text: '↔ '});
-                
-                if (isUrl(tB) && loadedImages[indexB]) {
-                    segments.push({type: 'image', img: loadedImages[indexB]});
-                } else if (isUrl(tB)) {
-                    segments.push({type: 'text', text: `[Image ${indexB+1}]`});
-                } else {
-                    segments.push({type: 'text', text: tB});
-                }
-                
-                return segments;
-            }
-
-            const bodyFont = "15px sans-serif";
-            const titleFont = "bold 18px sans-serif";
-
-            const sections = [
-                { titleSegments: getTitleSegments(activeTerms[0], activeTerms[1], loadedImages, 0, 1), text: explanations.e12 },
-                { titleSegments: getTitleSegments(activeTerms[1], activeTerms[2], loadedImages, 1, 2), text: explanations.e23 },
-                { titleSegments: getTitleSegments(activeTerms[2], activeTerms[0], loadedImages, 2, 0), text: explanations.e31 },
-                { titleSegments: [{type: 'text', text: 'Scenario Summary'}], text: explanations.center, isFinal: true }
-            ];
-
-            let calculatedSections = sections.map(s => {
-                ctx.font = titleFont; // Important: setup font before measure
-                const titleHeight = measureInlineRichText(ctx, s.titleSegments, maxWidth, 30);
-                const lines = getWrappedLines(s.text, maxWidth, bodyFont);
-                return { ...s, titleHeight, lines };
-            });
-
-            // Re-calculate height with proper spacing for wrapped titles + images
-            let currentYCalc = 650; // Extra room for triangle
-            calculatedSections.forEach(s => {
-                currentYCalc += s.titleHeight + 15; // Header space
-                currentYCalc += s.lines.length * lineHeight;
-                currentYCalc += 50; // Spacing/divider
-            });
-
-            canvas.width = 800;
-            canvas.height = currentYCalc + padding;
-
-            // Draw Background
-            ctx.fillStyle = "#f8fafc";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Triangle
-            ctx.strokeStyle = "#cbd5e1";
-            ctx.lineWidth = 8;
-            ctx.lineJoin = "round";
-            ctx.beginPath();
-            ctx.moveTo(400, 100);
-            ctx.lineTo(600, 450);
-            ctx.lineTo(200, 450);
-            ctx.closePath();
-            ctx.stroke();
-
-            // Nodes
-            activeTerms.forEach((t, i) => {
-                let x = [400, 200, 600][i], y = [100, 450, 450][i];
-                ctx.fillStyle = "white";
-                ctx.strokeStyle = "#4f46e5";
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.roundRect(x - 110, y - 40, 220, 80, 12);
-                ctx.fill();
-                ctx.stroke();
-                ctx.fillStyle = "#1e1b4b";
-                ctx.font = "bold 13px sans-serif";
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-                
-                if (isUrl(t)) {
-                    if (loadedImages[i]) {
-                        const img = loadedImages[i];
-                        let drawW = img.width;
-                        let drawH = img.height;
-                        const ratio = Math.min(200 / drawW, 60 / drawH);
-                        drawW *= ratio;
-                        drawH *= ratio;
-                        // Draw image perfectly centered inside the 220x80 node box
-                        ctx.drawImage(img, x - drawW/2, y - drawH/2, drawW, drawH);
-                    } else {
-                        // Fallback text if image block failed to load
-                        ctx.fillText(`[Image ${i+1}]`, x, y);
-                    }
-                } else {
-                    const nodeLines = getWrappedLines(t, 200, "bold 13px sans-serif");
-                    let nodeStartY = y - ((nodeLines.length - 1) * 16) / 2;
-                    nodeLines.forEach((l, idx) => {
-                        ctx.fillText(l, x, nodeStartY + (idx * 16));
-                    });
-                }
-            });
-
-            // Start drawing text further down to avoid overlap with nodes
-            let currentY = 600; 
-            ctx.textAlign = "left";
-            
-            calculatedSections.forEach(s => {
-                // Section Title (Handles wrapping mixed with Images!)
-                ctx.fillStyle = s.isFinal ? "#f59e0b" : "#4f46e5";
-                ctx.font = titleFont;
-                ctx.textBaseline = "middle";
-                
-                drawInlineRichText(ctx, s.titleSegments, padding, currentY + 15, maxWidth, 30);
-                currentY += s.titleHeight + 10; 
-
-                // Section Body
-                ctx.fillStyle = "#334155";
-                ctx.font = bodyFont;
-                ctx.textBaseline = "top";
-                s.lines.forEach(line => {
-                    ctx.fillText(line, padding, currentY);
-                    currentY += lineHeight;
-                });
-                
-                // Divider
-                currentY += 20;
-                ctx.strokeStyle = "#e2e8f0";
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.moveTo(padding, currentY);
-                ctx.lineTo(canvas.width - padding, currentY);
-                ctx.stroke();
-
-                currentY += 30; 
-            });
-
-            // Revert original button UI
-            saveImgBtn.innerHTML = originalBtnContent;
-
-            // Trigger Download (try/catch in case canvas is tainted by bad image host)
             try {
+                // 1. Take a screenshot of the actual triangle using html2canvas
+                const container = document.getElementById('triangle-container');
+                const canvasObj = await html2canvas(container, {
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: null,
+                    scale: 2 // Keep it high resolution
+                });
+
+                // 2. Setup the export canvas
+                const canvas = document.getElementById('export-canvas');
+                const ctx = canvas.getContext('2d');
+                const maxWidth = 700;
+                const lineHeight = 24; 
+                const padding = 50;
+
+                function getWrappedLines(text, maxWidth) {
+                    if (!text) return ["(No response provided)"];
+                    const paragraphs = text.split('\n');
+                    let allLines = [];
+                    paragraphs.forEach(p => {
+                        const words = p.split(' ');
+                        let currentLine = '';
+                        words.forEach(word => {
+                            let test = currentLine + (currentLine ? ' ' : '') + word;
+                            if (ctx.measureText(test).width > maxWidth) {
+                                allLines.push(currentLine);
+                                currentLine = word;
+                            } else {
+                                currentLine = test;
+                            }
+                        });
+                        allLines.push(currentLine);
+                    });
+                    return allLines;
+                }
+
+                const bodyFont = "15px sans-serif";
+                const titleFont = "bold 18px sans-serif";
+                
+                // Simple label references to match the screenshot visually
+                const getTermLabel = (t, i) => isUrl(t) ? `[Image ${i+1}]` : t;
+
+                const sections = [
+                    { title: `Connection: ${getTermLabel(activeTerms[0], 0)} ↔ ${getTermLabel(activeTerms[1], 1)}`, text: explanations.e12 },
+                    { title: `Connection: ${getTermLabel(activeTerms[1], 1)} ↔ ${getTermLabel(activeTerms[2], 2)}`, text: explanations.e23 },
+                    { title: `Connection: ${getTermLabel(activeTerms[2], 2)} ↔ ${getTermLabel(activeTerms[0], 0)}`, text: explanations.e31 },
+                    { title: "Scenario Summary", text: explanations.center, isFinal: true }
+                ];
+
+                // Measure required space
+                let calculatedSections = sections.map(s => {
+                    ctx.font = titleFont; 
+                    const titleLines = getWrappedLines(s.title, maxWidth);
+                    ctx.font = bodyFont;
+                    const lines = getWrappedLines(s.text, maxWidth);
+                    return { ...s, titleLines, lines };
+                });
+
+                // Target width for screenshot mapping
+                const tWidth = 800;
+                const tHeight = (canvasObj.height / canvasObj.width) * tWidth;
+
+                let currentYCalc = tHeight + 40; 
+                calculatedSections.forEach(s => {
+                    currentYCalc += s.titleLines.length * 26 + 15; 
+                    currentYCalc += s.lines.length * lineHeight;
+                    currentYCalc += 50; 
+                });
+
+                canvas.width = 800;
+                canvas.height = currentYCalc + padding;
+
+                // Draw Background
+                ctx.fillStyle = "#f8fafc";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Draw the actual Screenshot of the Triangle
+                ctx.drawImage(canvasObj, 0, 20, tWidth, tHeight);
+
+                // Draw the Text Sections Below
+                let currentY = tHeight + 40; 
+                ctx.textAlign = "left";
+                ctx.textBaseline = "top";
+                
+                calculatedSections.forEach(s => {
+                    // Title
+                    ctx.fillStyle = s.isFinal ? "#f59e0b" : "#4f46e5";
+                    ctx.font = titleFont;
+                    s.titleLines.forEach(tLine => {
+                        ctx.fillText(tLine, padding, currentY);
+                        currentY += 26;
+                    });
+                    currentY += 10; 
+
+                    // Body
+                    ctx.fillStyle = "#334155";
+                    ctx.font = bodyFont;
+                    s.lines.forEach(line => {
+                        ctx.fillText(line, padding, currentY);
+                        currentY += lineHeight;
+                    });
+                    
+                    // Divider
+                    currentY += 20;
+                    ctx.strokeStyle = "#e2e8f0";
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(padding, currentY);
+                    ctx.lineTo(canvas.width - padding, currentY);
+                    ctx.stroke();
+
+                    currentY += 30; 
+                });
+
+                // Reset Button and Trigger Download
+                saveImgBtn.innerHTML = originalBtnContent;
                 const link = document.createElement('a');
                 link.download = `association-triangle-${Date.now()}.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
+                
             } catch (error) {
-                alert("Security restriction: One of your image links securely blocked the download. You can still use the 'Copy Text' feature instead!");
+                console.error(error);
+                saveImgBtn.innerHTML = originalBtnContent;
+                alert("Security restriction: Could not capture screenshot. You can still use the 'Copy Text' feature instead!");
             }
         });
     </script>
