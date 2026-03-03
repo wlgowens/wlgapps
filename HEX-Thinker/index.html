@@ -126,7 +126,6 @@
         const COLORS = ['#EAB308', '#10B981', '#F43F5E', '#0EA5E9', '#F97316', '#8B5CF6', '#EC4899'];
         let colorIndex = 0;
         
-        // Tracking Completion Logic
         let currentMode = 'pair';
         let pairText = "";
         let nodeText = "";
@@ -135,7 +134,6 @@
 
         const GRID_DX = 90, GRID_DY = 104;
 
-        // Modal Draggable Logic
         let isModalDragging = false, modalOffsetX, modalOffsetY;
         modalContent.addEventListener('mousedown', (e) => {
             if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'BUTTON' || e.target.closest('#mode-selector')) return;
@@ -324,7 +322,6 @@
                 const [c, r] = pos.split(',').map(Number), neighbors = getNeighbors(c, r);
                 const connectedNeighbors = neighbors.filter(n => gridMap[`${n.c},${n.r}`]);
                 
-                // Node logic: Max 4 Hexagons total (Hub + up to 3 neighbors)
                 if (connectedNeighbors.length >= 2) {
                     const limitedNeighbors = connectedNeighbors.slice(0, 3);
                     const group = [data, ...limitedNeighbors.map(n => gridMap[`${n.c},${n.r}`])];
@@ -332,7 +329,6 @@
                     if (!seenNodes.has(key)) { seenNodes.add(key); allNodes.push(group); }
                 }
                 
-                // Pair logic
                 connectedNeighbors.forEach(n => {
                     const group = [data, gridMap[`${n.c},${n.r}`]];
                     const key = group.map(g => g.text).sort().join('|');
@@ -340,7 +336,6 @@
                 });
             }
 
-            // Find Non-Overlapping Pair and Node
             selectedNode = null;
             selectedPair = null;
             pairText = "";
@@ -359,17 +354,14 @@
                         break;
                     }
                 }
-                // Fallback if mathematically impossible to separate
                 if (!selectedNode) {
                     selectedNode = shuffledNodes[0];
                     selectedPair = shuffledPairs[0];
                 }
             } else {
-                // If no nodes exist at all
                 selectedPair = allPairs[Math.floor(Math.random() * allPairs.length)];
             }
 
-            // Update UI visibility based on what was found
             if (!selectedNode) { 
                 btnNode.classList.add('hidden'); 
                 completionHint.textContent = "Complete the challenge to finish!";
@@ -386,7 +378,6 @@
             promptModal.classList.remove('hidden');
         });
 
-        // Track Text Entry to enable Save Button
         promptTextarea.addEventListener('input', (e) => {
             if (currentMode === 'pair') pairText = e.target.value;
             else nodeText = e.target.value;
@@ -436,10 +427,10 @@
             hexes.forEach(h => { const x = parseFloat(h.style.left), y = parseFloat(h.style.top); minX = Math.min(minX, x); minY = Math.min(minY, y); maxX = Math.max(maxX, x + 120); maxY = Math.max(maxY, y + 104); });
             const canvas = document.getElementById('export-canvas'), ctx = canvas.getContext('2d'), bW = (maxX - minX) + 160, bH = (maxY - minY) + 160;
             
-            ctx.font = "15px sans-serif";
             function getLines(context, text, maxWidth) {
+                if (!text) return [];
                 const words = text.split(" "), lines = [];
-                let currentLine = words[0];
+                let currentLine = words[0] || "";
                 for (let i = 1; i < words.length; i++) {
                     if (context.measureText(currentLine + " " + words[i]).width < maxWidth) currentLine += " " + words[i];
                     else { lines.push(currentLine); currentLine = words[i]; }
@@ -448,12 +439,19 @@
                 return lines;
             }
 
-            let pairLines = getLines(ctx, pairText, Math.max(bW, 600) - 80);
-            let nodeLines = selectedNode ? getLines(ctx, nodeText, Math.max(bW, 600) - 80) : [];
+            const maxWidth = Math.max(bW, 600) - 80;
+
+            ctx.font = "bold 16px sans-serif";
+            let pairHeaderLines = selectedPair ? getLines(ctx, "Pair Connection: " + selectedPair.map(g=>g.text).join(' + '), maxWidth) : [];
+            let nodeHeaderLines = selectedNode ? getLines(ctx, "Node Intersection: " + selectedNode.map(g=>g.text).join(' • '), maxWidth) : [];
+
+            ctx.font = "15px sans-serif";
+            let pairLines = selectedPair ? getLines(ctx, pairText, maxWidth) : [];
+            let nodeLines = selectedNode ? getLines(ctx, nodeText, maxWidth) : [];
             
             let extraHeight = 40;
-            if (selectedPair) extraHeight += 50 + (pairLines.length * 24);
-            if (selectedNode) extraHeight += 50 + (nodeLines.length * 24);
+            if (selectedPair) extraHeight += (pairHeaderLines.length * 24) + (pairLines.length * 22) + 20;
+            if (selectedNode) extraHeight += (nodeHeaderLines.length * 24) + (nodeLines.length * 22) + 20;
 
             canvas.width = Math.max(bW, 600); canvas.height = bH + extraHeight;
             ctx.fillStyle = "#d8d2e1"; ctx.fillRect(0,0,canvas.width, canvas.height);
@@ -475,17 +473,17 @@
 
             if (selectedPair) {
                 ctx.fillStyle = "#6366f1"; ctx.font = "bold 16px sans-serif"; ctx.textAlign = "left";
-                ctx.fillText("Pair Connection: " + selectedPair.map(g=>g.text).join(' + '), textPadding, currentY);
-                currentY += 25;
+                pairHeaderLines.forEach(l => { ctx.fillText(l, textPadding, currentY); currentY += 24; });
+                currentY += 5;
                 ctx.fillStyle = "#4a4a4a"; ctx.font = "15px sans-serif";
                 pairLines.forEach(l => { ctx.fillText(l, textPadding, currentY); currentY += 22; });
-                currentY += 15;
+                currentY += 25; 
             }
 
             if (selectedNode) {
                 ctx.fillStyle = "#6366f1"; ctx.font = "bold 16px sans-serif"; ctx.textAlign = "left";
-                ctx.fillText("Node Intersection: " + selectedNode.map(g=>g.text).join(' • '), textPadding, currentY);
-                currentY += 25;
+                nodeHeaderLines.forEach(l => { ctx.fillText(l, textPadding, currentY); currentY += 24; });
+                currentY += 5;
                 ctx.fillStyle = "#4a4a4a"; ctx.font = "15px sans-serif";
                 nodeLines.forEach(l => { ctx.fillText(l, textPadding, currentY); currentY += 22; });
             }
