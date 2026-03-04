@@ -26,22 +26,13 @@
 
         /* --- Bee Animations --- */
         .bee { position: absolute; font-size: 28px; z-index: 5; pointer-events: none; top: 0; left: 0; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15)); }
-        .bee-inner { display: inline-block; animation: bob 1s infinite ease-in-out; }
-        @keyframes bob { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-12px) rotate(8deg); } }
         
-        .bee-1 { animation: fly1 35s infinite linear; }
-        .bee-2 { animation: fly2 45s infinite linear; animation-delay: -5s; }
-        .bee-3 { animation: fly3 40s infinite linear; animation-delay: -15s; }
-        .bee-4 { animation: fly4 38s infinite linear; animation-delay: -2s; }
-        .bee-5 { animation: fly5 50s infinite linear; animation-delay: -10s; }
-        .bee-6 { animation: fly1 32s infinite linear; animation-delay: -20s; opacity: 0.8; }
-        .bee-7 { animation: fly3 48s infinite linear; animation-delay: -8s; opacity: 0.9; }
-
-        @keyframes fly1 { 0% { transform: translate(-10vw, 20vh) scaleX(-1); } 50% { transform: translate(80vw, 10vh) scaleX(1); } 100% { transform: translate(-10vw, 20vh) scaleX(-1); } }
-        @keyframes fly2 { 0% { transform: translate(110vw, 50vh) scaleX(1); } 50% { transform: translate(10vw, 60vh) scaleX(-1); } 100% { transform: translate(110vw, 50vh) scaleX(1); } }
-        @keyframes fly3 { 0% { transform: translate(50vw, -10vh) scaleX(-1); } 50% { transform: translate(85vw, 70vh) scaleX(1); } 100% { transform: translate(50vw, -10vh) scaleX(-1); } }
-        @keyframes fly4 { 0% { transform: translate(20vw, 110vh) scaleX(1); } 50% { transform: translate(70vw, 20vh) scaleX(-1); } 100% { transform: translate(20vw, 110vh) scaleX(1); } }
-        @keyframes fly5 { 0% { transform: translate(0vw, 50vh) scaleX(1); } 50% { transform: translate(100vw, 50vh) scaleX(-1); } 100% { transform: translate(0vw, 50vh) scaleX(1); } }
+        /* Gentle breathing to simulate a resting/tending bee */
+        .bee-inner { display: inline-block; animation: breathe 3s infinite ease-in-out; }
+        @keyframes breathe { 
+            0%, 100% { transform: scale(1) translateY(0); } 
+            50% { transform: scale(1.08) translateY(-2px); } 
+        }
 
         /* Hexagon Styling */
         .hex-container { position: absolute; width: 120px; height: 104px; cursor: move; filter: drop-shadow(0 6px 12px rgba(217, 119, 6, 0.1)); transition: transform 0.1s ease-out, filter 0.2s, left 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); user-select: none; touch-action: none; z-index: 10; }
@@ -124,15 +115,15 @@
     </div>
 
     <div id="workspace">
-        <div class="bee bee-1"><div class="bee-inner">🐝</div></div>
-        <div class="bee bee-2"><div class="bee-inner">🐝</div></div>
-        <div class="bee bee-3"><div class="bee-inner">🐝</div></div>
-        <div class="bee bee-4"><div class="bee-inner">🐝</div></div>
-        <div class="bee bee-5"><div class="bee-inner">🐝</div></div>
-        <div class="bee bee-6"><div class="bee-inner">🐝</div></div>
-        <div class="bee bee-7"><div class="bee-inner">🐝</div></div>
+        <div class="bee"><div class="bee-inner">🐝</div></div>
+        <div class="bee"><div class="bee-inner">🐝</div></div>
+        <div class="bee"><div class="bee-inner">🐝</div></div>
+        <div class="bee"><div class="bee-inner">🐝</div></div>
+        <div class="bee"><div class="bee-inner">🐝</div></div>
+        <div class="bee"><div class="bee-inner">🐝</div></div>
+        <div class="bee"><div class="bee-inner">🐝</div></div>
     </div>
-   
+    
     <canvas id="export-canvas"></canvas>
 
     <div id="prompt-modal" class="fixed inset-0 z-[2000] hidden flex items-center justify-center p-4">
@@ -172,7 +163,8 @@
               termContainer = document.getElementById('term-container'), 
               promptTextarea = document.getElementById('prompt-textarea'), 
               btnPair = document.getElementById('select-pair'), 
-              btnNode = document.getElementById('select-node');
+              btnNode = document.getElementById('select-node'),
+              challengeDesc = document.getElementById('challenge-desc');
 
         const GRID_DX = 90, GRID_DY = 104;
         const THEME_COLOR = "#d97706"; // Amber border color for hexes
@@ -228,7 +220,7 @@
         function checkAllConnected() {
             const hexes = document.querySelectorAll('.hex-container');
             if (hexes.length === 0) { promptBtn.classList.add('hidden'); return; }
-           
+            
             const occupied = new Set();
             let startNode = null;
             hexes.forEach(h => {
@@ -239,7 +231,7 @@
 
             const visited = new Set(), queue = [startNode];
             visited.add(startNode);
-           
+            
             while(queue.length > 0) {
                 const current = queue.shift(), [c, r] = current.split(',');
                 getNeighbors(c, r).forEach(n => {
@@ -250,7 +242,7 @@
                     }
                 });
             }
-           
+            
             if (visited.size === occupied.size && hexes.length >= 6) {
                 promptBtn.classList.remove('hidden');
             } else {
@@ -285,7 +277,7 @@
                 const dr = deleteZone.getBoundingClientRect(), 
                       mp = document.querySelector('.controls-panel').getBoundingClientRect(), 
                       ap = document.querySelector('.actions-panel').getBoundingClientRect();
-               
+                
                 if (cx > dr.left && cx < dr.right && cy > dr.top) el.remove();
                 else if ((cx < mp.right + 20 && cy < mp.bottom + 20) || (cx > ap.left - 20 && cy > ap.top - 20)) { el.style.left = originalLeft; el.style.top = originalTop; }
                 else {
@@ -305,11 +297,11 @@
             if (!raw) return;
             const terms = raw.split(/\r?\n|,/).map(t => t.trim()).filter(t => t.length > 0);
             if (terms.length < 6 || terms.length > 24) return alert("Please enter between 6 and 24 terms.");
-           
+            
             const occupied = new Set();
             document.querySelectorAll('.hex-container').forEach(h => occupied.add(`${h.dataset.col},${h.dataset.row}`));
             const sw = Math.max(window.innerWidth - 540, 100), sh = Math.max(window.innerHeight - 240, 100);
-           
+            
             terms.forEach(term => {
                 let found = false, attempts = 0, snap;
                 while (!found && attempts < 100) {
@@ -372,7 +364,7 @@
             hexes.forEach(h => {
                 gridMap[`${h.dataset.col},${h.dataset.row}`] = { text: h.dataset.fullText, x: parseFloat(h.style.left), y: parseFloat(h.style.top) };
             });
-           
+            
             let allPairs = [], allNodes = [];
             const seenPairs = new Set(), seenNodes = new Set();
             for (const [pos, data] of Object.entries(gridMap)) {
@@ -392,7 +384,7 @@
 
             selectedNode = allNodes.length > 0 ? allNodes[Math.floor(Math.random() * allNodes.length)] : null;
             selectedPair = allPairs[Math.floor(Math.random() * allPairs.length)];
-           
+            
             if (!selectedNode) btnNode.classList.add('hidden');
             else btnNode.classList.remove('hidden');
 
@@ -407,10 +399,86 @@
             else { saveModalBtn.classList.add('hidden'); completionHint.classList.remove('hidden'); }
         }
 
+        function initBees() {
+            const bees = document.querySelectorAll('.bee');
+            bees.forEach(bee => {
+                // Set initial random position
+                let x = Math.random() * window.innerWidth;
+                let y = Math.random() * window.innerHeight;
+                bee.style.transform = `translate(${x}px, ${y}px)`;
+                
+                function fly() {
+                    // Pick a random spot on the board to fly to
+                    let tx = Math.random() * (window.innerWidth - 100) + 50;
+                    let ty = Math.random() * (window.innerHeight - 100) + 50;
+                    
+                    let dx = tx - x;
+                    let dy = ty - y;
+                    let dist = Math.sqrt(dx*dx + dy*dy);
+                    
+                    // The emoji inherently faces Top-Left. +135 degrees aligns it to the flight path perfectly.
+                    let angle = Math.atan2(dy, dx) * (180 / Math.PI) + 135; 
+                    
+                    // Flight duration based on distance (swooping speed)
+                    let duration = Math.max(dist * 15, 3000); 
+                    
+                    bee.style.transition = `transform ${duration}ms cubic-bezier(0.4, 0, 0.2, 1)`;
+                    bee.style.transform = `translate(${tx}px, ${ty}px) rotate(${angle}deg)`;
+                    
+                    x = tx;
+                    y = ty;
+                    
+                    // Wait for the flight to finish, then start tending
+                    setTimeout(() => tend(angle), duration);
+                }
+                
+                function tend(baseAngle) {
+                    let tends = Math.floor(Math.random() * 4) + 3; // 3 to 6 short crawls
+                    let tendCount = 0;
+                    
+                    function doTend() {
+                        if (tendCount >= tends) {
+                            fly(); // Done tending, fly to a new spot
+                            return;
+                        }
+                        
+                        // Small crawling movements around the localized area
+                        let nx = x + (Math.random() * 80 - 40); 
+                        let ny = y + (Math.random() * 80 - 40);
+                        let nAngle = baseAngle + (Math.random() * 120 - 60); // Shift body orientation
+                        
+                        bee.style.transition = `transform ${1000 + Math.random() * 1000}ms ease-in-out`;
+                        bee.style.transform = `translate(${nx}px, ${ny}px) rotate(${nAngle}deg)`;
+                        
+                        x = nx;
+                        y = ny;
+                        baseAngle = nAngle;
+                        
+                        tendCount++;
+                        // Pause slightly between crawls
+                        setTimeout(doTend, 1500 + Math.random() * 1500);
+                    }
+                    
+                    doTend();
+                }
+                
+                // Give each bee a random delay before they start moving
+                setTimeout(fly, Math.random() * 3000);
+            });
+        }
+
+        // Initialize dynamic bee behaviors
+        initBees();
+
         function setChallengeMode(mode) {
             currentMode = mode;
             btnPair.classList.toggle('active', mode === 'pair');
             btnNode.classList.toggle('active', mode === 'node');
+            
+            challengeDesc.textContent = mode === 'pair' 
+                ? 'Explain how these two concepts are connected:' 
+                : 'Explain how these concepts are connected:';
+
             const group = mode === 'pair' ? selectedPair : selectedNode;
             termContainer.innerHTML = createClusterSVG(group);
             promptTextarea.value = mode === 'pair' ? pairText : nodeText;
@@ -452,7 +520,6 @@
             canvas.width = Math.max(bW, 800); 
             canvas.height = bH + totalChallengeHeight + 100;
             
-            // Clean Background for download - Set to White specifically
             ctx.fillStyle = "#ffffff"; 
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
