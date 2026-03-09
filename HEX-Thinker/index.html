@@ -24,75 +24,84 @@
 
         #workspace:active { cursor: grabbing; }
 
-        /* --- Bee Animations --- */
-        .bee { position: absolute; font-size: 28px; z-index: 5; pointer-events: none; top: 0; left: 0; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15)); }
-        
-        /* Gentle breathing to simulate a resting/tending bee */
-        .bee-inner { display: inline-block; animation: breathe 3s infinite ease-in-out; }
-        @keyframes breathe { 
-            0%, 100% { transform: scale(1) translateY(0); } 
-            50% { transform: scale(1.08) translateY(-2px); } 
+        /* Original Bee Animation */
+        .bee {
+            position: absolute;
+            font-size: 24px;
+            pointer-events: none;
+            z-index: 2000;
+            transition: left 2s linear, top 2s linear, transform 0.3s;
         }
 
         /* Hexagon Styling */
-        .hex-container { position: absolute; width: 120px; height: 104px; cursor: move; filter: drop-shadow(0 6px 12px rgba(217, 119, 6, 0.1)); transition: transform 0.1s ease-out, filter 0.2s, left 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); user-select: none; touch-action: none; z-index: 10; }
-        .hex-container.dragging { filter: drop-shadow(0 20px 30px rgba(0,0,0,0.15)); z-index: 1000; transition: none; }
-        .hex-shape-outer { fill: white; stroke-width: 2; stroke-linejoin: round; }
+        .hex-container { position: absolute; width: 120px; height: 104px; cursor: move; filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.3)); transition: transform 0.1s ease-out, filter 0.2s, left 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); user-select: none; touch-action: none; z-index: 10; }
+        .hex-container.dragging { filter: drop-shadow(0 20px 30px rgba(0,0,0,0.5)); z-index: 1000; transition: none; }
+        .hex-shape-outer { fill: #fffbeb; stroke-width: 3; stroke-linejoin: round; }
         .hex-text { pointer-events: none; font-size: 11px; font-weight: 800; text-anchor: middle; dominant-baseline: middle; fill: #4b5563; font-family: 'Inter', system-ui, sans-serif; }
 
-        /* Golden Honey Ooze */
-        .honey-ooze {
+        /* Original Honey Ooze Animation */
+        .honey-drop {
             position: absolute;
-            width: 24px;
-            height: 24px;
+            width: 12px;
+            height: 12px;
+            background: #f59e0b;
+            border-radius: 50% 50% 50% 10%;
+            transform: rotate(45deg);
+            z-index: 5;
             pointer-events: none;
-            z-index: 2000;
-            animation: ooze-and-fade 0.8s ease-out forwards;
-            filter: drop-shadow(0 2px 4px rgba(217, 119, 6, 0.4));
+            animation: drip 2s ease-in forwards;
+            filter: blur(1px);
         }
-        @keyframes ooze-and-fade {
-            0% { transform: scale(0.5) translateY(0); opacity: 0; }
-            30% { transform: scale(1.3) translateY(5px); opacity: 1; }
-            100% { transform: scale(1) translateY(20px); opacity: 0; }
+        @keyframes drip {
+            0% { transform: scale(0) rotate(45deg); opacity: 1; }
+            20% { transform: scale(1.2) rotate(45deg); }
+            100% { transform: translateY(40px) scale(0.8) rotate(45deg); opacity: 0; }
         }
 
-        .controls-panel { position: fixed; top: 20px; left: 20px; z-index: 100; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); padding: 24px; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); width: 340px; border: 1px solid rgba(255,255,255,0.3); }
+        .controls-panel { position: fixed; top: 20px; left: 20px; z-index: 100; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); padding: 24px; border-radius: 16px; box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.5); width: 340px; border: 1px solid rgba(255,255,255,0.3); }
         .actions-panel { position: fixed; bottom: 24px; right: 24px; z-index: 100; display: flex; gap: 12px; }
         .delete-zone { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); width: 260px; height: 80px; border: 3px dashed #f43f5e; border-radius: 20px; display: flex; align-items: center; justify-content: center; color: #f43f5e; background: rgba(255, 241, 242, 0.9); opacity: 0; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); pointer-events: none; z-index: 50; }
         .delete-zone.visible { opacity: 1; }
         .delete-zone.active { background: #ffe4e6; transform: translateX(-50%) scale(1.05); border-style: solid; }
         
         #export-canvas { display: none; }
-        .btn-primary { background: #6366f1; color: white; padding: 10px 20px; border-radius: 10px; font-weight: 700; transition: all 0.2s; }
-        .btn-primary:hover { background: #4f46e5; transform: translateY(-1px); }
+        .btn-primary { background: #d97706; color: white; padding: 10px 20px; border-radius: 10px; font-weight: 700; transition: all 0.2s; border: 1px solid #b45309; }
+        .btn-primary:hover { background: #b45309; transform: translateY(-1px); }
         textarea { resize: none; scrollbar-width: thin; line-height: 1.4; }
         .hidden { display: none !important; }
         
-        .choice-btn { flex: 1; padding: 12px; border-radius: 12px; border: 2px solid #eef2ff; font-weight: bold; transition: all 0.2s; text-align: center; cursor: pointer; color: #6366f1; }
-        .choice-btn:hover { background-color: #f5f7ff; }
-        .choice-btn.active { background-color: #6366f1; border-color: #6366f1; color: white; }
+        .choice-btn { flex: 1; padding: 12px; border-radius: 12px; border: 2px solid #eef2ff; font-weight: bold; transition: all 0.2s; text-align: center; cursor: pointer; color: #d97706; }
+        .choice-btn:hover { background-color: #fef3c7; }
+        .choice-btn.active { background-color: #d97706; border-color: #d97706; color: white; }
         #prompt-modal { pointer-events: none; }
         #modal-content { pointer-events: auto; cursor: grab; }
-        #term-container svg { max-height: 180px; max-width: 100%; drop-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        #term-container svg { max-height: 180px; max-width: 100%; drop-shadow: 0 4px 6px rgba(0,0,0,0.15); }
     </style>
 </head>
 <body>
 
     <div class="controls-panel">
-        <h1 class="text-2xl font-black mb-6 text-gray-800 flex items-center gap-2">
+        <h1 class="text-2xl font-black mb-4 text-gray-800 flex items-center gap-2">
             <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="3" fill="none" class="text-amber-600"><path d="M12 2l9 4.9V17.1L12 22l-9-4.9V6.9L12 2z"/></svg>
             Hexagonal Thinking
         </h1>
+        
+        <!-- Updated Instructions -->
+        <div class="mb-5 p-3.5 bg-amber-50 rounded-xl border-2 border-amber-200 text-amber-900 text-sm font-semibold shadow-inner">
+            <span class="block text-amber-600 font-black uppercase text-[10px] tracking-wider mb-1">Instructions</span>
+            Snap related ideas together! Every piece must touch at least one other hexagon to finish!
+        </div>
+
         <div class="mb-5">
             <label id="terms-label" class="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2 text-[10px]">Terms (Min: 6 | Max: 24)</label>
             <div class="flex flex-col gap-2">
-                <textarea id="hex-input" placeholder="Concept 1&#10;Concept 2&#10;Concept 3..." rows="5" class="w-full px-4 py-3 border-2 border-gray-100 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all text-sm"></textarea>
-                <button id="add-btn" class="btn-primary shadow-lg shadow-indigo-200 w-full">Scatter Hexagons</button>
-                <button id="link-btn" class="bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold py-2.5 rounded-xl w-full hover:bg-emerald-200 transition shadow-sm flex items-center justify-center gap-2 text-sm mt-2">
+                <textarea id="hex-input" placeholder="Concept 1&#10;Concept 2&#10;Concept 3..." rows="4" class="w-full px-4 py-3 border-2 border-gray-100 rounded-xl focus:ring-4 focus:ring-amber-100 focus:border-amber-400 outline-none transition-all text-sm"></textarea>
+                <button id="add-btn" class="btn-primary shadow-lg shadow-amber-900/20 w-full">Scatter Hexagons</button>
+                <button id="link-btn" class="bg-amber-100 text-amber-800 border border-amber-300 font-bold py-2.5 rounded-xl w-full hover:bg-amber-200 transition shadow-sm flex items-center justify-center gap-2 text-sm mt-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
                     Copy Student Link
                 </button>
-                <p id="share-hint" class="text-[10px] text-amber-600/60 italic text-center -mt-1 font-medium">
+                <p id="share-hint" class="text-[10px] text-gray-400 italic text-center -mt-1 font-medium">
                     Share with students (paste into Classroom, etc)
                 </p>
             </div>
@@ -100,8 +109,8 @@
     </div>
 
     <div class="actions-panel">
-        <button id="clear-btn" class="bg-white/80 backdrop-blur border border-gray-200 text-gray-600 px-5 py-3 rounded-xl hover:bg-white transition font-bold shadow-sm">Clear Board</button>
-        <button id="prompt-btn" class="hidden bg-indigo-600 text-white border border-indigo-700 px-8 py-3 rounded-xl hover:bg-indigo-700 transition font-black flex items-center gap-2 shadow-lg shadow-indigo-200 text-lg">
+        <button id="clear-btn" class="bg-white/90 backdrop-blur border border-gray-200 text-gray-700 px-5 py-3 rounded-xl hover:bg-white transition font-bold shadow-lg">Clear Board</button>
+        <button id="prompt-btn" class="hidden bg-amber-600 text-white border border-amber-700 px-8 py-3 rounded-xl hover:bg-amber-700 transition font-black flex items-center gap-2 shadow-lg shadow-amber-900/30 text-lg">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
             Finished
         </button>
@@ -114,33 +123,25 @@
         </span>
     </div>
 
-    <div id="workspace">
-        <div class="bee"><div class="bee-inner">🐝</div></div>
-        <div class="bee"><div class="bee-inner">🐝</div></div>
-        <div class="bee"><div class="bee-inner">🐝</div></div>
-        <div class="bee"><div class="bee-inner">🐝</div></div>
-        <div class="bee"><div class="bee-inner">🐝</div></div>
-        <div class="bee"><div class="bee-inner">🐝</div></div>
-        <div class="bee"><div class="bee-inner">🐝</div></div>
-    </div>
+    <div id="workspace"></div>
     
     <canvas id="export-canvas"></canvas>
 
-    <div id="prompt-modal" class="fixed inset-0 z-[2000] hidden flex items-center justify-center p-4">
-        <div id="modal-content" class="bg-white/95 backdrop-blur-md p-8 rounded-3xl shadow-2xl max-w-2xl w-full border border-white/50 relative shadow-indigo-500/20">
-            <h2 class="text-2xl font-black text-indigo-800 mb-4 text-center pointer-events-none">Connections Challenge!</h2>
-            <div class="flex gap-2 mb-6 p-1.5 bg-gray-100/80 rounded-2xl" id="mode-selector">
+    <div id="prompt-modal" class="fixed inset-0 z-[3000] hidden flex items-center justify-center p-4">
+        <div id="modal-content" class="bg-white/95 backdrop-blur-md p-8 rounded-3xl shadow-2xl max-w-2xl w-full border border-white/50 relative">
+            <h2 class="text-2xl font-black text-amber-800 mb-4 text-center pointer-events-none">Connections Challenge!</h2>
+            <div class="flex gap-2 mb-6 p-1.5 bg-amber-50 rounded-2xl" id="mode-selector">
                 <div id="select-pair" class="choice-btn active">Pair Challenge</div>
                 <div id="select-node" class="choice-btn">Node Challenge</div>
             </div>
-            <p id="challenge-desc" class="text-gray-500 mb-4 text-xs font-black uppercase tracking-[0.2em] text-center pointer-events-none">Explain how these two concepts are connected:</p>
-            <div id="term-container" class="flex items-center justify-center mb-6 p-4 bg-indigo-50/40 rounded-2xl border border-indigo-100/50 pointer-events-none w-full h-52"></div>
-            <textarea id="prompt-textarea" class="w-full h-40 p-5 border-2 border-indigo-50 rounded-2xl focus:border-indigo-400 focus:ring-8 focus:ring-indigo-100 outline-none transition-all mb-6 text-gray-700 bg-white/80" placeholder="Analyze the relationship here..."></textarea>
+            <p id="challenge-desc" class="text-amber-700/80 mb-4 text-xs font-black uppercase tracking-[0.2em] text-center pointer-events-none">Explain how these two concepts are connected:</p>
+            <div id="term-container" class="flex items-center justify-center mb-6 p-4 bg-amber-50/50 rounded-2xl border border-amber-200/50 pointer-events-none w-full h-52"></div>
+            <textarea id="prompt-textarea" class="w-full h-40 p-5 border-2 border-amber-100 rounded-2xl focus:border-amber-400 focus:ring-8 focus:ring-amber-50 outline-none transition-all mb-6 text-gray-700 bg-white/80" placeholder="Analyze the relationship here..."></textarea>
             <div class="flex justify-between items-center gap-3">
                 <span id="completion-hint" class="text-sm font-bold text-rose-500 animate-pulse">Complete both tabs to finish!</span>
                 <div class="flex gap-3 ml-auto">
                     <button id="close-modal-btn" class="px-6 py-3 rounded-xl font-bold text-gray-400 hover:text-gray-600 transition-colors">Cancel</button>
-                    <button id="save-modal-btn" class="hidden bg-indigo-600 text-white px-8 py-3 rounded-xl font-black hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-200 flex items-center gap-3 active:scale-95">Save & Download</button>
+                    <button id="save-modal-btn" class="hidden bg-amber-600 text-white px-8 py-3 rounded-xl font-black hover:bg-amber-700 transition-all shadow-xl shadow-amber-200 flex items-center gap-3 active:scale-95">Save & Download</button>
                 </div>
             </div>
         </div>
@@ -168,13 +169,76 @@
 
         const GRID_DX = 90, GRID_DY = 104;
         const THEME_COLOR = "#d97706"; // Amber border color for hexes
-        const BG_COLOR = "#fef3c7";
-
+        
         let currentMode = 'pair';
         let pairText = "";
         let nodeText = "";
         let selectedPair = null;
         let selectedNode = null;
+        let bees = [];
+
+        // Original Bee Logic
+        function initBees() {
+            for (let i = 0; i < 2; i++) {
+                const bee = document.createElement('div');
+                bee.className = 'bee';
+                bee.innerHTML = '🐝';
+                bee.style.left = Math.random() * window.innerWidth + 'px';
+                bee.style.top = Math.random() * window.innerHeight + 'px';
+                document.body.appendChild(bee);
+                bees.push({
+                    el: bee,
+                    x: parseFloat(bee.style.left),
+                    y: parseFloat(bee.style.top),
+                    targetX: Math.random() * window.innerWidth,
+                    targetY: Math.random() * window.innerHeight,
+                    timer: Math.random() * 2000
+                });
+            }
+            animateBees();
+        }
+
+        function animateBees() {
+            bees.forEach(bee => {
+                bee.timer -= 16;
+                if (bee.timer <= 0) {
+                    // Check if there's honey to visit
+                    const drops = document.querySelectorAll('.honey-drop');
+                    if (drops.length > 0 && Math.random() > 0.4) {
+                        const drop = drops[Math.floor(Math.random() * drops.length)];
+                        const rect = drop.getBoundingClientRect();
+                        bee.targetX = rect.left;
+                        bee.targetY = rect.top;
+                    } else {
+                        bee.targetX = Math.random() * window.innerWidth;
+                        bee.targetY = Math.random() * window.innerHeight;
+                    }
+                    bee.timer = 1500 + Math.random() * 2000;
+                }
+
+                // Smooth movement
+                bee.x += (bee.targetX - bee.x) * 0.02;
+                bee.y += (bee.targetY - bee.y) * 0.02;
+
+                const angle = Math.atan2(bee.targetY - bee.y, bee.targetX - bee.x) * 180 / Math.PI;
+                const flip = bee.targetX < bee.x ? 'scaleX(-1)' : 'scaleX(1)';
+                
+                bee.el.style.left = bee.x + 'px';
+                bee.el.style.top = bee.y + 'px';
+                bee.el.style.transform = `${flip} rotate(${angle/10}deg)`;
+            });
+            requestAnimationFrame(animateBees);
+        }
+
+        // Original Honey Ooze Logic
+        function spawnHoney(x, y) {
+            const drop = document.createElement('div');
+            drop.className = 'honey-drop';
+            drop.style.left = (x + 55) + 'px';
+            drop.style.top = (y + 45) + 'px';
+            workspace.appendChild(drop);
+            setTimeout(() => drop.remove(), 2000);
+        }
 
         function getSnapPos(x, y) {
             const col = Math.round(x / GRID_DX);
@@ -189,32 +253,6 @@
             if (col % 2 === 0) neighbors.push({c: col - 1, r: row - 1}, {c: col - 1, r: row}, {c: col + 1, r: row - 1}, {c: col + 1, r: row});
             else neighbors.push({c: col - 1, r: row}, {c: col - 1, r: row + 1}, {c: col + 1, r: row}, {c: col + 1, r: row + 1});
             return neighbors;
-        }
-
-        function triggerHoneyOoze(hexEl, col, row) {
-            const hexes = document.querySelectorAll('.hex-container');
-            const occupied = new Set();
-            hexes.forEach(h => { if (h !== hexEl) occupied.add(`${h.dataset.col},${h.dataset.row}`); });
-
-            const neighbors = getNeighbors(col, row);
-            neighbors.forEach((n, i) => {
-                if (occupied.has(`${n.c},${n.r}`)) {
-                    const drip = document.createElement('div');
-                    drip.className = 'honey-ooze';
-                    drip.innerHTML = `
-                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 21.5c-3.6 0-6.5-2.9-6.5-6.5 0-3.3 4.2-8.5 5.7-10.3.4-.5 1.2-.5 1.6 0 1.5 1.8 5.7 7 5.7 10.3 0 3.6-2.9 6.5-6.5 6.5z" fill="#f59e0b"/>
-                            <path d="M10 16.5c0-1.1.9-2 2-2" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
-                        </svg>
-                    `;
-                    const angle = (i * 60) - 90;
-                    const rad = (angle * Math.PI) / 180;
-                    drip.style.left = (parseFloat(hexEl.style.left) + 60 + Math.cos(rad) * 45 - 12) + 'px';
-                    drip.style.top = (parseFloat(hexEl.style.top) + 52 + Math.sin(rad) * 45 - 12) + 'px';
-                    workspace.appendChild(drip);
-                    setTimeout(() => drip.remove(), 800);
-                }
-            });
         }
 
         function checkAllConnected() {
@@ -278,14 +316,48 @@
                       mp = document.querySelector('.controls-panel').getBoundingClientRect(), 
                       ap = document.querySelector('.actions-panel').getBoundingClientRect();
                 
-                if (cx > dr.left && cx < dr.right && cy > dr.top) el.remove();
-                else if ((cx < mp.right + 20 && cy < mp.bottom + 20) || (cx > ap.left - 20 && cy > ap.top - 20)) { el.style.left = originalLeft; el.style.top = originalTop; }
-                else {
+                if (cx > dr.left && cx < dr.right && cy > dr.top) {
+                    el.remove();
+                } else if ((cx < mp.right + 20 && cy < mp.bottom + 20) || (cx > ap.left - 20 && cy > ap.top - 20)) { 
+                    el.style.left = originalLeft; el.style.top = originalTop; 
+                } else {
                     const snap = getSnapPos(parseFloat(el.style.left), parseFloat(el.style.top));
-                    el.style.left = snap.x + "px"; el.style.top = snap.y + "px";
-                    el.dataset.col = snap.col; el.dataset.row = snap.row;
-                    triggerHoneyOoze(el, snap.col, snap.row);
+                    
+                    // Collision check to prevent overlapping hexagons
+                    let isOccupied = false;
+                    document.querySelectorAll('.hex-container').forEach(h => {
+                        if (h !== el && parseInt(h.dataset.col) === snap.col && parseInt(h.dataset.row) === snap.row) {
+                            isOccupied = true;
+                        }
+                    });
+
+                    if (isOccupied) {
+                        // Revert to original location if target space is taken
+                        el.style.left = originalLeft;
+                        el.style.top = originalTop;
+                        // Quick shake animation to indicate blocked move
+                        el.animate([
+                            { transform: 'translateX(0)' },
+                            { transform: 'translateX(-5px)' },
+                            { transform: 'translateX(5px)' },
+                            { transform: 'translateX(-5px)' },
+                            { transform: 'translateX(5px)' },
+                            { transform: 'translateX(0)' }
+                        ], { duration: 300 });
+                    } else {
+                        // Place safely
+                        el.style.left = snap.x + "px"; el.style.top = snap.y + "px";
+                        el.dataset.col = snap.col; el.dataset.row = snap.row;
+                        
+                        // Original Linked Logic
+                        const neighbors = getNeighbors(snap.col, snap.row);
+                        const isLinked = Array.from(document.querySelectorAll('.hex-container')).some(other => 
+                            other !== el && neighbors.some(n => n.c == other.dataset.col && n.r == other.dataset.row)
+                        );
+                        if (isLinked) spawnHoney(snap.x, snap.y);
+                    }
                 }
+                
                 el.classList.remove('dragging'); deleteZone.classList.remove('visible'); deleteZone.classList.remove('active');
                 document.onmouseup = document.onmousemove = document.ontouchend = document.ontouchmove = null;
                 checkAllConnected();
@@ -313,7 +385,12 @@
                 }
                 const hex = createHex(term, THEME_COLOR, snap.x, snap.y);
                 workspace.appendChild(hex); occupied.add(`${snap.col},${snap.row}`);
-                triggerHoneyOoze(hex, snap.col, snap.row);
+                
+                const neighbors = getNeighbors(snap.col, snap.row);
+                const isLinked = Array.from(document.querySelectorAll('.hex-container')).some(other => 
+                    other !== hex && neighbors.some(n => n.c == other.dataset.col && n.r == other.dataset.row)
+                );
+                if (isLinked) spawnHoney(snap.x, snap.y);
             });
             checkAllConnected();
         });
@@ -352,7 +429,7 @@
                     return acc;
                 }, []).slice(0, 4);
                 const textSVG = lines.map((l, i) => `<tspan x="60" dy="${i === 0 ? 0 : 16}">${l.trim()}</tspan>`).join('');
-                svgContent += `<g transform="translate(${h.x - minX}, ${h.y - minY})"><path d="M 30 2 L 90 2 L 118 52 L 90 102 L 30 102 L 2 52 Z" fill="white" stroke="${THEME_COLOR}" stroke-width="2" stroke-linejoin="round" /><text x="60" y="${52 - (lines.length - 1) * 8}" font-family="Inter, system-ui, sans-serif" font-size="11px" font-weight="800" text-anchor="middle" dominant-baseline="middle" fill="#4b5563">${textSVG}</text></g>`;
+                svgContent += `<g transform="translate(${h.x - minX}, ${h.y - minY})"><path d="M 30 2 L 90 2 L 118 52 L 90 102 L 30 102 L 2 52 Z" fill="#fffbeb" stroke="${THEME_COLOR}" stroke-width="2" stroke-linejoin="round" /><text x="60" y="${52 - (lines.length - 1) * 8}" font-family="Inter, system-ui, sans-serif" font-size="11px" font-weight="800" text-anchor="middle" dominant-baseline="middle" fill="#4b5563">${textSVG}</text></g>`;
             });
             svgContent += `</svg>`;
             return svgContent;
@@ -399,76 +476,22 @@
             else { saveModalBtn.classList.add('hidden'); completionHint.classList.remove('hidden'); }
         }
 
-        function initBees() {
-            const bees = document.querySelectorAll('.bee');
-            bees.forEach(bee => {
-                // Set initial random position
-                let x = Math.random() * window.innerWidth;
-                let y = Math.random() * window.innerHeight;
-                bee.style.transform = `translate(${x}px, ${y}px)`;
-                
-                function fly() {
-                    // Pick a random spot on the board to fly to
-                    let tx = Math.random() * (window.innerWidth - 100) + 50;
-                    let ty = Math.random() * (window.innerHeight - 100) + 50;
-                    
-                    let dx = tx - x;
-                    let dy = ty - y;
-                    let dist = Math.sqrt(dx*dx + dy*dy);
-                    
-                    // The emoji inherently faces Top-Left. +135 degrees aligns it to the flight path perfectly.
-                    let angle = Math.atan2(dy, dx) * (180 / Math.PI) + 135; 
-                    
-                    // Flight duration based on distance (swooping speed)
-                    let duration = Math.max(dist * 15, 3000); 
-                    
-                    bee.style.transition = `transform ${duration}ms cubic-bezier(0.4, 0, 0.2, 1)`;
-                    bee.style.transform = `translate(${tx}px, ${ty}px) rotate(${angle}deg)`;
-                    
-                    x = tx;
-                    y = ty;
-                    
-                    // Wait for the flight to finish, then start tending
-                    setTimeout(() => tend(angle), duration);
-                }
-                
-                function tend(baseAngle) {
-                    let tends = Math.floor(Math.random() * 4) + 3; // 3 to 6 short crawls
-                    let tendCount = 0;
-                    
-                    function doTend() {
-                        if (tendCount >= tends) {
-                            fly(); // Done tending, fly to a new spot
-                            return;
-                        }
-                        
-                        // Small crawling movements around the localized area
-                        let nx = x + (Math.random() * 80 - 40); 
-                        let ny = y + (Math.random() * 80 - 40);
-                        let nAngle = baseAngle + (Math.random() * 120 - 60); // Shift body orientation
-                        
-                        bee.style.transition = `transform ${1000 + Math.random() * 1000}ms ease-in-out`;
-                        bee.style.transform = `translate(${nx}px, ${ny}px) rotate(${nAngle}deg)`;
-                        
-                        x = nx;
-                        y = ny;
-                        baseAngle = nAngle;
-                        
-                        tendCount++;
-                        // Pause slightly between crawls
-                        setTimeout(doTend, 1500 + Math.random() * 1500);
-                    }
-                    
-                    doTend();
-                }
-                
-                // Give each bee a random delay before they start moving
-                setTimeout(fly, Math.random() * 3000);
-            });
-        }
-
-        // Initialize dynamic bee behaviors
-        initBees();
+        window.addEventListener('DOMContentLoaded', () => {
+            initBees();
+            const t = new URLSearchParams(window.location.search).get('t');
+            if (t) {
+                hexInput.value = decodeURIComponent(t).split('|').join('\n');
+                setTimeout(() => { 
+                    addBtn.click(); 
+                    hexInput.readOnly = true; 
+                    hexInput.classList.add('bg-gray-50'); 
+                    addBtn.classList.add('hidden'); 
+                    linkBtn.classList.add('hidden'); 
+                    document.getElementById('share-hint').classList.add('hidden');
+                    document.getElementById('terms-label').textContent = "Assigned Terms"; 
+                }, 100);
+            }
+        });
 
         function setChallengeMode(mode) {
             currentMode = mode;
@@ -526,7 +549,7 @@
             hexes.forEach(h => {
                 const x = parseFloat(h.style.left)-minX+80, y = parseFloat(h.style.top)-minY+80, tLines = h.querySelectorAll('tspan');
                 ctx.save(); ctx.translate(x, y); ctx.beginPath(); [[30,2],[90,2],[118,52],[90,102],[30,102],[2,52]].forEach((p, i) => i === 0 ? ctx.moveTo(p[0],p[1]) : ctx.lineTo(p[0],p[1]));
-                ctx.closePath(); ctx.fillStyle = "white"; ctx.fill(); ctx.strokeStyle = THEME_COLOR; ctx.lineWidth = 2; ctx.stroke();
+                ctx.closePath(); ctx.fillStyle = "#fffbeb"; ctx.fill(); ctx.strokeStyle = THEME_COLOR; ctx.lineWidth = 2; ctx.stroke();
                 ctx.fillStyle = "#4b5563"; ctx.font = "800 11px sans-serif"; ctx.textAlign = "center";
                 tLines.forEach((tl, i) => ctx.fillText(tl.textContent, 60, (52-(tLines.length-1)*8) + (i*16))); ctx.restore();
             });
@@ -557,21 +580,6 @@
             const a = document.createElement('a'); a.download = `hex-thinking-${Date.now()}.png`; a.href = canvas.toDataURL(); a.click();
         }
 
-        window.addEventListener('DOMContentLoaded', () => {
-            const t = new URLSearchParams(window.location.search).get('t');
-            if (t) {
-                hexInput.value = decodeURIComponent(t).split('|').join('\n');
-                setTimeout(() => { 
-                    addBtn.click(); 
-                    hexInput.readOnly = true; 
-                    hexInput.classList.add('bg-gray-50'); 
-                    addBtn.classList.add('hidden'); 
-                    linkBtn.classList.add('hidden'); 
-                    document.getElementById('share-hint').classList.add('hidden');
-                    document.getElementById('terms-label').textContent = "Assigned Terms"; 
-                }, 100);
-            }
-        });
         clearBtn.onclick = () => { if(confirm("Clear board?")) { workspace.querySelectorAll('.hex-container').forEach(h => h.remove()); promptBtn.classList.add('hidden'); } };
         linkBtn.onclick = () => { const t = hexInput.value.split(/[\n,]+/).map(x=>x.trim()).filter(x=>x).join('|'); if(!t) return; const u = new URL(window.location.href); u.searchParams.set('t', encodeURIComponent(t)); navigator.clipboard.writeText(u.toString()).then(()=>alert("Link Copied!")); };
     </script>
