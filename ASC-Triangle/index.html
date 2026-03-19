@@ -68,9 +68,12 @@
             font-size: 0.95rem;
             background: linear-gradient(white, white) padding-box, linear-gradient(135deg, #818cf8, #f472b6) border-box;
             border: 4px solid transparent;
-            overflow: hidden;
+            /* Removed overflow: hidden so hover cards can pop out */
             padding: 10px;
             line-height: 1.2;
+        }
+        .triangle-node:hover {
+            z-index: 100;
         }
 
         .triangle-node img {
@@ -176,17 +179,25 @@
         </h1>
         
         <div id="info-box" class="mb-5 p-3 bg-indigo-50 rounded-lg text-[12px] text-indigo-800 leading-tight">
-            <strong>Teacher Guide:</strong> You can enter simple terms, full sentences, or multiple image URLs in the boxes below. The app creates a "pool" of your items and randomly selects exactly 3 for each student. Keep your total pool between 3 and 9 items.
+            <strong>Teacher Guide:</strong> You can enter simple terms, text snippets (like short quotes), or image URLs in the box below. The app creates a "pool" of your items and randomly selects exactly 3 for each student. Keep your total pool between 3 and 9 items.
         </div>
         
         <div id="teacher-inputs">
-            <label id="terms-label" class="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Terms or Sentences (one per line)</label>
-            <textarea id="term-input" placeholder="Enter vocabulary words...&#10;Or full analytical sentences...&#10;One per line..." rows="4" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-400 outline-none mb-3 text-sm"></textarea>
+            <label id="terms-label" class="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Add Term, Text Snippet, or Image URL</label>
+            <div class="flex gap-2 mb-3">
+                <input type="text" id="single-item-input" placeholder="Type a term, short quote, or paste a link..." class="w-full px-3 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-400 outline-none text-sm shadow-inner">
+                <button id="add-item-btn" class="bg-indigo-100 text-indigo-700 px-5 py-3 rounded-xl font-bold hover:bg-indigo-200 transition-colors active:scale-95 shadow-sm">Add</button>
+            </div>
             
-            <label id="urls-label" class="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Image URLs (one per line)</label>
-            <textarea id="url-input" placeholder="Paste links to graphs/photos...&#10;https://example.com/image1.png...&#10;One per line..." rows="3" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-400 outline-none mb-4 text-sm"></textarea>
+            <div id="item-list-container" class="mb-4 hidden">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Item Pool</span>
+                    <span id="item-count-display" class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">0/9</span>
+                </div>
+                <ul id="item-list" class="space-y-2 max-h-32 overflow-y-auto pr-1 pb-1"></ul>
+            </div>
             
-            <button id="add-btn" class="btn-primary w-full mb-6">Preview Triangle</button>
+            <button id="generate-btn" class="btn-primary w-full mb-6 disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-indigo-200" disabled>Preview Triangle (Need 3)</button>
             
             <div class="mb-2 p-3 bg-emerald-50 rounded-lg text-[11px] text-emerald-800 border border-emerald-100">
                 <strong>Share with Students:</strong> Copy this unique link below to share with students (Google Classroom, etc).
@@ -253,9 +264,14 @@
     </div>
 
     <script>
-        const termInput = document.getElementById('term-input');
-        const urlInput = document.getElementById('url-input');
-        const addBtn = document.getElementById('add-btn');
+        const singleItemInput = document.getElementById('single-item-input');
+        const addItemBtn = document.getElementById('add-item-btn');
+        const itemListContainer = document.getElementById('item-list-container');
+        const itemList = document.getElementById('item-list');
+        const itemCountDisplay = document.getElementById('item-count-display');
+        const generateBtn = document.getElementById('generate-btn');
+        let itemPool = [];
+
         const linkBtn = document.getElementById('link-btn');
         const infoBox = document.getElementById('info-box');
         const iconLayer = document.getElementById('icon-layer');
@@ -314,15 +330,30 @@
             lightbox.style.display = 'flex';
         };
 
-        function formatDisplayItem(content, className = "") {
+        function formatDisplayItem(content, className = "", isNode = false) {
             if (isUrl(content)) {
                 return `<img src="${content}" class="${className}" onclick="zoomImage('${content}')" onerror="this.parentElement.innerHTML='[Invalid Image URL]'">`;
             }
-            return `<span>${content}</span>`;
+            
+            // Auto-clamp and Hover Expansion Logic
+            if (isNode && content.length > 40) {
+                return `
+                    <div class="w-full h-full flex items-center justify-center group cursor-help relative">
+                        <span style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;" class="text-[0.85rem] font-bold text-gray-800 px-1 leading-snug w-full">${content}</span>
+                        
+                        <!-- Hover Expand Card -->
+                        <div class="opacity-0 invisible group-hover:opacity-100 group-hover:visible absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 bg-white p-5 rounded-2xl shadow-2xl border-2 border-indigo-400 z-[9999] text-sm font-black text-indigo-950 pointer-events-none text-center leading-relaxed transition-all duration-200">
+                            ${content}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            return `<span class="${isNode && content.length > 20 ? 'text-sm' : ''} px-2 break-words">${content}</span>`;
         }
 
         function renderNode(nodeEl, content) {
-            nodeEl.innerHTML = formatDisplayItem(content);
+            nodeEl.innerHTML = formatDisplayItem(content, "", true);
         }
 
         function updateTheme(terms) {
@@ -421,20 +452,72 @@
             }
         });
 
-        addBtn.addEventListener('click', () => {
-            const raw = (termInput.value + '\n' + urlInput.value).trim();
-            const terms = raw.split(/\r?\n/).map(t => t.trim()).filter(t => t.length > 0);
-            if (terms.length < 3) return alert("Please enter at least 3 items total.");
-            if (terms.length > 9) return alert("Please limit your pool to a maximum of 9 items.");
-            buildTriangle(terms);
+        addItemBtn.addEventListener('click', () => {
+            const val = singleItemInput.value.trim();
+            if (!val) return;
+            if (itemPool.length >= 9) return alert("Maximum of 9 items allowed in the pool.");
+            
+            itemPool.push(val);
+            singleItemInput.value = '';
+            singleItemInput.focus();
+            renderItemList();
+        });
+
+        singleItemInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addItemBtn.click();
+            }
+        });
+
+        window.removePoolItem = function(index) {
+            itemPool.splice(index, 1);
+            renderItemList();
+        }
+
+        function renderItemList() {
+            if (itemPool.length > 0) {
+                itemListContainer.classList.remove('hidden');
+            } else {
+                itemListContainer.classList.add('hidden');
+            }
+            
+            itemCountDisplay.textContent = `${itemPool.length}/9`;
+            
+            itemList.innerHTML = itemPool.map((item, index) => {
+                let display = item;
+                if (isUrl(item)) {
+                    display = `<span class="text-indigo-600 font-mono">🖼️ Image Link</span>`;
+                } else if (item.length > 35) {
+                    display = item.substring(0, 35) + '...';
+                }
+                
+                return `
+                    <li class="flex justify-between items-center bg-white p-2.5 rounded-lg border border-gray-200 text-xs shadow-sm">
+                        <span class="truncate text-gray-700 font-medium w-5/6" title="${item.replace(/"/g, '&quot;')}">${display}</span>
+                        <button onclick="removePoolItem(${index})" class="text-rose-400 hover:bg-rose-100 hover:text-rose-600 h-6 w-6 rounded-md flex items-center justify-center font-bold transition">&times;</button>
+                    </li>
+                `;
+            }).join('');
+
+            if (itemPool.length >= 3) {
+                generateBtn.disabled = false;
+                generateBtn.innerText = "Preview Triangle";
+            } else {
+                generateBtn.disabled = true;
+                generateBtn.innerText = `Preview Triangle (Need ${3 - itemPool.length} more)`;
+            }
+        }
+
+        generateBtn.addEventListener('click', () => {
+            if (itemPool.length < 3) return;
+            buildTriangle(itemPool);
         });
 
         linkBtn.addEventListener('click', () => {
-            const raw = (termInput.value + '\n' + urlInput.value).trim();
-            const terms = raw.split(/\r?\n/).map(t => t.trim()).filter(t => t.length > 0);
-            if (terms.length < 3) return alert("Enter items first!");
+            if (itemPool.length < 3) return alert("Add at least 3 items first!");
             const url = new URL(window.location.href);
-            url.searchParams.set('t', encodeURIComponent(terms.join('|')));
+            url.searchParams.set('t', encodeURIComponent(itemPool.join('|')));
             navigator.clipboard.writeText(url.toString()).then(() => alert("Student Link Copied!")).catch(() => {
                 prompt("Copy this link:", url.toString());
             });
