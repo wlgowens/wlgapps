@@ -14,103 +14,98 @@
             position: relative; 
             cursor: grab; 
             overflow: hidden; 
-            background-color: #fef3c7;
-            /* Realistic High-Contrast Honeycomb Background for UI */
+            background-color: #fef3c7; 
+            /* Realistic High-Contrast Honeycomb Background */
             background-image: 
-                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='208' viewBox='0 0 180 208'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='50%25' r='50%25'%3E%3Cstop offset='0%25' stop-color='%23f59e0b' stop-opacity='0.4'/%3E%3Cstop offset='80%25' stop-color='%23fef3c7' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cpath d='M30 0 L90 0 L120 52 L90 104 L30 104 L0 52 Z M120 104 L180 104 L210 156 L180 208 L120 208 L90 156 Z M30 104 L90 104 L120 156 L90 208 L30 208 L0 156 Z' fill='url(%23g)'/%3E%3Cpath d='M30 0 L90 0 L120 52 L90 104 L30 104 L0 52 Z M120 104 L180 104 L210 156 L180 208 L120 208 L90 156 Z M30 104 L90 104 L120 156 L90 208 L30 208 L0 156 Z' fill='none' stroke='%23fcd34d' stroke-width='4' stroke-opacity='0.5' stroke-linejoin='round'/%3E%3C/svg%3E"); 
-            background-size: 180px 208px;
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='208' viewBox='0 0 180 208'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='50%25' r='50%25'%3E%3Cstop offset='0%25' stop-color='%23f59e0b' stop-opacity='0.4'/%3E%3Cstop offset='80%25' stop-color='%23fef3c7' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cpath d='M30 0 L90 0 L120 52 L90 104 L30 104 L0 52 Z M120 104 L180 104 L210 156 L180 208 L120 208 L90 156 Z M30 104 L90 104 L120 156 L90 208 L30 208 L0 156 Z' fill='url(%23g)'/%3E%3Cpath d='M30 0 L90 0 L120 52 L90 104 L30 104 L0 52 Z M120 104 L180 104 L210 156 L180 208 L120 208 L90 156 Z M30 104 L90 104 L120 156 L90 208 L30 208 L0 156 Z' fill='none' stroke='%23fcd34d' stroke-width='4' stroke-opacity='0.5' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-size: 180px 208px; 
             box-shadow: inset 0 0 200px rgba(251, 191, 36, 0.2);
         }
-
+        
         #workspace:active { cursor: grabbing; }
+        
+        /* --- Bee Animations --- */
+        .bee { position: absolute; font-size: 28px; z-index: 5; pointer-events: none; top: 0; left: 0; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15)); }
+        .bee-inner { display: inline-block; animation: bob 1s infinite ease-in-out; }
+        @keyframes bob { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-12px) rotate(8deg); } }
+        
+        .bee-1 { animation: fly1 35s infinite linear; }
+        .bee-2 { animation: fly2 45s infinite linear; animation-delay: -5s; }
+        .bee-3 { animation: fly3 40s infinite linear; animation-delay: -15s; }
+        .bee-4 { animation: fly4 38s infinite linear; animation-delay: -2s; }
+        .bee-5 { animation: fly5 50s infinite linear; animation-delay: -10s; }
+        .bee-6 { animation: fly1 32s infinite linear; animation-delay: -20s; opacity: 0.8; }
+        .bee-7 { animation: fly3 48s infinite linear; animation-delay: -8s; opacity: 0.9; }
 
-        /* Original Bee Animation */
-        .bee {
-            position: absolute;
-            font-size: 24px;
-            pointer-events: none;
-            z-index: 2000;
-            transition: left 2s linear, top 2s linear, transform 0.3s;
-        }
+        @keyframes fly1 { 0% { transform: translate(-10vw, 20vh) scaleX(-1); } 50% { transform: translate(80vw, 10vh) scaleX(1); } 100% { transform: translate(-10vw, 20vh) scaleX(-1); } }
+        @keyframes fly2 { 0% { transform: translate(110vw, 50vh) scaleX(1); } 50% { transform: translate(10vw, 60vh) scaleX(-1); } 100% { transform: translate(110vw, 50vh) scaleX(1); } }
+        @keyframes fly3 { 0% { transform: translate(50vw, -10vh) scaleX(-1); } 50% { transform: translate(85vw, 70vh) scaleX(1); } 100% { transform: translate(50vw, -10vh) scaleX(-1); } }
+        @keyframes fly4 { 0% { transform: translate(20vw, 110vh) scaleX(1); } 50% { transform: translate(70vw, 20vh) scaleX(-1); } 100% { transform: translate(20vw, 110vh) scaleX(1); } }
+        @keyframes fly5 { 0% { transform: translate(0vw, 50vh) scaleX(1); } 50% { transform: translate(100vw, 50vh) scaleX(-1); } 100% { transform: translate(0vw, 50vh) scaleX(1); } }
 
         /* Hexagon Styling */
-        .hex-container { position: absolute; width: 120px; height: 104px; cursor: move; filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.3)); transition: transform 0.1s ease-out, filter 0.2s, left 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); user-select: none; touch-action: none; z-index: 10; }
-        .hex-container.dragging { filter: drop-shadow(0 20px 30px rgba(0,0,0,0.5)); z-index: 1000; transition: none; }
-        .hex-shape-outer { fill: #fffbeb; stroke-width: 3; stroke-linejoin: round; }
-        .hex-text { pointer-events: none; font-size: 11px; font-weight: 800; text-anchor: middle; dominant-baseline: middle; fill: #4b5563; font-family: 'Inter', system-ui, sans-serif; }
+        .hex-container { position: absolute; width: 120px; height: 104px; cursor: move; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05)); transition: transform 0.1s ease-out, filter 0.2s, left 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); user-select: none; touch-action: none; z-index: 10; }
+        .hex-container.dragging { filter: drop-shadow(0 20px 30px rgba(0,0,0,0.15)); z-index: 1000; transition: none; }
+        .hex-shape-outer { fill: white; stroke-width: 5; stroke-linejoin: round; }
+        .hex-text { pointer-events: none; font-size: 11px; font-weight: 800; text-anchor: middle; dominant-baseline: middle; fill: #374151; font-family: 'Inter', system-ui, sans-serif; }
 
-        /* Original Honey Ooze Animation */
-        .honey-drop {
+        /* Golden Honey Ooze */
+        .honey-ooze {
             position: absolute;
-            width: 12px;
-            height: 12px;
-            background: #f59e0b;
-            border-radius: 50% 50% 50% 10%;
-            transform: rotate(45deg);
-            z-index: 5;
+            width: 24px;
+            height: 24px;
             pointer-events: none;
-            animation: drip 2s ease-in forwards;
-            filter: blur(1px);
+            z-index: 2000;
+            animation: ooze-and-fade 0.8s ease-out forwards;
+            filter: drop-shadow(0 2px 4px rgba(217, 119, 6, 0.4));
         }
-        @keyframes drip {
-            0% { transform: scale(0) rotate(45deg); opacity: 1; }
-            20% { transform: scale(1.2) rotate(45deg); }
-            100% { transform: translateY(40px) scale(0.8) rotate(45deg); opacity: 0; }
+        @keyframes ooze-and-fade {
+            0% { transform: scale(0.5) translateY(0); opacity: 0; }
+            30% { transform: scale(1.3) translateY(5px); opacity: 1; }
+            100% { transform: scale(1) translateY(20px); opacity: 0; }
         }
 
-        .controls-panel { position: fixed; top: 20px; left: 20px; z-index: 100; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); padding: 24px; border-radius: 16px; box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.5); width: 340px; border: 1px solid rgba(255,255,255,0.3); }
+        .controls-panel { position: fixed; top: 20px; left: 20px; z-index: 100; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); padding: 24px; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); width: 340px; border: 1px solid rgba(255,255,255,0.3); }
         .actions-panel { position: fixed; bottom: 24px; right: 24px; z-index: 100; display: flex; gap: 12px; }
         .delete-zone { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); width: 260px; height: 80px; border: 3px dashed #f43f5e; border-radius: 20px; display: flex; align-items: center; justify-content: center; color: #f43f5e; background: rgba(255, 241, 242, 0.9); opacity: 0; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); pointer-events: none; z-index: 50; }
         .delete-zone.visible { opacity: 1; }
         .delete-zone.active { background: #ffe4e6; transform: translateX(-50%) scale(1.05); border-style: solid; }
-        
         #export-canvas { display: none; }
-        .btn-primary { background: #d97706; color: white; padding: 10px 20px; border-radius: 10px; font-weight: 700; transition: all 0.2s; border: 1px solid #b45309; }
-        .btn-primary:hover { background: #b45309; transform: translateY(-1px); }
+        .btn-primary { background: #6366f1; color: white; padding: 10px 20px; border-radius: 10px; font-weight: 700; transition: all 0.2s; }
+        .btn-primary:hover { background: #4f46e5; transform: translateY(-1px); }
         textarea { resize: none; scrollbar-width: thin; line-height: 1.4; }
         .hidden { display: none !important; }
-        
-        .choice-btn { flex: 1; padding: 12px; border-radius: 12px; border: 2px solid #eef2ff; font-weight: bold; transition: all 0.2s; text-align: center; cursor: pointer; color: #d97706; }
-        .choice-btn:hover { background-color: #fef3c7; }
-        .choice-btn.active { background-color: #d97706; border-color: #d97706; color: white; }
+        .choice-btn { flex: 1; padding: 12px; border-radius: 12px; border: 2px solid #eef2ff; font-weight: bold; transition: all 0.2s; text-align: center; cursor: pointer; color: #6366f1; }
+        .choice-btn:hover { background-color: #f5f7ff; }
+        .choice-btn.active { background-color: #6366f1; border-color: #6366f1; color: white; }
         #prompt-modal { pointer-events: none; }
         #modal-content { pointer-events: auto; cursor: grab; }
-        #term-container svg { max-height: 180px; max-width: 100%; drop-shadow: 0 4px 6px rgba(0,0,0,0.15); }
+        #term-container svg { max-height: 100%; max-width: 100%; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05)); }
     </style>
 </head>
 <body>
 
     <div class="controls-panel">
-        <h1 class="text-2xl font-black mb-4 text-gray-800 flex items-center gap-2">
-            <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="3" fill="none" class="text-amber-600"><path d="M12 2l9 4.9V17.1L12 22l-9-4.9V6.9L12 2z"/></svg>
+        <h1 class="text-2xl font-black mb-6 text-gray-800 flex items-center gap-2 text-shadow-sm">
+            <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="3" fill="none" class="text-indigo-600"><path d="M12 2l9 4.9V17.1L12 22l-9-4.9V6.9L12 2z"/></svg>
             Hexagonal Thinking
         </h1>
-        
-        <!-- Updated Instructions -->
-        <div class="mb-5 p-3.5 bg-amber-50 rounded-xl border-2 border-amber-200 text-amber-900 text-sm font-semibold shadow-inner">
-            <span class="block text-amber-600 font-black uppercase text-[10px] tracking-wider mb-1">Instructions</span>
-            Snap related ideas together! Every piece must touch at least one other hexagon to finish!
-        </div>
-
         <div class="mb-5">
-            <label id="terms-label" class="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2 text-[10px]">Terms (Min: 6 | Max: 24)</label>
+            <label id="terms-label" class="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2 text-[10px]">Terms (Min: 6 | Max: 24 | Paste list or type line by line)</label>
             <div class="flex flex-col gap-2">
-                <textarea id="hex-input" placeholder="Concept 1&#10;Concept 2&#10;Concept 3..." rows="4" class="w-full px-4 py-3 border-2 border-gray-100 rounded-xl focus:ring-4 focus:ring-amber-100 focus:border-amber-400 outline-none transition-all text-sm"></textarea>
-                <button id="add-btn" class="btn-primary shadow-lg shadow-amber-900/20 w-full">Scatter Hexagons</button>
-                <button id="link-btn" class="bg-amber-100 text-amber-800 border border-amber-300 font-bold py-2.5 rounded-xl w-full hover:bg-amber-200 transition shadow-sm flex items-center justify-center gap-2 text-sm mt-2">
+                <textarea id="hex-input" placeholder="Concept 1&#10;Concept 2&#10;Concept 3..." rows="5" class="w-full px-4 py-3 border-2 border-gray-100 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all text-sm"></textarea>
+                <button id="add-btn" class="btn-primary shadow-lg shadow-indigo-200 w-full">Scatter Hexagons</button>
+                <button id="link-btn" class="bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold py-2.5 rounded-xl w-full hover:bg-emerald-200 transition shadow-sm flex items-center justify-center gap-2 text-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
                     Copy Student Link
                 </button>
-                <p id="share-hint" class="text-[10px] text-gray-400 italic text-center -mt-1 font-medium">
-                    Share with students (paste into Classroom, etc)
-                </p>
             </div>
         </div>
     </div>
 
     <div class="actions-panel">
-        <button id="clear-btn" class="bg-white/90 backdrop-blur border border-gray-200 text-gray-700 px-5 py-3 rounded-xl hover:bg-white transition font-bold shadow-lg">Clear Board</button>
-        <button id="prompt-btn" class="hidden bg-amber-600 text-white border border-amber-700 px-8 py-3 rounded-xl hover:bg-amber-700 transition font-black flex items-center gap-2 shadow-lg shadow-amber-900/30 text-lg">
+        <button id="clear-btn" class="bg-white/80 backdrop-blur border border-gray-200 text-gray-600 px-5 py-3 rounded-xl hover:bg-white transition font-bold shadow-sm">Clear Board</button>
+        <button id="prompt-btn" class="hidden bg-indigo-600 text-white border border-indigo-700 px-8 py-3 rounded-xl hover:bg-indigo-700 transition font-black flex items-center gap-2 shadow-lg shadow-indigo-200 text-lg">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
             Finished
         </button>
@@ -123,122 +118,58 @@
         </span>
     </div>
 
-    <div id="workspace"></div>
+    <div id="workspace">
+        <div class="bee bee-1"><div class="bee-inner">🐝</div></div>
+        <div class="bee bee-2"><div class="bee-inner">🐝</div></div>
+        <div class="bee bee-3"><div class="bee-inner">🐝</div></div>
+        <div class="bee bee-4"><div class="bee-inner">🐝</div></div>
+        <div class="bee bee-5"><div class="bee-inner">🐝</div></div>
+        <div class="bee bee-6"><div class="bee-inner">🐝</div></div>
+        <div class="bee bee-7"><div class="bee-inner">🐝</div></div>
+    </div>
     
     <canvas id="export-canvas"></canvas>
 
-    <div id="prompt-modal" class="fixed inset-0 z-[3000] hidden flex items-center justify-center p-4">
-        <div id="modal-content" class="bg-white/95 backdrop-blur-md p-8 rounded-3xl shadow-2xl max-w-2xl w-full border border-white/50 relative">
-            <h2 class="text-2xl font-black text-amber-800 mb-4 text-center pointer-events-none">Connections Challenge!</h2>
-            <div class="flex gap-2 mb-6 p-1.5 bg-amber-50 rounded-2xl" id="mode-selector">
-                <div id="select-pair" class="choice-btn active">Pair Challenge</div>
-                <div id="select-node" class="choice-btn">Node Challenge</div>
+    <div id="prompt-modal" class="fixed inset-0 z-[2000] hidden flex items-center justify-center p-4">
+        <div id="modal-content" class="bg-white/95 backdrop-blur-md p-6 sm:p-8 rounded-3xl shadow-2xl max-w-2xl w-full border border-white/50 relative shadow-indigo-500/20 max-h-[95vh] flex flex-col overflow-y-auto">
+            <h2 class="text-xl sm:text-2xl font-black text-indigo-800 mb-2 sm:mb-3 text-center pointer-events-none shrink-0">Connections Challenge!</h2>
+            
+            <div id="completion-hint" class="bg-rose-100 text-rose-700 border border-rose-200 font-bold px-4 py-2 sm:py-3 rounded-xl mb-4 text-center text-sm sm:text-base animate-pulse shrink-0 w-full shadow-sm">
+                🚨 Please complete BOTH the Pair and Node tabs to finish!
             </div>
-            <p id="challenge-desc" class="text-amber-700/80 mb-4 text-xs font-black uppercase tracking-[0.2em] text-center pointer-events-none">Explain how these two concepts are connected:</p>
-            <div id="term-container" class="flex items-center justify-center mb-6 p-4 bg-amber-50/50 rounded-2xl border border-amber-200/50 pointer-events-none w-full h-52"></div>
-            <textarea id="prompt-textarea" class="w-full h-40 p-5 border-2 border-amber-100 rounded-2xl focus:border-amber-400 focus:ring-8 focus:ring-amber-50 outline-none transition-all mb-6 text-gray-700 bg-white/80" placeholder="Analyze the relationship here..."></textarea>
-            <div class="flex justify-between items-center gap-3">
-                <span id="completion-hint" class="text-sm font-bold text-rose-500 animate-pulse">Complete both tabs to finish!</span>
-                <div class="flex gap-3 ml-auto">
-                    <button id="close-modal-btn" class="px-6 py-3 rounded-xl font-bold text-gray-400 hover:text-gray-600 transition-colors">Cancel</button>
-                    <button id="save-modal-btn" class="hidden bg-amber-600 text-white px-8 py-3 rounded-xl font-black hover:bg-amber-700 transition-all shadow-xl shadow-amber-200 flex items-center gap-3 active:scale-95">Save & Download</button>
-                </div>
+
+            <div class="flex gap-2 mb-4 p-1.5 bg-gray-100/80 rounded-2xl shrink-0" id="mode-selector">
+                <div id="select-pair" class="choice-btn active py-2 sm:py-3">Pair Challenge</div>
+                <div id="select-node" class="choice-btn py-2 sm:py-3">Node Challenge</div>
+            </div>
+            
+            <p id="challenge-desc" class="text-gray-500 mb-3 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] text-center pointer-events-none shrink-0">Explain how these two concepts are connected:</p>
+            
+            <div id="term-container" class="flex items-center justify-center mb-4 p-2 sm:p-4 bg-indigo-50/40 rounded-2xl border border-indigo-100/50 pointer-events-none w-full h-32 sm:h-48 shrink-0"></div>
+            
+            <textarea id="prompt-textarea" class="w-full h-24 sm:h-32 p-4 border-2 border-indigo-50 rounded-2xl focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 outline-none transition-all mb-5 text-sm sm:text-base text-gray-700 bg-white/80 shrink-0" placeholder="Analyze the relationship here..."></textarea>
+            
+            <div class="flex justify-end gap-2 sm:gap-3 mt-auto shrink-0 w-full">
+                <button id="close-modal-btn" class="px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-bold text-gray-400 hover:text-gray-600 transition-colors text-sm sm:text-base">Cancel</button>
+                <button id="save-modal-btn" class="hidden bg-indigo-600 text-white px-5 sm:px-8 py-2 sm:py-3 rounded-xl font-black hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-200 flex items-center gap-2 sm:gap-3 active:scale-95 text-sm sm:text-base">Save & Download</button>
             </div>
         </div>
     </div>
 
     <script>
-        const workspace = document.getElementById('workspace'), 
-              hexInput = document.getElementById('hex-input'), 
-              addBtn = document.getElementById('add-btn'), 
-              linkBtn = document.getElementById('link-btn'), 
-              clearBtn = document.getElementById('clear-btn'), 
-              promptBtn = document.getElementById('prompt-btn'), 
-              deleteZone = document.getElementById('delete-zone');
-
-        const promptModal = document.getElementById('prompt-modal'), 
-              modalContent = document.getElementById('modal-content'), 
-              closeModalBtn = document.getElementById('close-modal-btn'), 
-              saveModalBtn = document.getElementById('save-modal-btn'), 
-              completionHint = document.getElementById('completion-hint'), 
-              termContainer = document.getElementById('term-container'), 
-              promptTextarea = document.getElementById('prompt-textarea'), 
-              btnPair = document.getElementById('select-pair'), 
-              btnNode = document.getElementById('select-node'),
-              challengeDesc = document.getElementById('challenge-desc');
+        const workspace = document.getElementById('workspace'), hexInput = document.getElementById('hex-input'), addBtn = document.getElementById('add-btn'), linkBtn = document.getElementById('link-btn'), clearBtn = document.getElementById('clear-btn'), promptBtn = document.getElementById('prompt-btn'), deleteZone = document.getElementById('delete-zone');
+        const promptModal = document.getElementById('prompt-modal'), modalContent = document.getElementById('modal-content'), closeModalBtn = document.getElementById('close-modal-btn'), saveModalBtn = document.getElementById('save-modal-btn'), completionHint = document.getElementById('completion-hint'), termContainer = document.getElementById('term-container'), promptTextarea = document.getElementById('prompt-textarea'), btnPair = document.getElementById('select-pair'), btnNode = document.getElementById('select-node');
 
         const GRID_DX = 90, GRID_DY = 104;
-        const THEME_COLOR = "#d97706"; // Amber border color for hexes
-        
+        const THEME_COLOR = "#d97706"; // Amber-Brown for all hex borders
+        let colorIndex = 0;
+        const COLORS = [THEME_COLOR]; // Consistent color as requested
+
         let currentMode = 'pair';
         let pairText = "";
         let nodeText = "";
         let selectedPair = null;
         let selectedNode = null;
-        let bees = [];
-
-        // Original Bee Logic
-        function initBees() {
-            for (let i = 0; i < 2; i++) {
-                const bee = document.createElement('div');
-                bee.className = 'bee';
-                bee.innerHTML = '🐝';
-                bee.style.left = Math.random() * window.innerWidth + 'px';
-                bee.style.top = Math.random() * window.innerHeight + 'px';
-                document.body.appendChild(bee);
-                bees.push({
-                    el: bee,
-                    x: parseFloat(bee.style.left),
-                    y: parseFloat(bee.style.top),
-                    targetX: Math.random() * window.innerWidth,
-                    targetY: Math.random() * window.innerHeight,
-                    timer: Math.random() * 2000
-                });
-            }
-            animateBees();
-        }
-
-        function animateBees() {
-            bees.forEach(bee => {
-                bee.timer -= 16;
-                if (bee.timer <= 0) {
-                    // Check if there's honey to visit
-                    const drops = document.querySelectorAll('.honey-drop');
-                    if (drops.length > 0 && Math.random() > 0.4) {
-                        const drop = drops[Math.floor(Math.random() * drops.length)];
-                        const rect = drop.getBoundingClientRect();
-                        bee.targetX = rect.left;
-                        bee.targetY = rect.top;
-                    } else {
-                        bee.targetX = Math.random() * window.innerWidth;
-                        bee.targetY = Math.random() * window.innerHeight;
-                    }
-                    bee.timer = 1500 + Math.random() * 2000;
-                }
-
-                // Smooth movement
-                bee.x += (bee.targetX - bee.x) * 0.02;
-                bee.y += (bee.targetY - bee.y) * 0.02;
-
-                const angle = Math.atan2(bee.targetY - bee.y, bee.targetX - bee.x) * 180 / Math.PI;
-                const flip = bee.targetX < bee.x ? 'scaleX(-1)' : 'scaleX(1)';
-                
-                bee.el.style.left = bee.x + 'px';
-                bee.el.style.top = bee.y + 'px';
-                bee.el.style.transform = `${flip} rotate(${angle/10}deg)`;
-            });
-            requestAnimationFrame(animateBees);
-        }
-
-        // Original Honey Ooze Logic
-        function spawnHoney(x, y) {
-            const drop = document.createElement('div');
-            drop.className = 'honey-drop';
-            drop.style.left = (x + 55) + 'px';
-            drop.style.top = (y + 45) + 'px';
-            workspace.appendChild(drop);
-            setTimeout(() => drop.remove(), 2000);
-        }
 
         function getSnapPos(x, y) {
             const col = Math.round(x / GRID_DX);
@@ -255,32 +186,59 @@
             return neighbors;
         }
 
+        function triggerHoneyOoze(hexEl, col, row) {
+            const hexes = document.querySelectorAll('.hex-container');
+            const occupied = new Set();
+            hexes.forEach(h => { if (h !== hexEl) occupied.add(`${h.dataset.col},${h.dataset.row}`); });
+
+            const neighbors = getNeighbors(col, row);
+            neighbors.forEach((n, i) => {
+                if (occupied.has(`${n.c},${n.r}`)) {
+                    const drip = document.createElement('div');
+                    drip.className = 'honey-ooze';
+                    drip.innerHTML = `
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 21.5c-3.6 0-6.5-2.9-6.5-6.5 0-3.3 4.2-8.5 5.7-10.3.4-.5 1.2-.5 1.6 0 1.5 1.8 5.7 7 5.7 10.3 0 3.6-2.9 6.5-6.5 6.5z" fill="#f59e0b"/>
+                            <path d="M10 16.5c0-1.1.9-2 2-2" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+                        </svg>
+                    `;
+                    const angle = (i * 60) - 90;
+                    const rad = (angle * Math.PI) / 180;
+                    drip.style.left = (parseFloat(hexEl.style.left) + 60 + Math.cos(rad) * 45 - 12) + 'px';
+                    drip.style.top = (parseFloat(hexEl.style.top) + 52 + Math.sin(rad) * 45 - 12) + 'px';
+                    workspace.appendChild(drip);
+                    setTimeout(() => drip.remove(), 800);
+                }
+            });
+        }
+
         function checkAllConnected() {
             const hexes = document.querySelectorAll('.hex-container');
             if (hexes.length === 0) { promptBtn.classList.add('hidden'); return; }
             
-            const occupied = new Set();
+            const occupied = new Set(); 
             let startNode = null;
-            hexes.forEach(h => {
-                const pos = `${h.dataset.col},${h.dataset.row}`;
-                occupied.add(pos);
-                if (!startNode) startNode = pos;
+            hexes.forEach(h => { 
+                const pos = `${h.dataset.col},${h.dataset.row}`; 
+                occupied.add(pos); 
+                if (!startNode) startNode = pos; 
             });
 
-            const visited = new Set(), queue = [startNode];
+            const visited = new Set(), queue = [startNode]; 
             visited.add(startNode);
             
             while(queue.length > 0) {
                 const current = queue.shift(), [c, r] = current.split(',');
                 getNeighbors(c, r).forEach(n => {
                     const nPos = `${n.c},${n.r}`;
-                    if (occupied.has(nPos) && !visited.has(nPos)) {
-                        visited.add(nPos);
-                        queue.push(nPos);
+                    if (occupied.has(nPos) && !visited.has(nPos)) { 
+                        visited.add(nPos); 
+                        queue.push(nPos); 
                     }
                 });
             }
             
+            // Show button only if all nodes are reachable and minimum count met
             if (visited.size === occupied.size && hexes.length >= 6) {
                 promptBtn.classList.remove('hidden');
             } else {
@@ -312,52 +270,16 @@
                 el.style.transition = 'transform 0.1s ease-out, filter 0.2s, left 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
                 const cx = e.type === 'touchend' ? e.changedTouches[0].clientX : e.clientX;
                 const cy = e.type === 'touchend' ? e.changedTouches[0].clientY : e.clientY;
-                const dr = deleteZone.getBoundingClientRect(), 
-                      mp = document.querySelector('.controls-panel').getBoundingClientRect(), 
-                      ap = document.querySelector('.actions-panel').getBoundingClientRect();
+                const dr = deleteZone.getBoundingClientRect(), mp = document.querySelector('.controls-panel').getBoundingClientRect(), ap = document.querySelector('.actions-panel').getBoundingClientRect();
                 
-                if (cx > dr.left && cx < dr.right && cy > dr.top) {
-                    el.remove();
-                } else if ((cx < mp.right + 20 && cy < mp.bottom + 20) || (cx > ap.left - 20 && cy > ap.top - 20)) { 
-                    el.style.left = originalLeft; el.style.top = originalTop; 
-                } else {
-                    const snap = getSnapPos(parseFloat(el.style.left), parseFloat(el.style.top));
-                    
-                    // Collision check to prevent overlapping hexagons
-                    let isOccupied = false;
-                    document.querySelectorAll('.hex-container').forEach(h => {
-                        if (h !== el && parseInt(h.dataset.col) === snap.col && parseInt(h.dataset.row) === snap.row) {
-                            isOccupied = true;
-                        }
-                    });
-
-                    if (isOccupied) {
-                        // Revert to original location if target space is taken
-                        el.style.left = originalLeft;
-                        el.style.top = originalTop;
-                        // Quick shake animation to indicate blocked move
-                        el.animate([
-                            { transform: 'translateX(0)' },
-                            { transform: 'translateX(-5px)' },
-                            { transform: 'translateX(5px)' },
-                            { transform: 'translateX(-5px)' },
-                            { transform: 'translateX(5px)' },
-                            { transform: 'translateX(0)' }
-                        ], { duration: 300 });
-                    } else {
-                        // Place safely
-                        el.style.left = snap.x + "px"; el.style.top = snap.y + "px";
-                        el.dataset.col = snap.col; el.dataset.row = snap.row;
-                        
-                        // Original Linked Logic
-                        const neighbors = getNeighbors(snap.col, snap.row);
-                        const isLinked = Array.from(document.querySelectorAll('.hex-container')).some(other => 
-                            other !== el && neighbors.some(n => n.c == other.dataset.col && n.r == other.dataset.row)
-                        );
-                        if (isLinked) spawnHoney(snap.x, snap.y);
-                    }
+                if (cx > dr.left && cx < dr.right && cy > dr.top) el.remove();
+                else if ((cx < mp.right + 20 && cy < mp.bottom + 20) || (cx > ap.left - 20 && cy > ap.top - 20)) { el.style.left = originalLeft; el.style.top = originalTop; }
+                else { 
+                    const snap = getSnapPos(parseFloat(el.style.left), parseFloat(el.style.top)); 
+                    el.style.left = snap.x + "px"; el.style.top = snap.y + "px"; 
+                    el.dataset.col = snap.col; el.dataset.row = snap.row; 
+                    triggerHoneyOoze(el, snap.col, snap.row);
                 }
-                
                 el.classList.remove('dragging'); deleteZone.classList.remove('visible'); deleteZone.classList.remove('active');
                 document.onmouseup = document.onmousemove = document.ontouchend = document.ontouchmove = null;
                 checkAllConnected();
@@ -385,12 +307,6 @@
                 }
                 const hex = createHex(term, THEME_COLOR, snap.x, snap.y);
                 workspace.appendChild(hex); occupied.add(`${snap.col},${snap.row}`);
-                
-                const neighbors = getNeighbors(snap.col, snap.row);
-                const isLinked = Array.from(document.querySelectorAll('.hex-container')).some(other => 
-                    other !== hex && neighbors.some(n => n.c == other.dataset.col && n.r == other.dataset.row)
-                );
-                if (isLinked) spawnHoney(snap.x, snap.y);
             });
             checkAllConnected();
         });
@@ -400,7 +316,7 @@
             container.className = 'hex-container';
             const snap = getSnapPos(x, y);
             container.style.left = `${x}px`; container.style.top = `${y}px`;
-            container.dataset.col = snap.col; container.dataset.row = snap.row;
+            container.dataset.col = snap.col; container.dataset.row = snap.row; 
             container.dataset.fullText = text; container.dataset.borderColor = color;
             const lines = text.split(' ').reduce((acc, word) => {
                 let last = acc[acc.length-1];
@@ -429,7 +345,7 @@
                     return acc;
                 }, []).slice(0, 4);
                 const textSVG = lines.map((l, i) => `<tspan x="60" dy="${i === 0 ? 0 : 16}">${l.trim()}</tspan>`).join('');
-                svgContent += `<g transform="translate(${h.x - minX}, ${h.y - minY})"><path d="M 30 2 L 90 2 L 118 52 L 90 102 L 30 102 L 2 52 Z" fill="#fffbeb" stroke="${THEME_COLOR}" stroke-width="2" stroke-linejoin="round" /><text x="60" y="${52 - (lines.length - 1) * 8}" font-family="Inter, system-ui, sans-serif" font-size="11px" font-weight="800" text-anchor="middle" dominant-baseline="middle" fill="#4b5563">${textSVG}</text></g>`;
+                svgContent += `<g transform="translate(${h.x - minX}, ${h.y - minY})"><path d="M 30 2 L 90 2 L 118 52 L 90 102 L 30 102 L 2 52 Z" fill="white" stroke="${THEME_COLOR}" stroke-width="5" stroke-linejoin="round" /><text x="60" y="${52 - (lines.length - 1) * 8}" font-family="Inter, system-ui, sans-serif" font-size="11px" font-weight="800" text-anchor="middle" dominant-baseline="middle" fill="#374151">${textSVG}</text></g>`;
             });
             svgContent += `</svg>`;
             return svgContent;
@@ -438,8 +354,8 @@
         promptBtn.addEventListener('click', () => {
             const hexes = document.querySelectorAll('.hex-container');
             const gridMap = {};
-            hexes.forEach(h => {
-                gridMap[`${h.dataset.col},${h.dataset.row}`] = { text: h.dataset.fullText, x: parseFloat(h.style.left), y: parseFloat(h.style.top) };
+            hexes.forEach(h => { 
+                gridMap[`${h.dataset.col},${h.dataset.row}`] = { text: h.dataset.fullText, x: parseFloat(h.style.left), y: parseFloat(h.style.top) }; 
             });
             
             let allPairs = [], allNodes = [];
@@ -476,32 +392,10 @@
             else { saveModalBtn.classList.add('hidden'); completionHint.classList.remove('hidden'); }
         }
 
-        window.addEventListener('DOMContentLoaded', () => {
-            initBees();
-            const t = new URLSearchParams(window.location.search).get('t');
-            if (t) {
-                hexInput.value = decodeURIComponent(t).split('|').join('\n');
-                setTimeout(() => { 
-                    addBtn.click(); 
-                    hexInput.readOnly = true; 
-                    hexInput.classList.add('bg-gray-50'); 
-                    addBtn.classList.add('hidden'); 
-                    linkBtn.classList.add('hidden'); 
-                    document.getElementById('share-hint').classList.add('hidden');
-                    document.getElementById('terms-label').textContent = "Assigned Terms"; 
-                }, 100);
-            }
-        });
-
         function setChallengeMode(mode) {
             currentMode = mode;
             btnPair.classList.toggle('active', mode === 'pair');
             btnNode.classList.toggle('active', mode === 'node');
-            
-            challengeDesc.textContent = mode === 'pair' 
-                ? 'Explain how these two concepts are connected:' 
-                : 'Explain how these concepts are connected:';
-
             const group = mode === 'pair' ? selectedPair : selectedNode;
             termContainer.innerHTML = createClusterSVG(group);
             promptTextarea.value = mode === 'pair' ? pairText : nodeText;
@@ -518,68 +412,84 @@
         closeModalBtn.onclick = () => promptModal.classList.add('hidden');
         saveModalBtn.onclick = () => { promptModal.classList.add('hidden'); generateAndDownloadImage(); };
 
+        function drawHoneycombGrid(ctx, width, height) {
+            const grd = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, Math.max(width, height));
+            grd.addColorStop(0, "#fffbeb"); grd.addColorStop(1, "#fef3c7");
+            ctx.fillStyle = grd; ctx.fillRect(0,0,width, height);
+            ctx.strokeStyle = "rgba(253, 211, 77, 0.4)";
+            ctx.lineWidth = 5;
+            ctx.lineJoin = "round";
+            ctx.beginPath();
+            for (let x = -180; x < width + 180; x += 180) {
+                for (let y = -208; y < height + 208; y += 208) {
+                    const pts = [x+30, y+0, x+90, y+0, x+120, y+52, x+90, y+104, x+30, y+104, x+0, y+52];
+                    ctx.moveTo(pts[0], pts[1]);
+                    for(let i=2; i<pts.length; i+=2) ctx.lineTo(pts[i], pts[i+1]);
+                    ctx.closePath();
+                }
+            }
+            ctx.stroke();
+        }
+
         function generateAndDownloadImage() {
             const hexes = document.querySelectorAll('.hex-container');
             let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
             hexes.forEach(h => { const x = parseFloat(h.style.left), y = parseFloat(h.style.top); minX = Math.min(minX, x); minY = Math.min(minY, y); maxX = Math.max(maxX, x + 120); maxY = Math.max(maxY, y + 104); });
             const canvas = document.getElementById('export-canvas'), ctx = canvas.getContext('2d'), bW = (maxX - minX) + 160, bH = (maxY - minY) + 160;
-            
             function getLines(context, text, maxWidth) {
                 if (!text) return []; const words = text.split(" "), lines = []; let currentLine = words[0] || "";
                 for (let i = 1; i < words.length; i++) { if (context.measureText(currentLine + " " + words[i]).width < maxWidth) currentLine += " " + words[i]; else { lines.push(currentLine); currentLine = words[i]; } }
                 lines.push(currentLine); return lines;
             }
-
-            const maxWidth = Math.max(bW, 800) - 120;
-            ctx.font = "14px sans-serif";
-            const pairLines = getLines(ctx, pairText, maxWidth);
-            const nodeLines = selectedNode ? getLines(ctx, nodeText, maxWidth) : [];
             
-            let totalChallengeHeight = 40 + 25 + (pairLines.length * 20); 
-            if (selectedNode) {
-                totalChallengeHeight += 30 + 25 + (nodeLines.length * 20); 
-            }
-
-            canvas.width = Math.max(bW, 800); 
-            canvas.height = bH + totalChallengeHeight + 100;
+            // Calculate height for both if selectedNode exists
+            let contentHeight = selectedNode ? 400 : 250;
+            canvas.width = Math.max(bW, 800); canvas.height = bH + contentHeight;
             
-            ctx.fillStyle = "#ffffff"; 
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
+            drawHoneycombGrid(ctx, canvas.width, canvas.height);
             hexes.forEach(h => {
                 const x = parseFloat(h.style.left)-minX+80, y = parseFloat(h.style.top)-minY+80, tLines = h.querySelectorAll('tspan');
                 ctx.save(); ctx.translate(x, y); ctx.beginPath(); [[30,2],[90,2],[118,52],[90,102],[30,102],[2,52]].forEach((p, i) => i === 0 ? ctx.moveTo(p[0],p[1]) : ctx.lineTo(p[0],p[1]));
-                ctx.closePath(); ctx.fillStyle = "#fffbeb"; ctx.fill(); ctx.strokeStyle = THEME_COLOR; ctx.lineWidth = 2; ctx.stroke();
-                ctx.fillStyle = "#4b5563"; ctx.font = "800 11px sans-serif"; ctx.textAlign = "center";
+                ctx.closePath(); ctx.fillStyle = "white"; ctx.fill(); ctx.strokeStyle = THEME_COLOR; ctx.lineWidth = 5; ctx.stroke();
+                ctx.fillStyle = "#374151"; ctx.font = "800 11px sans-serif"; ctx.textAlign = "center";
                 tLines.forEach((tl, i) => ctx.fillText(tl.textContent, 60, (52-(tLines.length-1)*8) + (i*16))); ctx.restore();
             });
-
+            
             const py = bH - 20; 
-            const boxPadding = 40;
             ctx.fillStyle = "white"; 
-            ctx.fillRect(40, py, canvas.width-80, totalChallengeHeight + boxPadding); 
-            ctx.strokeStyle = "#fbbf24"; ctx.lineWidth = 2; 
-            ctx.strokeRect(40, py, canvas.width-80, totalChallengeHeight + boxPadding);
+            ctx.fillRect(40, py, canvas.width-80, contentHeight - 40); 
+            ctx.strokeStyle = "#fbbf24"; 
+            ctx.lineWidth = 2; 
+            ctx.strokeRect(40, py, canvas.width-80, contentHeight - 40);
             
             ctx.textAlign = "left"; 
             let curY = py + 40; 
             
+            // Pair Challenge
             ctx.font = "bold 16px sans-serif"; ctx.fillStyle = "#d97706";
             ctx.fillText("Pair Challenge: " + selectedPair.map(s => s.text).join(" + "), 60, curY);
             curY += 25; ctx.font = "14px sans-serif"; ctx.fillStyle = "#4b5563";
-            pairLines.forEach(l => { ctx.fillText(l, 60, curY); curY += 20; });
-
+            getLines(ctx, pairText, canvas.width - 120).forEach(l => { ctx.fillText(l, 60, curY); curY += 20; });
+            
+            // Node Challenge (if exists)
             if (selectedNode) {
-                curY += 15; 
+                curY += 40;
                 ctx.font = "bold 16px sans-serif"; ctx.fillStyle = "#d97706";
                 ctx.fillText("Node Challenge: " + selectedNode.map(s => s.text).join(" • "), 60, curY);
                 curY += 25; ctx.font = "14px sans-serif"; ctx.fillStyle = "#4b5563";
-                nodeLines.forEach(l => { ctx.fillText(l, 60, curY); curY += 20; });
+                getLines(ctx, nodeText, canvas.width - 120).forEach(l => { ctx.fillText(l, 60, curY); curY += 20; });
             }
-
+            
             const a = document.createElement('a'); a.download = `hex-thinking-${Date.now()}.png`; a.href = canvas.toDataURL(); a.click();
         }
 
+        window.addEventListener('DOMContentLoaded', () => {
+            const t = new URLSearchParams(window.location.search).get('t');
+            if (t) {
+                hexInput.value = decodeURIComponent(t).split('|').join('\n');
+                setTimeout(() => { addBtn.click(); hexInput.readOnly = true; hexInput.classList.add('bg-gray-50'); addBtn.classList.add('hidden'); linkBtn.classList.add('hidden'); document.getElementById('terms-label').textContent = "Assigned Terms"; }, 100);
+            }
+        });
         clearBtn.onclick = () => { if(confirm("Clear board?")) { workspace.querySelectorAll('.hex-container').forEach(h => h.remove()); promptBtn.classList.add('hidden'); } };
         linkBtn.onclick = () => { const t = hexInput.value.split(/[\n,]+/).map(x=>x.trim()).filter(x=>x).join('|'); if(!t) return; const u = new URL(window.location.href); u.searchParams.set('t', encodeURIComponent(t)); navigator.clipboard.writeText(u.toString()).then(()=>alert("Link Copied!")); };
     </script>
