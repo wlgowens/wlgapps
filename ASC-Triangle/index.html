@@ -170,10 +170,14 @@
     </div>
 
     <div class="controls-panel">
-        <h1 class="text-2xl font-black mb-6 text-gray-800 flex items-center gap-2">
+        <h1 class="text-2xl font-black mb-4 text-gray-800 flex items-center gap-2">
             <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="3" fill="none" class="text-indigo-600"><polygon points="12 2 22 20 2 20"></polygon></svg>
             Association Triangle
         </h1>
+        
+        <div id="info-box" class="mb-5 p-3 bg-indigo-50 rounded-lg text-[12px] text-indigo-800 leading-tight">
+            <strong>Teacher Guide:</strong> You can enter simple terms, full sentences, or multiple image URLs in the boxes below. The app creates a "pool" of your items and randomly selects exactly 3 for each student. Keep your total pool between 3 and 9 items.
+        </div>
         
         <div id="teacher-inputs">
             <label id="terms-label" class="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Terms or Sentences (one per line)</label>
@@ -188,10 +192,6 @@
                 <strong>Share with Students:</strong> Copy this unique link below to share with students (Google Classroom, etc).
             </div>
             <button id="link-btn" class="bg-emerald-100 text-emerald-700 font-bold py-3 rounded-xl w-full text-sm hover:bg-emerald-200 transition-all active:scale-95 shadow-sm">Copy Student Link</button>
-        </div>
-        
-        <div id="info-box" class="mt-4 p-3 bg-indigo-50 rounded-lg text-[12px] text-indigo-800 leading-tight">
-            <strong>Teacher Guide:</strong> You can enter simple terms, full sentences, or multiple image URLs in the boxes above. The app creates a "pool" of your items and randomly selects exactly 3 for each student. Keep your total pool between 3 and 9 items.
         </div>
     </div>
 
@@ -222,29 +222,30 @@
     </div>
     
     <div id="prompt-modal" class="fixed inset-0 z-[2000] hidden flex items-center justify-center p-4">
-        <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-2xl w-full border border-gray-100 relative">
-            <h2 id="modal-title" class="text-2xl font-black text-indigo-800 mb-2 text-center">Explain the Connection</h2>
-            <p id="modal-desc" class="text-gray-500 mb-6 text-sm font-bold uppercase tracking-wider text-center">Explain how these two relate, connect, or influence each other:</p>
+        <!-- Made modal fully responsive for Chromebooks -->
+        <div class="bg-white p-6 sm:p-8 rounded-3xl shadow-2xl max-w-2xl w-full border border-gray-100 relative max-h-[95vh] flex flex-col overflow-y-auto">
+            <h2 id="modal-title" class="text-xl sm:text-2xl font-black text-indigo-800 mb-2 text-center shrink-0">Explain the Connection</h2>
+            <p id="modal-desc" class="text-gray-500 mb-4 sm:mb-6 text-xs sm:text-sm font-bold uppercase tracking-wider text-center shrink-0">Explain how these two relate, connect, or influence each other:</p>
             
-            <div id="modal-terms-display" class="flex items-center justify-center gap-4 mb-6 p-4 bg-indigo-50 rounded-2xl border border-indigo-100 font-black text-indigo-900 text-lg text-center"></div>
+            <div id="modal-terms-display" class="flex items-center justify-center gap-4 mb-4 sm:mb-6 p-4 bg-indigo-50 rounded-2xl border border-indigo-100 font-black text-indigo-900 text-base sm:text-lg text-center shrink-0 min-h-[80px]"></div>
             
-            <textarea id="prompt-textarea" class="w-full h-44 p-5 border-2 border-gray-200 rounded-2xl focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 outline-none transition-all mb-6 text-gray-700 text-base" placeholder="Type your explanation here..."></textarea>
+            <textarea id="prompt-textarea" class="w-full h-32 sm:h-44 p-4 sm:p-5 border-2 border-gray-200 rounded-2xl focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 outline-none transition-all mb-4 sm:mb-6 text-gray-700 text-sm sm:text-base shrink-0" placeholder="Type your explanation here..."></textarea>
             
-            <div id="student-export-zone" class="hidden mt-6 pt-6 border-t border-gray-100">
-                <p class="text-center font-black text-indigo-900 mb-1 text-lg">Share with your Teacher</p>
+            <div id="student-export-zone" class="hidden mt-4 pt-4 sm:mt-6 sm:pt-6 border-t border-gray-100 shrink-0">
+                <p class="text-center font-black text-indigo-900 mb-1 text-base sm:text-lg">Share with your Teacher</p>
                 <p class="text-center text-xs text-gray-500 mb-4 px-4">Choose 'Copy Text' to paste your work into Google Classroom or a Doc.</p>
                 <div class="flex flex-wrap justify-center gap-3">
-                    <button id="copy-text-btn" class="bg-indigo-600 text-white border border-indigo-700 px-8 py-3 rounded-xl hover:bg-indigo-700 transition font-black flex items-center gap-2 shadow-lg shadow-indigo-200 text-base">
+                    <button id="copy-text-btn" class="bg-indigo-600 text-white border border-indigo-700 px-6 sm:px-8 py-2 sm:py-3 rounded-xl hover:bg-indigo-700 transition font-black flex items-center gap-2 shadow-lg shadow-indigo-200 text-sm sm:text-base">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                         Copy Text to Clipboard
                     </button>
                 </div>
             </div>
 
-            <div class="flex justify-end gap-3 mt-6">
-                <button id="edit-modal-btn" class="hidden px-6 py-3 rounded-xl font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 hover:text-gray-800 transition-colors">Whoops! I Need to Edit More</button>
-                <button id="close-modal-btn" class="px-6 py-3 rounded-xl font-bold text-gray-400 hover:text-gray-600 transition-colors">Cancel</button>
-                <button id="save-modal-btn" class="bg-indigo-600 text-white px-8 py-3 rounded-xl font-black hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 flex items-center gap-2">
+            <div class="flex justify-end gap-2 sm:gap-3 mt-auto pt-2 shrink-0 w-full">
+                <button id="edit-modal-btn" class="hidden px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 hover:text-gray-800 transition-colors text-sm sm:text-base">Whoops! I Need to Edit More</button>
+                <button id="close-modal-btn" class="px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-bold text-gray-400 hover:text-gray-600 transition-colors text-sm sm:text-base">Cancel</button>
+                <button id="save-modal-btn" class="bg-indigo-600 text-white px-5 sm:px-8 py-2 sm:py-3 rounded-xl font-black hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 flex items-center gap-2 text-sm sm:text-base">
                     Save Response
                 </button>
             </div>
